@@ -1,21 +1,16 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono, Noto_Sans, Instrument_Sans } from 'next/font/google';
+import { Noto_Sans, Instrument_Serif } from 'next/font/google';
 import '@/styles/globals.css';
-import { cn } from "@/lib/utils";
+import { cn } from '../src/lib/utils';
+import { Toaster } from '@/components/ui/sonner';
+import { ThemeProvider } from '@/components/provider/theme-provider';
 
-const instrumentSansHeading = Instrument_Sans({subsets:['latin'],variable:'--font-heading'});
-
-const notoSans = Noto_Sans({subsets:['latin'],variable:'--font-sans'});
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const instrumentSerif = Instrument_Serif({
   subsets: ['latin'],
+  weight: '400',
+  variable: '--font-instrument',
 });
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
+const notoSans = Noto_Sans({ subsets: ['latin'], variable: '--font-noto' });
 
 export const metadata: Metadata = {
   title: 'Create Next App',
@@ -30,9 +25,25 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", notoSans.variable, instrumentSansHeading.variable)}
+      suppressHydrationWarning
+      className={cn(
+        'h-full',
+        'antialiased',
+        notoSans.variable,
+        instrumentSerif.variable,
+      )}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster />
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
