@@ -1,17 +1,35 @@
 'use client';
 
-import * as React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { LogIn, Moon, Sun } from 'lucide-react';
-import { Toggle } from '@/components/ui/toggle';
+import { LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useTheme } from 'next-themes';
 import { ThemeToggle } from '../shared/theme-toggle';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { signOutAction } from '@/features/auth/action';
+import { toast } from 'sonner';
 
 export default function NavigationBar() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
   const pathname = usePathname();
+
+  const handleLogout = async () => {
+    try {
+      const result = await signOutAction();
+
+      if (result?.success === false) {
+        toast.error(result.message || 'Logout failed');
+        return;
+      }
+      toast.success('Signed out');
+      router.push('/home');
+    } catch (error) {
+      toast.error('An unexpected error occurred');
+    }
+  };
+
   const NAV_LINKS = [
     { label: 'Home', href: '/home' },
     { label: 'News & Events', href: '/news-events' },
@@ -20,8 +38,8 @@ export default function NavigationBar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b-2 bg-background/5 backdrop-blur supports-backdrop-filter:bg-background/60 px-6 py-3">
-      <div className="mx-auto flex max-w-7xl justify-between items-center">
+    <header className="sticky top-0 z-50 w-full border-b-2 bg-card backdrop-blur supports-backdrop-filter:bg-card/60 px-6 py-3">
+      <div className="mx-auto flex max-w-screen-2xl justify-between items-center">
         <Link
           href="/home"
           className="flex flex-col items-start hover:opacity-90 transition-opacity"
@@ -50,9 +68,16 @@ export default function NavigationBar() {
 
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Button size="lg" className="gap-2 font-medium">
-            Login <LogIn className="h-4 w-4" />
-          </Button>
+          {isAuthenticated && (
+            <Button
+              onClick={handleLogout}
+              size="xl"
+              className="gap-2 font-medium"
+              disabled={isLoading}
+            >
+              Sign Out <LogOut className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     </header>

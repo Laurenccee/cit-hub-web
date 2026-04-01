@@ -13,15 +13,14 @@ export function ThemeToggle() {
     setMounted(true);
   }, []);
 
-  if (!mounted) return <div className="h-10 w-10" />;
-
   return (
     <Toggle
       variant="outline"
-      size="lg"
+      size="xl"
       className="group relative"
       pressed={theme === 'dark'}
       onPressedChange={(pressed) => setTheme(pressed ? 'dark' : 'light')}
+      disabled={!mounted}
     >
       <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
       <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
