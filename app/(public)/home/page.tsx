@@ -1,17 +1,16 @@
-'use client';
-import ClassShecduleCard from '@/features/home/components/ClassScheduleCard';
+import ClassScheduleCard from '@/features/home/components/ClassScheduleCard';
 import { formatDayDate } from '@/utils/formatters';
 import Link from 'next/link';
 import NewsCard from '@/features/home/components/NewsCard';
 import { LATEST_NEWS } from '@/data/news';
 import { CLASS_SCHEDULES } from '@/data/schedule';
 import { EVENTS_ITEM } from '@/data/events';
-import UpcommingEventCards from '@/features/home/components/UpcommingEventsCard';
+import UpcomingEventsCard from '@/features/home/components/UpcomingEventsCard';
 
 export default function HomePage() {
   const newsItem = LATEST_NEWS[0];
   const classesToday = CLASS_SCHEDULES.filter(
-    (item) => item.dayOfWeek === new Date().getDay() || 7,
+    (item) => item.dayOfWeek === (new Date().getDay() || 7),
   );
   const today = formatDayDate(new Date());
   return (
@@ -51,8 +50,8 @@ export default function HomePage() {
             <p className=" text-muted-foreground">{today}</p>
           </div>
           <div className=" flex flex-col gap-8">
-            <ClassShecduleCard schedule={classesToday} />
-            <UpcommingEventCards events={EVENTS_ITEM} />
+            <ClassScheduleCard schedule={classesToday} />
+            <UpcomingEventsCard events={EVENTS_ITEM} />
           </div>
         </section>
       </div>

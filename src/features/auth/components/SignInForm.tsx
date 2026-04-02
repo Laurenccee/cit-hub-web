@@ -30,7 +30,7 @@ export default function SignInForm() {
   const {
     control,
     handleSubmit,
-    formState: { isSubmitting, errors },
+    formState: { isSubmitting },
   } = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
   });
@@ -45,6 +45,7 @@ export default function SignInForm() {
       }
       toast.success('Welcome, Admin!');
       router.push('/home');
+      router.refresh();
     } catch (error) {
       toast.error('An unexpected error occurred');
     }
@@ -64,12 +65,23 @@ export default function SignInForm() {
             control={control}
             defaultValue=""
             render={({ field, fieldState }) => (
-              <InputGroup>
-                <InputGroupInput {...field} type="email" placeholder="Email" />
-                <InputGroupAddon>
-                  <User2 />
-                </InputGroupAddon>
-              </InputGroup>
+              <div className="flex flex-col gap-1">
+                <InputGroup>
+                  <InputGroupInput
+                    {...field}
+                    type="email"
+                    placeholder="Email"
+                  />
+                  <InputGroupAddon>
+                    <User2 />
+                  </InputGroupAddon>
+                </InputGroup>
+                {fieldState.error && (
+                  <p className="text-sm text-destructive">
+                    {fieldState.error.message}
+                  </p>
+                )}
+              </div>
             )}
           />
           <Controller
@@ -77,16 +89,23 @@ export default function SignInForm() {
             control={control}
             defaultValue=""
             render={({ field, fieldState }) => (
-              <InputGroup>
-                <InputGroupInput
-                  {...field}
-                  type="password"
-                  placeholder="Password"
-                />
-                <InputGroupAddon>
-                  <RectangleEllipsis />
-                </InputGroupAddon>
-              </InputGroup>
+              <div className="flex flex-col gap-1">
+                <InputGroup>
+                  <InputGroupInput
+                    {...field}
+                    type="password"
+                    placeholder="Password"
+                  />
+                  <InputGroupAddon>
+                    <RectangleEllipsis />
+                  </InputGroupAddon>
+                </InputGroup>
+                {fieldState.error && (
+                  <p className="text-sm text-destructive">
+                    {fieldState.error.message}
+                  </p>
+                )}
+              </div>
             )}
           />
         </CardContent>

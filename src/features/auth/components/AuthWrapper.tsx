@@ -9,7 +9,18 @@ export default async function AuthWrapper({
   const supabase = await createClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
+
+  // If Supabase is unreachable, gracefully render children as unauthenticated
+  // rather than crashing the entire layout tree.
+  if (authError) {
+    return (
+      <AuthProvider initialUser={null} initialRole={null}>
+        {children}
+      </AuthProvider>
+    );
+  }
 
   let role = null;
   if (user) {

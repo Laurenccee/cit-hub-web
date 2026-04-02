@@ -2,6 +2,7 @@
 
 import { useContext } from 'react';
 import { AuthContext } from '@/features/auth/provider/AuthProvider';
+import { ROLES } from '@/lib/constants/roles';
 
 export function useAuth() {
   const context = useContext(AuthContext);
@@ -13,9 +14,9 @@ export function useAuth() {
   }
 
   const isAuthenticated = context.user !== null;
-  const isAdmin = context.role === 0 && context.user !== null;
-  const isFaculty = context.role === 1 && context.user !== null;
-  const isPioneer = context.role === 2 && context.user !== null;
+  const isAdmin = context.role === ROLES.ADMIN && context.user !== null;
+  const isFaculty = context.role === ROLES.FACULTY && context.user !== null;
+  const isPioneer = context.role === ROLES.PIONEER && context.user !== null;
 
   return {
     ...context,

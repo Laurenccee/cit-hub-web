@@ -10,6 +10,13 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { signOutAction } from '@/features/auth/action';
 import { toast } from 'sonner';
 
+const NAV_LINKS = [
+  { label: 'Home', href: '/home' },
+  { label: 'News & Events', href: '/news-events' },
+  { label: 'Schedule', href: '/schedule' },
+  { label: 'Faculty', href: '/faculty' },
+];
+
 export default function NavigationBar() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
@@ -25,17 +32,11 @@ export default function NavigationBar() {
       }
       toast.success('Signed out');
       router.push('/home');
+      router.refresh();
     } catch (error) {
       toast.error('An unexpected error occurred');
     }
   };
-
-  const NAV_LINKS = [
-    { label: 'Home', href: '/home' },
-    { label: 'News & Events', href: '/news-events' },
-    { label: 'Schedule', href: '/schedule' },
-    { label: 'Faculty', href: '/faculty' },
-  ];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b-2 bg-card backdrop-blur supports-backdrop-filter:bg-card/60 px-6 py-3">

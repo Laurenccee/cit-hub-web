@@ -11,7 +11,7 @@ import { ArrowRight } from 'lucide-react';
 import { NewsCardProps } from '../../../types/types';
 import { formatDayDate } from '@/utils/formatters';
 
-export default function LatestNewsCard({
+export default function NewsCard({
   news,
   variant = 'grid',
   priority = false,
@@ -27,8 +27,6 @@ export default function LatestNewsCard({
             fill
             priority={priority || isFeatured}
             className="object-cover transition-all"
-            placeholder="blur"
-            blurDataURL="data:image/webp;..."
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         </div>

@@ -4,6 +4,16 @@ const phDateFormatter = new Intl.DateTimeFormat('en-PH', {
   year: 'numeric',
 });
 
+const shortMonthFormatter = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+});
+
+const dayDateFormatter = new Intl.DateTimeFormat('en-US', {
+  weekday: 'long',
+  month: 'short',
+  day: 'numeric',
+});
+
 export function formatDate(date: Date | string) {
   const d = typeof date === 'string' ? new Date(date) : date;
   if (isNaN(d.getTime())) return 'Invalid Date';
@@ -22,14 +32,10 @@ export function formatDayDate(
   }
 
   if (type === 'MMM') {
-    return new Intl.DateTimeFormat('en-US', { month: 'short' }).format(d);
+    return shortMonthFormatter.format(d);
   }
 
-  return new Intl.DateTimeFormat('en-US', {
-    weekday: 'long',
-    month: 'short',
-    day: 'numeric',
-  }).format(d);
+  return dayDateFormatter.format(d);
 }
 
 export function formatCurrency(amount: number) {

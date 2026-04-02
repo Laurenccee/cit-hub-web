@@ -9,15 +9,11 @@ export default function PublicLayout({
 }>) {
   return (
     <>
-      <header className="sticky top-0 z-10">
-        <NavigationBar />
-      </header>
+      <NavigationBar />
       <main className="flex-1">
         <div className="mx-auto max-w-screen-2xl py-16">{children}</div>
       </main>
-      <footer className="">
-        <Footer />
-      </footer>
+      <Footer />
     </>
   );
 }

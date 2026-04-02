@@ -15,7 +15,7 @@ export const LATEST_NEWS: NewsItem[] = [
   {
     id: '2',
     title: 'New Seminar: AI in Industrial Technology',
-    date: new Date('2026-11-05'), // Date object also works!
+    date: '2026-11-05', // String format works with our formatter
     description:
       'Join us for a deep dive into how Artificial Intelligence is reshaping the landscape of modern industry.',
     imageUrl: '/images/news1.jpg',
@@ -37,7 +37,7 @@ export const LATEST_NEWS: NewsItem[] = [
   {
     id: '4',
     title: 'CIT Students Present Research at International Conference',
-    date: new Date('2026-10-10'),
+    date: '2026-10-10',
     description:
       'A team of our IT students recently presented their groundbreaking research on sustainable technology solutions at the International Tech Conference in Singapore.',
     imageUrl: '/images/news1.jpg',
@@ -59,7 +59,7 @@ export const LATEST_NEWS: NewsItem[] = [
   {
     id: '6',
     title: 'CIT IT Department Receives Grant for Research on Renewable Energy',
-    date: new Date('2026-09-30'),
+    date: '2026-09-30',
     description:
       'We are thrilled to announce that the IT department at CIT has been awarded a significant grant to conduct research on innovative renewable energy solutions.',
     imageUrl: '/images/news1.jpg',

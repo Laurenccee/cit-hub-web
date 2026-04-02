@@ -5,7 +5,7 @@ export interface NewsItem {
   content?: string;
   imageUrl: string;
   imageAlt: string;
-  date: string | Date;
+  date: string;
   category: 'Announcement' | 'Academic' | 'Achievement';
   slug: string;
   variant?: 'featured' | 'grid';
@@ -22,7 +22,7 @@ export interface EventItemProps {
   description: string;
   imageUrl: string;
   imageAlt: string;
-  date: string | Date;
+  date: string;
   startTime: string;
   endTime: string;
   slug: string;
@@ -35,7 +35,7 @@ export interface ScheduleItemProps {
   course: string;
   major: string;
   year: string;
-  section: string | Date;
+  section: string;
   dayOfWeek: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   startTime: string;
   endTime: string;

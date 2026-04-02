@@ -1,4 +1,3 @@
-import { start } from 'repl';
 import { EventItemProps } from '../types/types';
 
 export const EVENTS_ITEM: EventItemProps[] = [
@@ -18,7 +17,7 @@ export const EVENTS_ITEM: EventItemProps[] = [
   {
     id: '2',
     title: 'CIT IT Department Receives Grant for Research on Renewable Energy',
-    date: new Date('2026-09-30'),
+    date: '2026-09-30',
     startTime: '09:00',
     endTime: '17:00',
     description:

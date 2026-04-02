@@ -11,11 +11,10 @@ import {
 } from '@/components/ui/card';
 import React from 'react';
 import { EventItemProps } from '../../../types/types';
-import { start } from 'repl';
 import { formatDayDate } from '@/utils/formatters';
 import { Clock } from 'lucide-react';
 
-export default function UpcommingEventCards({
+export default function UpcomingEventsCard({
   events,
 }: {
   events: EventItemProps[];
@@ -44,9 +43,8 @@ export default function UpcommingEventCards({
                 {item.description}
               </p>
               <span className="flex items-center gap-1 text-sm text-muted-foreground/80">
-                {item.startTime}AM - {item.endTime}PM
+                {item.startTime} – {item.endTime}
               </span>
-              <span></span>
             </div>
           </div>
         ))}

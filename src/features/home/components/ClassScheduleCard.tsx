@@ -17,17 +17,13 @@ export default function ClassScheduleCard({
 }: {
   schedule: ScheduleItemProps[];
 }) {
-  const today = new Date().getDay() || 7;
-
-  const classesToday = schedule.filter(
-    (item) => item.dayOfWeek === today,
-  ).length;
+  const classCount = schedule.length;
   return (
     <Card className="gap-8">
       <CardHeader className="flex items-start justify-between">
-        <CardTitle className="text-xl">Todays's Schedule</CardTitle>
+        <CardTitle className="text-xl">Today's Schedule</CardTitle>
         <CardAction>
-          <Badge>{classesToday}</Badge>
+          <Badge>{classCount}</Badge>
         </CardAction>
       </CardHeader>
       <CardContent className="gap-4 flex flex-col">
@@ -42,7 +38,7 @@ export default function ClassScheduleCard({
                 {item.room} - {item.type}
               </p>
               <p className="text-sm text-muted-foreground/80">
-                {item.startTime}AM - {item.endTime}PM
+                {item.startTime} – {item.endTime}
               </p>
             </div>
             <div className="col-span-1">

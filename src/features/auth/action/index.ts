@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { signInSchema, type SignInFormData } from '../schema/auth';
-import { redirect } from 'next/navigation';
+import { ROLES } from '@/lib/constants/roles';
 
 export async function signInAction(values: SignInFormData) {
   const validatedFields = signInSchema.safeParse(values);
@@ -12,11 +12,13 @@ export async function signInAction(values: SignInFormData) {
 
   const supabase = await createClient();
 
-  const { data, error: authError } =
-    await supabase.auth.signInWithPassword(values);
+  const { data, error: authError } = await supabase.auth.signInWithPassword(
+    validatedFields.data,
+  );
 
   if (authError) {
-    return { success: false, message: authError.message };
+    // Return a generic message to prevent email enumeration attacks.
+    return { success: false, message: 'Invalid email or password.' };
   }
 
   const { data: profile, error: profileError } = await supabase
@@ -25,7 +27,7 @@ export async function signInAction(values: SignInFormData) {
     .eq('id', data.user.id)
     .single();
 
-  if (profileError || !profile || profile.role_id !== 0) {
+  if (profileError || !profile || profile.role_id !== ROLES.ADMIN) {
     await supabase.auth.signOut();
     return {
       success: false,
