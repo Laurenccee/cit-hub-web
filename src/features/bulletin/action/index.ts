@@ -44,7 +44,7 @@ export async function addNewsAction(values: NewsFormData) {
 
   const { error } = await supabase.from('news').insert({
     title: data.title,
-    description: data.description,
+    description: data.description ?? '',
     content: data.content ?? null,
     date: data.date,
     slug: data.slug,

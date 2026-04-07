@@ -22,7 +22,7 @@ export interface EducationEntry {
 export interface NewsItem {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   content?: string;
   imageUrl: string;
   imageAlt: string;
