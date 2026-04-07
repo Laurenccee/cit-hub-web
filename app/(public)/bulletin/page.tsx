@@ -18,8 +18,9 @@ import { Suspense } from 'react';
 export default async function NewsAndAnnouncementsPage() {
   const supabase = await createClient();
 
-  const [contentTypesData, heroData] = await Promise.all([
+  const [contentTypesData, featuredNewsData] = await Promise.all([
     supabase.from('content_types').select('id, label, slug').order('label'),
+
     supabase
       .from('news')
       .select('*, types:content_types(label)')
@@ -31,7 +32,7 @@ export default async function NewsAndAnnouncementsPage() {
       .maybeSingle(),
   ]);
 
-  if (contentTypesData.error || heroData.error) {
+  if (contentTypesData.error || featuredNewsData.error) {
     throw new Error('Failed to load form options');
   }
 
@@ -40,20 +41,20 @@ export default async function NewsAndAnnouncementsPage() {
     name: ct.label,
     slug: ct.slug,
   }));
-  const hero = heroData.data;
+  const featuredNews = featuredNewsData.data;
 
   const heroTypeLabel =
-    (hero?.types as { label?: string } | null)?.label ?? 'Announcement';
+    (featuredNews?.types as { label?: string } | null)?.label ?? 'Announcement';
 
   return (
     <div className="flex flex-col gap-16">
       <section>
-        {hero ? (
+        {featuredNews ? (
           <Card className="flex-col lg:flex-row-reverse gap-0 lg:p-8 p-0">
             <CardHeader className="relative w-full lg:w-1/2 aspect-video lg:aspect-auto lg:min-h-80 overflow-hidden rounded-t-md lg:rounded-sm bg-muted shrink-0">
               <Image
-                src={hero.image_url || '/images/news1.jpg'}
-                alt={hero.image_alt || 'News hero image'}
+                src={featuredNews.image_url || '/images/news1.jpg'}
+                alt={featuredNews.image_alt || 'News hero image'}
                 fill
                 priority
                 className="object-cover"
@@ -65,22 +66,22 @@ export default async function NewsAndAnnouncementsPage() {
               </div>
               <div className="flex flex-col gap-4">
                 <h1 className="text-2xl md:text-4xl lg:text-5xl text-primary tracking-wide">
-                  {hero.title}
+                  {featuredNews.title}
                 </h1>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  {hero.description}
+                  {featuredNews.description}
                 </p>
                 <span className="text-xs text-muted-foreground">
-                  {formatDate(hero.date)}
+                  {formatDate(featuredNews.date)}
                 </span>
               </div>
               <div>
-                <Button variant="link" size="lg" asChild>
-                  <Link href={`/bulletin/${hero.slug}`}>
+                <Link href={`/bulletin/${featuredNews.slug}`}>
+                  <Button variant="link" size="link">
                     View Full Article
                     <ArrowRight />
-                  </Link>
-                </Button>
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>

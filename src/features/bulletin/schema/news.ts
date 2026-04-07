@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const newsBaseSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
+  description: z.string().optional(),
   content: z.string().optional(),
   date: z.string().min(1, 'Date is required'),
   slug: z

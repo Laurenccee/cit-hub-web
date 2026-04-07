@@ -8,9 +8,88 @@ import { UPCOMING_EVENTS } from '@/data/events';
 import UpcomingEventsCard from '@/features/home/components/UpcomingEventsCard';
 import { Suspense } from 'react';
 import NewsCardSkeleton from '@/features/bulletin/components/skeletons/NewsCardSkeleton';
+import { createClient } from '@/lib/supabase/server';
+import { notFound } from 'next/navigation';
+import { NewsItem } from '@/types/types';
 
-export default function HomePage() {
-  const featuredNews = LATEST_NEWS[0];
+export default async function HomePage() {
+  const supabase = await createClient();
+
+  // 1. Correct destructuring: Promise.all returns an array of results
+  const [contentTypesResponse, featuredNewsResponse, newsResponse] =
+    await Promise.all([
+      supabase.from('content_types').select('id, label, slug').order('label'),
+      supabase
+        .from('news')
+        .select('*, types:content_types(label)')
+        .eq('is_archived', false)
+        .eq('is_published', true)
+        .order('is_featured', { ascending: false })
+        .order('date', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from('news')
+        .select('*')
+        .eq('is_archived', false)
+        .order('date', { ascending: false }),
+    ]);
+
+  if (
+    newsResponse.error ||
+    contentTypesResponse.error ||
+    featuredNewsResponse.error
+  ) {
+    console.error(
+      'Supabase Error:',
+      newsResponse.error ||
+        contentTypesResponse.error ||
+        featuredNewsResponse.error,
+    );
+    throw new Error('Failed to load news or content types');
+  }
+
+  const contentTypes = (contentTypesResponse.data ?? []).map((category) => ({
+    id: category.id,
+    name: category.label,
+    slug: category.slug,
+  }));
+
+  const rawHero = featuredNewsResponse.data;
+  const featuredNews: NewsItem | null = rawHero
+    ? {
+        id: rawHero.id,
+        title: rawHero.title,
+        description: rawHero.description,
+        content: rawHero.content ?? undefined,
+        imageUrl: rawHero.image_url,
+        imageAlt: rawHero.image_alt,
+        date: rawHero.date,
+        slug: rawHero.slug,
+        typesId: rawHero.types_id,
+        isPublished: rawHero.is_published,
+        isFeatured: rawHero.is_featured,
+      }
+    : null;
+
+  const news: NewsItem[] = (newsResponse.data ?? [])
+    .map((row) => ({
+      id: row.id,
+      title: row.title,
+      description: row.description,
+      content: row.content ?? undefined,
+      imageUrl: row.image_url,
+      imageAlt: row.image_alt,
+      date: row.date,
+      slug: row.slug,
+      typesId: row.types_id,
+      isPublished: row.is_published,
+      isFeatured: row.is_featured,
+    }))
+    .filter((item) => item.id !== featuredNews?.id)
+    .slice(0, 3);
+  console.log('news', news);
+
   const classesToday = CLASS_SCHEDULES.filter(
     (item) => item.dayOfWeek === (new Date().getDay() || 7),
   );
@@ -38,18 +117,23 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-col gap-16">
-            <Suspense fallback={<NewsCardSkeleton />}>
-              <NewsCard
-                key={featuredNews.id}
-                news={featuredNews}
-                variant="featured"
-                contentTypes={[]}
-              />
-            </Suspense>
+            {featuredNews && (
+              <Suspense fallback={<NewsCardSkeleton />}>
+                <NewsCard
+                  news={featuredNews}
+                  variant="featured"
+                  contentTypes={contentTypes}
+                />
+              </Suspense>
+            )}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <Suspense fallback={<NewsCardSkeleton />}>
-                {LATEST_NEWS.slice(1, 7).map((news) => (
-                  <NewsCard key={news.id} news={news} contentTypes={[]} />
+                {news.map((item) => (
+                  <NewsCard
+                    key={item.id}
+                    news={item}
+                    contentTypes={contentTypes}
+                  />
                 ))}
               </Suspense>
             </div>

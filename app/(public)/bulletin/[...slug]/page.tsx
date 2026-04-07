@@ -102,6 +102,18 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             </CardFooter>
           </Card>
         </section>
+        <section>
+          <Card className="flex items-center justify-center min-h-64 bg-muted/30 border-dashed">
+            <CardContent className="flex flex-col items-center gap-3 text-center py-12">
+              <p className="text-lg font-medium text-muted-foreground">
+                No related news articles yet
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Related news articles will appear here.
+              </p>
+            </CardContent>
+          </Card>
+        </section>
       </div>
     </div>
   );

@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import EditNewsForm from './EditNewsForm';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Edit, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { LookupOption, NewsItem } from '@/types/types';
 
@@ -37,8 +37,7 @@ export default function EditNewsButton({
           variant="ghost"
           className="text-xs text-muted-foreground"
         >
-          Edit
-          <ArrowRight size={14} />
+          <Edit size={14} />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl flex p-0 flex-row max-h-[80vh]">

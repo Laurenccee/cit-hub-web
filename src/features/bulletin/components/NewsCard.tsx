@@ -72,12 +72,12 @@ export default function NewsCard({
           {news.description}
         </CardDescription>
       </CardHeader>
-      <CardFooter className="flex self-end justify-end">
+      <CardFooter className="flex justify-between">
         {canManage && (
-          <>
-            <EditNewsButton news={news} contentTypes={contentTypes} />
+          <div className="flex gap-2">
             <DeleteNewsButton id={news.id} title={news.title} />
-          </>
+            <EditNewsButton news={news} contentTypes={contentTypes} />
+          </div>
         )}
         <Link href={`/bulletin/${news.slug}`}>
           <Button

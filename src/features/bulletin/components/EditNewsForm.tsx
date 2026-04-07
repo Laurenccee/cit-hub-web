@@ -187,7 +187,12 @@ export default function EditNewsForm({
           control={control}
           render={({ field, fieldState }) => (
             <div className="flex flex-col gap-2">
-              <Label>Description</Label>
+              <Label>
+                Description{' '}
+                <span className="text-muted-foreground font-normal">
+                  (optional)
+                </span>
+              </Label>
               <Textarea
                 {...field}
                 placeholder="Short summary of the news article..."
