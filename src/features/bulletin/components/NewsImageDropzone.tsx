@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -165,7 +166,9 @@ export default function NewsImageDropzone({ onFile, initialUrl }: Props) {
         <DialogContent className="max-w-lg" showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>Crop Image</DialogTitle>
-            <DialogDescription>Adjust the crop area and zoom, then apply.</DialogDescription>
+            <DialogDescription>
+              Adjust the crop area and zoom, then apply.
+            </DialogDescription>
           </DialogHeader>
           <div className="relative w-full aspect-video bg-black rounded-md overflow-hidden">
             {cropSrc && (
