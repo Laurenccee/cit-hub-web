@@ -1,11 +1,9 @@
 'use client';
 
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { ArrowRight, Loader2, RectangleEllipsis, User2 } from 'lucide-react';
 import { toast } from 'sonner';
-
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -13,42 +11,40 @@ import {
   CardContent,
   CardFooter,
 } from '@/components/ui/card';
-import { signInSchema } from '../schema/auth';
-import { signInAction } from '../action';
+import { signInSchema, type SignInFormData } from '../schema/auth';
+import { signInAction } from '../actions';
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { useRouter } from 'next/navigation';
-
-type SignInFormData = z.infer<typeof signInSchema>;
+import { useTransition } from 'react';
 
 export default function SignInForm() {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-  const {
-    control,
-    handleSubmit,
-    formState: { isSubmitting },
-  } = useForm<SignInFormData>({
+  const { control, handleSubmit } = useForm<SignInFormData>({
     resolver: zodResolver(signInSchema),
   });
 
-  const onSubmit = async (data: SignInFormData) => {
-    try {
-      const result = await signInAction(data);
+  const handleSignIn: SubmitHandler<SignInFormData> = async (data) => {
+    startTransition(async () => {
+      try {
+        const result = await signInAction(data);
 
-      if (result?.success === false) {
-        toast.error(result.message || 'Sign in failed');
-        return;
+        if (result?.success === false) {
+          toast.error(result.message || 'Sign in failed');
+          return;
+        }
+
+        toast.success('Welcome, Pioneer!');
+        router.replace('/home');
+      } catch {
+        toast.error('An unexpected error occurred');
       }
-      toast.success('Welcome, Admin!');
-      router.push('/home');
-      router.refresh();
-    } catch (error) {
-      toast.error('An unexpected error occurred');
-    }
+    });
   };
 
   return (
@@ -58,7 +54,7 @@ export default function SignInForm() {
         <span>Secure login for authorized school staff only.</span>
       </CardHeader>
 
-      <form id="signin-form" onSubmit={handleSubmit(onSubmit)}>
+      <form id="signin-form" onSubmit={handleSubmit(handleSignIn)}>
         <CardContent className="flex flex-col gap-2">
           <Controller
             name="email"
@@ -116,11 +112,11 @@ export default function SignInForm() {
           size="xl"
           type="submit"
           className="w-full"
-          disabled={isSubmitting}
+          disabled={isPending}
           form="signin-form"
         >
-          {isSubmitting ? 'Signing in...' : 'Sign In'}
-          {isSubmitting ? <Loader2 className="animate-spin" /> : <ArrowRight />}
+          {isPending ? 'Signing in...' : 'Sign In'}
+          {isPending ? <Loader2 className="animate-spin" /> : <ArrowRight />}
         </Button>
       </CardFooter>
     </Card>

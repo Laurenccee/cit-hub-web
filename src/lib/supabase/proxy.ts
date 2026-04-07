@@ -8,7 +8,7 @@ export async function updateSession(request: NextRequest) {
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() {
@@ -29,9 +29,8 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // This refreshes the session if it exists.
-  // If the user isn't logged in, it simply returns null/error quietly.
-  await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims;
 
   if (request.nextUrl.pathname === '/') {
     const url = request.nextUrl.clone();
@@ -39,8 +38,11 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // REMOVED: The "if (!user)" redirect block.
-  // We want the request to proceed regardless of auth status.
+  if (user && request.nextUrl.pathname === '/sign-in') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/home';
+    return NextResponse.redirect(url);
+  }
 
   return supabaseResponse;
 }

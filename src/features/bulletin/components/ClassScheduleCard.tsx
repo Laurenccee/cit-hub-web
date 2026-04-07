@@ -4,12 +4,10 @@ import {
   Card,
   CardHeader,
   CardTitle,
-  CardDescription,
   CardContent,
   CardFooter,
   CardAction,
 } from '@/components/ui/card';
-import React from 'react';
 import { ScheduleItemProps } from '../../../types/types';
 
 export default function ClassScheduleCard({
@@ -17,32 +15,34 @@ export default function ClassScheduleCard({
 }: {
   schedule: ScheduleItemProps[];
 }) {
-  const classCount = schedule.length;
   return (
     <Card className="gap-8">
       <CardHeader className="flex items-start justify-between">
         <CardTitle className="text-xl">Today's Schedule</CardTitle>
         <CardAction>
-          <Badge>{classCount}</Badge>
+          <Badge>{schedule.length}</Badge>
         </CardAction>
       </CardHeader>
       <CardContent className="gap-4 flex flex-col">
-        {schedule.map((item) => (
-          <div key={item.id} className="grid grid-cols-6 items-center gap-2.5">
+        {schedule.map((scheduleItem) => (
+          <div
+            key={scheduleItem.id}
+            className="grid grid-cols-6 items-center gap-2.5"
+          >
             <div className="col-span-1 aspect-square rounded-md border"></div>
             <div className="col-span-4">
               <h1 className="text-lg text-primary leading-none">
-                {item.class}
+                {scheduleItem.class}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {item.room} - {item.type}
+                {scheduleItem.room} - {scheduleItem.type}
               </p>
               <p className="text-sm text-muted-foreground/80">
-                {item.startTime} – {item.endTime}
+                {scheduleItem.startTime} – {scheduleItem.endTime}
               </p>
             </div>
             <div className="col-span-1">
-              <Badge>{item.status}</Badge>
+              <Badge>{scheduleItem.status}</Badge>
             </div>
           </div>
         ))}

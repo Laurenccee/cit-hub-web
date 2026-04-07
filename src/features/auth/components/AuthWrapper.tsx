@@ -12,8 +12,6 @@ export default async function AuthWrapper({
     error: authError,
   } = await supabase.auth.getUser();
 
-  // If Supabase is unreachable, gracefully render children as unauthenticated
-  // rather than crashing the entire layout tree.
   if (authError) {
     return (
       <AuthProvider initialUser={null} initialRole={null}>

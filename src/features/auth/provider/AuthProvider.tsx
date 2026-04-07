@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  createContext,
-  useEffect,
-  useState,
-  useRef,
-  ReactNode,
-  useMemo,
-} from 'react';
+import { createContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 
@@ -33,9 +26,8 @@ export default function AuthProvider({
   const [user, setUser] = useState<User | null>(initialUser);
   const [role, setRole] = useState<number | null>(initialRole);
   const [isLoading, setIsLoading] = useState(!initialUser);
-  const supabase = useMemo(() => createClient(), []);
-  // Track whether the SSR-provided role has already been consumed so we
-  // skip a redundant profile fetch when onAuthStateChange fires on hydration.
+  const supabase = createClient();
+
   const ssrRoleConsumed = useRef(false);
 
   useEffect(() => {
@@ -59,7 +51,6 @@ export default function AuthProvider({
               .single();
             setRole(data?.role_id ?? null);
           } else if (!ssrRoleConsumed.current) {
-            // Same user — role was already loaded SSR, skip the DB round trip.
             ssrRoleConsumed.current = true;
           }
         } else if (event === 'SIGNED_OUT') {

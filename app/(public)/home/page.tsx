@@ -1,14 +1,16 @@
-import ClassScheduleCard from '@/features/home/components/ClassScheduleCard';
+import ClassScheduleCard from '@/features/bulletin/components/ClassScheduleCard';
 import { formatDayDate } from '@/utils/formatters';
 import Link from 'next/link';
-import NewsCard from '@/features/home/components/NewsCard';
+import NewsCard from '@/features/bulletin/components/NewsCard';
 import { LATEST_NEWS } from '@/data/news';
 import { CLASS_SCHEDULES } from '@/data/schedule';
-import { EVENTS_ITEM } from '@/data/events';
+import { UPCOMING_EVENTS } from '@/data/events';
 import UpcomingEventsCard from '@/features/home/components/UpcomingEventsCard';
+import { Suspense } from 'react';
+import NewsCardSkeleton from '@/features/bulletin/components/skeletons/NewsCardSkeleton';
 
 export default function HomePage() {
-  const newsItem = LATEST_NEWS[0];
+  const featuredNews = LATEST_NEWS[0];
   const classesToday = CLASS_SCHEDULES.filter(
     (item) => item.dayOfWeek === (new Date().getDay() || 7),
   );
@@ -18,7 +20,7 @@ export default function HomePage() {
       <section>
         <span className="text-primary/80">Academic overview</span>
         <div className="flex justify-between">
-          <h1 className="text-6xl text-mauve-800 tracking-wide leading-tighter">
+          <h1 className="text-7xl text-mauve-800 tracking-wide leading-tighter">
             Welcome CIT Students
           </h1>
         </div>
@@ -36,11 +38,20 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-col gap-16">
-            <NewsCard key={newsItem.id} news={newsItem} variant="featured" />
+            <Suspense fallback={<NewsCardSkeleton />}>
+              <NewsCard
+                key={featuredNews.id}
+                news={featuredNews}
+                variant="featured"
+                contentTypes={[]}
+              />
+            </Suspense>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {LATEST_NEWS.slice(1, 7).map((news) => (
-                <NewsCard key={news.id} news={news} />
-              ))}
+              <Suspense fallback={<NewsCardSkeleton />}>
+                {LATEST_NEWS.slice(1, 7).map((news) => (
+                  <NewsCard key={news.id} news={news} contentTypes={[]} />
+                ))}
+              </Suspense>
             </div>
           </div>
         </section>
@@ -51,7 +62,7 @@ export default function HomePage() {
           </div>
           <div className=" flex flex-col gap-8">
             <ClassScheduleCard schedule={classesToday} />
-            <UpcomingEventsCard events={EVENTS_ITEM} />
+            <UpcomingEventsCard events={UPCOMING_EVENTS} />
           </div>
         </section>
       </div>

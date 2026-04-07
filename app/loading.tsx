@@ -4,7 +4,6 @@ export default function Loading() {
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center bg-background">
       <div className="flex flex-col items-center gap-2">
-        {/* Using your font-serif for the logo style */}
         <h1 className="text-5xl font-serif text-primary animate-pulse tracking-tighter">
           CIT
         </h1>

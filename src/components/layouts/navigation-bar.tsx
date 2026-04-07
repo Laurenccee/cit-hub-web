@@ -7,35 +7,32 @@ import { LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '../shared/theme-toggle';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { signOutAction } from '@/features/auth/action';
+import { signOutAction } from '@/features/auth/actions';
 import { toast } from 'sonner';
-
-const NAV_LINKS = [
-  { label: 'Home', href: '/home' },
-  { label: 'News & Events', href: '/news-events' },
-  { label: 'Schedule', href: '/schedule' },
-  { label: 'Faculty', href: '/faculty' },
-];
+import { NAV_LINKS } from '@/lib/constants/links';
+import { useTransition } from 'react';
 
 export default function NavigationBar() {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const [isPending, startTransition] = useTransition();
   const pathname = usePathname();
 
-  const handleLogout = async () => {
-    try {
-      const result = await signOutAction();
+  const handleSignOut = async () => {
+    startTransition(async () => {
+      try {
+        const result = await signOutAction();
 
-      if (result?.success === false) {
-        toast.error(result.message || 'Logout failed');
-        return;
+        if (result?.success === false) {
+          toast.error(result.message || 'Logout failed');
+          return;
+        }
+        toast.success('Signed out');
+        router.refresh();
+      } catch {
+        toast.error('An unexpected error occurred');
       }
-      toast.success('Signed out');
-      router.push('/home');
-      router.refresh();
-    } catch (error) {
-      toast.error('An unexpected error occurred');
-    }
+    });
   };
 
   return (
@@ -71,10 +68,10 @@ export default function NavigationBar() {
           <ThemeToggle />
           {isAuthenticated && (
             <Button
-              onClick={handleLogout}
+              onClick={handleSignOut}
               size="xl"
               className="gap-2 font-medium"
-              disabled={isLoading}
+              disabled={isPending}
             >
               Sign Out <LogOut className="h-4 w-4" />
             </Button>

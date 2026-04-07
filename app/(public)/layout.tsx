@@ -1,6 +1,5 @@
-import Footer from '@/components/layout/footer';
-import NavigationBar from '@/components/layout/navigation-bar';
-import React from 'react';
+import Footer from '@/components/layouts/footer';
+import NavigationBar from '@/components/layouts/navigation-bar';
 
 export default function PublicLayout({
   children,
@@ -10,8 +9,8 @@ export default function PublicLayout({
   return (
     <>
       <NavigationBar />
-      <main className="flex-1">
-        <div className="mx-auto max-w-screen-2xl py-16">{children}</div>
+      <main className="flex-1 px-8 py-16">
+        <div className="mx-auto max-w-screen-2xl">{children}</div>
       </main>
       <Footer />
     </>

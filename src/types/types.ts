@@ -1,3 +1,24 @@
+import type { Tables } from './database.types';
+
+export type Rank = Tables<'ranks'>;
+export type Designation = Tables<'designations'>;
+export type LookupOption = { id: number; name: string; slug?: string };
+
+export interface SocialMedia {
+  facebook?: string;
+  twitter?: string;
+  instagram?: string;
+  linkedin?: string;
+}
+
+export interface EducationEntry {
+  degree: string;
+  major?: string;
+  institution: string;
+  yearGraduated?: number;
+  onGoing: boolean;
+}
+
 export interface NewsItem {
   id: string;
   title: string;
@@ -6,12 +27,14 @@ export interface NewsItem {
   imageUrl: string;
   imageAlt: string;
   date: string;
-  category: 'Announcement' | 'Academic' | 'Achievement';
   slug: string;
-  variant?: 'featured' | 'grid';
+  typesId: number;
+  isPublished: boolean;
+  isFeatured: boolean;
 }
 export interface NewsCardProps {
   news: NewsItem;
+  contentTypes?: LookupOption[];
   variant?: 'featured' | 'grid' | 'list';
   priority?: boolean;
 }
@@ -19,7 +42,7 @@ export interface NewsCardProps {
 export interface EventItemProps {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   imageUrl: string;
   imageAlt: string;
   date: string;
@@ -40,4 +63,24 @@ export interface ScheduleItemProps {
   startTime: string;
   endTime: string;
   status: 'Ongoing' | 'Upcoming' | 'Done' | 'Cancelled';
+}
+
+export interface Personnel {
+  id: string;
+  employeeId: string;
+  email: string;
+  name: string;
+
+  rank: Rank;
+  designation?: Designation | null;
+  office: string;
+  contactNumber: string;
+  socialMedia: SocialMedia;
+
+  education: EducationEntry[];
+
+  profilePictureUrl?: string;
+  isActive?: boolean;
+  mustChangePassword?: boolean;
+  createdAt?: string;
 }

@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { signInSchema, type SignInFormData } from '../schema/auth';
-import { ROLES } from '@/lib/constants/roles';
+import { revalidatePath } from 'next/cache';
 
 export async function signInAction(values: SignInFormData) {
   const validatedFields = signInSchema.safeParse(values);
@@ -12,29 +12,15 @@ export async function signInAction(values: SignInFormData) {
 
   const supabase = await createClient();
 
-  const { data, error: authError } = await supabase.auth.signInWithPassword(
+  const { error } = await supabase.auth.signInWithPassword(
     validatedFields.data,
   );
 
-  if (authError) {
-    // Return a generic message to prevent email enumeration attacks.
+  if (error) {
     return { success: false, message: 'Invalid email or password.' };
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('role_id')
-    .eq('id', data.user.id)
-    .single();
-
-  if (profileError || !profile || profile.role_id !== ROLES.ADMIN) {
-    await supabase.auth.signOut();
-    return {
-      success: false,
-      message: 'Access denied: You do not have admin privileges.',
-    };
-  }
-
+  revalidatePath('/', 'layout');
   return { success: true };
 }
 
@@ -46,5 +32,6 @@ export async function signOutAction() {
     return { success: false, message: error.message };
   }
 
+  revalidatePath('/', 'layout');
   return { success: true };
 }

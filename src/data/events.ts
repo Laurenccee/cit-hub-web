@@ -1,6 +1,6 @@
 import { EventItemProps } from '../types/types';
 
-export const EVENTS_ITEM: EventItemProps[] = [
+export const UPCOMING_EVENTS: EventItemProps[] = [
   {
     id: '1',
     title: 'CIT Hosts Annual Tech Career Fair',

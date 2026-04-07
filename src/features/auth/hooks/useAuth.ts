@@ -14,14 +14,16 @@ export function useAuth() {
   }
 
   const isAuthenticated = context.user !== null;
-  const isAdmin = context.role === ROLES.ADMIN && context.user !== null;
-  const isFaculty = context.role === ROLES.FACULTY && context.user !== null;
-  const isPioneer = context.role === ROLES.PIONEER && context.user !== null;
+  const isAdmin = context.role === ROLES.ADMIN && isAuthenticated;
+  const isClerk = context.role === ROLES.CLERK && isAuthenticated;
+  const isFaculty = context.role === ROLES.FACULTY && isAuthenticated;
+  const isPioneer = context.role === ROLES.PIONEER && isAuthenticated;
 
   return {
     ...context,
     isAuthenticated,
     isAdmin,
+    isClerk,
     isFaculty,
     isPioneer,
   };

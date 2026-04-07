@@ -57,3 +57,12 @@ export function formatTime(time: string) {
   const displayHours = h % 12 || 12;
   return `${displayHours}:${minutes} ${ampm}`;
 }
+
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}

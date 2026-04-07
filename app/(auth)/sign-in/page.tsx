@@ -1,5 +1,4 @@
 import SignInForm from '@/features/auth/components/SignInForm';
-import React from 'react';
 
 export default function SignInPage() {
   return (
