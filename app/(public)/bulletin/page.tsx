@@ -11,7 +11,7 @@ import { NewsHero } from '@/features/bulletin/components/NewsHero';
 import NewsCardSkeleton from '@/features/bulletin/components/skeletons/NewsCardSkeleton';
 
 export default async function NewsAndAnnouncementsPage() {
-  const { contentTypes, featuredNews, news } = await getNewsDashboardData();
+  const { contentTypes, featuredNews } = await getNewsDashboardData();
   return (
     <div className="flex flex-col gap-16">
       <section>

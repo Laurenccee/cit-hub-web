@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import EditNewsForm from './EditNewsForm';
-import { ArrowRight, Edit, Loader2 } from 'lucide-react';
+import { Edit, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { LookupOption, NewsItem } from '@/types/types';
 

@@ -16,7 +16,7 @@ export default async function PersonnelGrid({
 }) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from('personnel')
     .select(
       `

@@ -7,9 +7,6 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDayDate } from '@/utils/formatters';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import EditNewsButton from '@/features/bulletin/components/EditNewsButton';
-import DeleteNewsButton from '@/features/bulletin/components/DeleteNewsButton';
 import { NewsItem } from '@/types/types';
 
 interface NewsHeroProps {
@@ -18,9 +15,6 @@ interface NewsHeroProps {
 }
 
 export function NewsHero({ news, contentTypes }: NewsHeroProps) {
-  const { isAdmin, isFaculty } = useAuth();
-  const canManage = isAdmin || isFaculty;
-
   const typeLabel =
     contentTypes.find((t) => t.id === news.typesId)?.name || 'Latest News';
 
@@ -67,7 +61,6 @@ export function NewsHero({ news, contentTypes }: NewsHeroProps) {
           </div>
         </div>
 
-        {/* Action Section - Includes Admin Buttons + Link */}
         <div className="flex items-center justify-end mt-4">
           <Link href={`/bulletin/${news.slug}`}>
             <Button
