@@ -69,7 +69,7 @@ export default function NewsCard({
               : 'line-clamp-2 text-sm text-muted-foreground'
           }
         >
-          {news.description}
+          {news.description || news.content || 'No description available.'}
         </CardDescription>
       </CardHeader>
       <CardFooter className="flex justify-between">
