@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { Suspense } from 'react';
 
-// Components
 import AddPersonnelButton from '@/features/personnel/components/AddPersonnelButton';
 import PersonnelGrid from '@/features/personnel/components/PersonnelGrid';
 import PersonnelCardSkeleton from '@/features/personnel/components/skeletons/PersonalCardSkeleton';

@@ -123,7 +123,6 @@ export default function EditNewsForm({
         return;
       }
 
-      // Clean up old image if replaced or cleared
       if (news.imageUrl && imageUrl !== news.imageUrl) {
         deleteNewsImageAction(news.imageUrl);
       }

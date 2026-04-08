@@ -13,9 +13,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { LookupOption, Personnel } from '@/types/types';
-import { ArrowRight, Building, Phone } from 'lucide-react';
+import { Building, Phone } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import EditPersonnelButton from './EditPersonnelButton';
 import DeletePersonnelButton from './DeletePersonnelButton';

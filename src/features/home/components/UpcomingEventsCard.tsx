@@ -76,7 +76,7 @@ export default function UpcomingEventsCard({
           size="lg"
           variant="secondary"
           className="w-full h-10 text-sm"
-          disabled={!hasEvents} // Disable button if there are no events to view
+          disabled={!hasEvents}
         >
           View All Events
         </Button>

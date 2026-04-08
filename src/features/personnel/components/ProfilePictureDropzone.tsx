@@ -66,7 +66,6 @@ export default function ProfilePictureDropzone({ onFile, initialUrl }: Props) {
   const [preview, setPreview] = useState<string | null>(initialUrl ?? null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Crop state
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);

@@ -1,4 +1,3 @@
-// services/newsService.ts
 import { createClient } from '@/lib/supabase/server';
 import { NewsItem } from '@/types/types';
 
