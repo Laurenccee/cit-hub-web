@@ -25,7 +25,7 @@ export function NewsHero({ news, contentTypes }: NewsHeroProps) {
     contentTypes.find((t) => t.id === news.typesId)?.name || 'Latest News';
 
   return (
-    <Card className="flex flex-col lg:flex-row-reverse gap-0 border-none shadow-none lg:shadow-sm overflow-hidden p-0 lg:p-4">
+    <Card className="flex flex-col lg:flex-row-reverse gap-0 border-none shadow-none  overflow-hidden p-0 lg:p-4">
       <CardHeader className="relative w-full lg:w-1/2 aspect-video lg:aspect-auto lg:min-h-96 p-0 overflow-hidden bg-muted shrink-0">
         {news.imageUrl && (
           <Image
