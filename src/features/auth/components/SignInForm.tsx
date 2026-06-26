@@ -1,124 +1,80 @@
 'use client';
 
-import { useForm, Controller, type SubmitHandler } from 'react-hook-form';
+import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowRight, Loader2, RectangleEllipsis, User2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardFooter,
-} from '@/components/ui/card';
-import { signInSchema, type SignInFormData } from '../schema/auth';
+import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
+import { SignInSchema, type SignInFormData } from '../schemas/authSchema';
 import { signInAction } from '../actions';
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '@/components/ui/input-group';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
+import FormActions from './FormActions';
+import InputField from '@/components/shared/InputField';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { User03Icon, LockPasswordIcon, Loading02Icon, ArrowRight } from '@hugeicons/core-free-icons';
 
 export default function SignInForm() {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+    const router = useRouter();
+    const [isPending, startTransition] = useTransition();
 
-  const { control, handleSubmit } = useForm<SignInFormData>({
-    resolver: zodResolver(signInSchema),
-  });
-
-  const handleSignIn: SubmitHandler<SignInFormData> = async (data) => {
-    startTransition(async () => {
-      try {
-        const result = await signInAction(data);
-
-        if (result?.success === false) {
-          toast.error(result.message || 'Sign in failed');
-          return;
-        }
-
-        toast.success('Welcome, Pioneer!');
-        router.replace('/home');
-      } catch {
-        toast.error('An unexpected error occurred');
-      }
+    const { control, handleSubmit } = useForm<SignInFormData>({
+        resolver: zodResolver(SignInSchema),
+        defaultValues: {
+            email: '',
+            password: '',
+        },
     });
-  };
 
-  return (
-    <Card className="flex flex-col gap-4 max-w-sm w-full">
-      <CardHeader>
-        <h1 className="text-xl">Admin Portal</h1>
-        <span>Secure login for authorized school staff only.</span>
-      </CardHeader>
+    const handleSignIn: SubmitHandler<SignInFormData> = async (data) => {
+        startTransition(async () => {
+            try {
+                const result = await signInAction(data);
 
-      <form id="signin-form" onSubmit={handleSubmit(handleSignIn)}>
-        <CardContent className="flex flex-col gap-2">
-          <Controller
-            name="email"
-            control={control}
-            defaultValue=""
-            render={({ field, fieldState }) => (
-              <div className="flex flex-col gap-1">
-                <InputGroup>
-                  <InputGroupInput
-                    {...field}
+                if (result?.success === false) {
+                    toast.error(result.message || 'Sign in failed');
+                    return;
+                }
+
+                toast.success('Welcome, Pioneer!');
+                router.replace('/');
+            } catch {
+                toast.error('An unexpected error occurred');
+            }
+        });
+    };
+
+    return (
+        <form id="signin-form" onSubmit={handleSubmit(handleSignIn)} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+                <InputField
+                    label="Email"
                     type="email"
-                    placeholder="Email"
-                  />
-                  <InputGroupAddon>
-                    <User2 />
-                  </InputGroupAddon>
-                </InputGroup>
-                {fieldState.error && (
-                  <p className="text-sm text-destructive">
-                    {fieldState.error.message}
-                  </p>
-                )}
-              </div>
-            )}
-          />
-          <Controller
-            name="password"
-            control={control}
-            defaultValue=""
-            render={({ field, fieldState }) => (
-              <div className="flex flex-col gap-1">
-                <InputGroup>
-                  <InputGroupInput
-                    {...field}
+                    name="email"
+                    control={control}
+                    isPending={isPending}
+                    placeholder="Eg. john.doe@example.com"
+                    leadingIcon={<HugeiconsIcon icon={User03Icon} color="currentColor" strokeWidth={1.5} />}
+                />
+                <InputField
+                    label="Password"
                     type="password"
-                    placeholder="Password"
-                  />
-                  <InputGroupAddon>
-                    <RectangleEllipsis />
-                  </InputGroupAddon>
-                </InputGroup>
-                {fieldState.error && (
-                  <p className="text-sm text-destructive">
-                    {fieldState.error.message}
-                  </p>
+                    name="password"
+                    control={control}
+                    isPending={isPending}
+                    placeholder="Enter password"
+                    leadingIcon={<HugeiconsIcon icon={LockPasswordIcon} color="currentColor" strokeWidth={1.5} />}
+                />
+                <FormActions />
+            </div>
+            <Button size="xl" type="submit" className="w-full" disabled={isPending} form="signin-form">
+                {isPending ? 'Signing in...' : 'Sign In'}
+                {isPending ? (
+                    <HugeiconsIcon icon={Loading02Icon} className="animate-spin" />
+                ) : (
+                    <HugeiconsIcon icon={ArrowRight} />
                 )}
-              </div>
-            )}
-          />
-        </CardContent>
-      </form>
-
-      <CardFooter>
-        <Button
-          size="xl"
-          type="submit"
-          className="w-full"
-          disabled={isPending}
-          form="signin-form"
-        >
-          {isPending ? 'Signing in...' : 'Sign In'}
-          {isPending ? <Loader2 className="animate-spin" /> : <ArrowRight />}
-        </Button>
-      </CardFooter>
-    </Card>
-  );
+            </Button>
+        </form>
+    );
 }

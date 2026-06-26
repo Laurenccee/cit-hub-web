@@ -1,56 +1,33 @@
-import { createClient } from '@/lib/supabase/server';
-import {
-  EducationEntry,
-  LookupOption,
-  Personnel,
-  SocialMedia,
-} from '@/types/types';
+import React from 'react';
 import PersonnelCard from './PersonnelCard';
+import { Designation, Rank } from '../types';
+import { getPersonnel } from '../action/queries';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { UserGroup03Icon } from '@hugeicons/core-free-icons';
 
-export default async function PersonnelGrid({
-  ranks,
-  designations,
-}: {
-  ranks: LookupOption[];
-  designations: LookupOption[];
-}) {
-  const supabase = await createClient();
+export default async function PersonnelGrid({ ranks, designations }: { ranks: Rank[]; designations: Designation[] }) {
+    const { success, data: personnelList } = await getPersonnel();
 
-  const { data } = await supabase
-    .from('personnel')
-    .select(
-      `
-    *,
-    ranks ( id, name ),
-    designations ( id, name )
-  `,
-    )
-    .eq('is_active', true);
+    if (!success || !personnelList || personnelList.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-75 rounded-xl border border-dashed p-8 text-center bg-muted/20">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                    <HugeiconsIcon icon={UserGroup03Icon} />
+                </div>
+                <h3 className="mt-4 text-sm font-semibold text-foreground">No Personnel Found</h3>
+                <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+                    There are currently no active personnel records listed in the directory.
+                </p>
+            </div>
+        );
+    }
 
-  const personnel: Personnel[] = (data ?? []).map((row) => ({
-    id: row.id,
-    employeeId: row.employee_id,
-    email: row.email,
-    name: row.name,
-    rank: row.ranks!,
-    designation: row.designations ?? undefined,
-    office: row.office,
-    contactNumber: row.contact_number,
-    socialMedia: (row.social_media ?? {}) as unknown as SocialMedia,
-    education: (row.education ?? []) as unknown as EducationEntry[],
-    profilePictureUrl: row.profile_picture_url ?? undefined,
-  }));
-
-  return (
-    <section className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-      {personnel.map((p) => (
-        <PersonnelCard
-          key={p.id}
-          personnel={p}
-          ranks={ranks}
-          designations={designations}
-        />
-      ))}
-    </section>
-  );
+    return (
+        <section className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            {/* 3. Map over the extracted list variable instead of the wrapper object */}
+            {personnelList.map((p) => (
+                <PersonnelCard key={p.id} personnel={p} ranks={ranks} designations={designations} />
+            ))}
+        </section>
+    );
 }
