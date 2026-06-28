@@ -4,24 +4,23 @@ import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/comp
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
-import { NewsCardProps } from '../../../types';
 import { formatDayDate } from '@/utils/formatters';
 import Link from 'next/link';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import EditNewsButton from '@/features/bulletin/components/EditNewsButton';
 import DeleteNewsButton from '@/features/bulletin/components/DeleteNewsButton';
+import { NewsCardProps } from '../types';
 
-export default function NewsCard({ news, contentTypes = [], variant = 'grid', priority = false }: NewsCardProps) {
+export default function NewsCard({ news, variant = 'grid', priority = false }: NewsCardProps) {
     const isFeatured = variant === 'featured';
     const { isAdmin, isFaculty } = useAuth();
     const canManage = isAdmin || isFaculty;
     return (
         <Card className="pt-0 gap-8">
             <div className="relative aspect-video overflow-hidden bg-muted">
-                {news.imageUrl && (
+                {news.image_url && (
                     <Image
-                        src={news.imageUrl}
-                        alt={news.imageAlt ?? news.title}
+                        src={news.image_url}
+                        alt={news.image_alt ?? news.title}
                         fill
                         priority={priority || isFeatured}
                         className="object-cover transition-all"
@@ -39,12 +38,12 @@ export default function NewsCard({ news, contentTypes = [], variant = 'grid', pr
             </div>
 
             <CardHeader className="gap-2 flex-1">
-                <span className={cn(isFeatured ? 'text-base' : 'text-xs line-clamp-1 text-primary')}>
+                <p className={cn(isFeatured ? 'text-base' : 'text-xs line-clamp-1 text-primary')}>
                     {formatDayDate(news.date)}
-                </span>
-                <CardTitle className={cn(isFeatured ? 'text-2xl' : 'text-lg', 'leading-none')}>{news.title}</CardTitle>
+                </p>
+                <CardTitle className={cn(isFeatured ? 'text-lg' : 'text-base', 'leading-none')}>{news.title}</CardTitle>
                 <CardDescription
-                    className={isFeatured ? 'line-clamp-3 text-base' : 'line-clamp-2 text-sm text-muted-foreground'}
+                    className={isFeatured ? 'line-clamp-3 text-xs' : 'line-clamp-2 text-xs text-muted-foreground'}
                 >
                     {news.description || news.content || 'No description available.'}
                 </CardDescription>
@@ -53,11 +52,11 @@ export default function NewsCard({ news, contentTypes = [], variant = 'grid', pr
                 {canManage && (
                     <div className="flex gap-2">
                         <DeleteNewsButton id={news.id} title={news.title} />
-                        <EditNewsButton news={news} contentTypes={contentTypes} />
+                        {/* <EditNewsButton news={news} contentTypes={contentTypes} /> */}
                     </div>
                 )}
                 <Link href={`/bulletin/${news.slug}`}>
-                    <Button size="lg" variant="ghost" className="text-xs text-muted-foreground">
+                    <Button size="xl" variant="ghost" className="text-xs text-muted-foreground">
                         View Full Article
                         <ArrowRight size={14} />
                     </Button>

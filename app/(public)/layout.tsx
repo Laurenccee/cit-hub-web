@@ -9,9 +9,7 @@ export default function PublicLayout({
     return (
         <>
             <NavigationBar />
-            <main className="flex-1 px-8 py-16">
-                <div className="mx-auto max-w-screen-2xl">{children}</div>
-            </main>
+            <main className="flex min-h-0 flex-1 flex-col">{children}</main>
             <Footer />
         </>
     );

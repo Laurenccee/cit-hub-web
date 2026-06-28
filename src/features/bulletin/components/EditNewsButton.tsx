@@ -12,14 +12,29 @@ import {
 import EditNewsForm from './EditNewsForm';
 import { Edit, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { LookupOption, NewsItem } from '@/types';
+import { NewsFormData } from '../schema/news';
+import { ContentType, NewsItem } from '../types';
+import { updateNewsAction } from '../action';
+import NewsForm from './NewsForm';
 
 const FORM_ID = 'edit-news-form';
 
-export default function EditNewsButton({ news, contentTypes }: { news: NewsItem; contentTypes: LookupOption[] }) {
+export default function EditNewsButton({ news, contentTypes }: { news: NewsItem; contentTypes: ContentType[] }) {
     const [open, setOpen] = useState(false);
     const [isPending, setIsPending] = useState(false);
     const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+
+    const INITIAL_VALUES: NewsFormData = {
+        title: news.title,
+        description: news.description,
+        content: news.content,
+        slug: news.slug,
+        imageUrl: news.image_url,
+        imageAlt: news.image_alt,
+        typesId: news.content_type?.id ?? undefined,
+        isPublished: news.is_published,
+        isFeatured: news.is_featured,
+    };
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -34,9 +49,12 @@ export default function EditNewsButton({ news, contentTypes }: { news: NewsItem;
                         <DialogTitle>Edit News</DialogTitle>
                         <DialogDescription>Update the details for &ldquo;{news.title}&rdquo;.</DialogDescription>
                     </DialogHeader>
-                    <EditNewsForm
+                    <NewsForm
                         id={FORM_ID}
+                        mode="update"
                         news={news}
+                        initialValues={INITIAL_VALUES}
+                        submitAction={updateNewsAction}
                         contentTypes={contentTypes}
                         onPendingChange={setIsPending}
                         onSuccess={() => setOpen(false)}

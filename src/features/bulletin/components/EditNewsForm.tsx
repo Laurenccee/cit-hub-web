@@ -16,17 +16,17 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Controller, SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type UpdateNewsFormData, updateNewsSchema } from '../schema/news';
+import { type UpdateNewsFormData, UpdateNewsSchema } from '../schema/news';
 import FormTextField from '@/features/personnel/components/FormTextField';
 import NewsImageDropzone from './NewsImageDropzone';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { deleteNewsImageAction, updateNewsAction, uploadNewsImageAction } from '../action';
-import { LookupOption, NewsItem } from '@/types';
 import { slugify } from '@/utils/formatters';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group';
 import { CalendarIcon, FileText, Link, Type } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { ContentType, NewsItem } from '../types';
 
 const FORM_ID_PREFIX = 'edit-news-form';
 
@@ -40,7 +40,7 @@ export default function EditNewsForm({
 }: {
     id?: string;
     news: NewsItem;
-    contentTypes: LookupOption[];
+    contentTypes: ContentType;
     onPendingChange?: (isPending: boolean) => void;
     onSuccess?: () => void;
     portalContainer?: HTMLElement | null;
@@ -54,7 +54,7 @@ export default function EditNewsForm({
         setValue,
         formState: { isSubmitting },
     } = useForm<UpdateNewsFormData>({
-        resolver: zodResolver(updateNewsSchema),
+        resolver: zodResolver(UpdateNewsSchema),
         defaultValues: {
             id: news.id,
             title: news.title,
@@ -62,11 +62,11 @@ export default function EditNewsForm({
             content: news.content ?? '',
             date: news.date,
             slug: news.slug,
-            imageUrl: news.imageUrl,
-            imageAlt: news.imageAlt,
-            typesId: news.typesId,
-            isPublished: news.isPublished,
-            isFeatured: news.isFeatured,
+            imageUrl: news.image_url,
+            imageAlt: news.image_alt,
+            typesId: news.content_type?.id,
+            isPublished: news.is_published,
+            isFeatured: news.is_featured,
         },
     });
 

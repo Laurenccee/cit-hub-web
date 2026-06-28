@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ROLES } from '@/utils/constants/roles';
 import { revalidatePath } from 'next/cache';
-import { newsSchema, updateNewsSchema, NewsFormData, UpdateNewsFormData } from '../schema/news';
+import { NewsSchema, UpdateNewsSchema, NewsFormData, UpdateNewsFormData } from '../schema/news';
 
 async function getAuthorizedUser() {
     const supabase = await createClient();
@@ -25,7 +25,7 @@ export async function addNewsAction(values: NewsFormData) {
     const authorized = await getAuthorizedUser();
     if (!authorized) return { success: false as const, message: 'Unauthorized.' };
 
-    const validated = newsSchema.safeParse(values);
+    const validated = NewsSchema.safeParse(values);
     if (!validated.success) {
         return { success: false as const, message: 'Invalid form data.' };
     }
@@ -37,15 +37,13 @@ export async function addNewsAction(values: NewsFormData) {
         title: data.title,
         description: data.description ?? '',
         content: data.content ?? null,
-        date: data.date,
         slug: data.slug,
         image_url: data.imageUrl ?? '',
         image_alt: data.imageAlt ?? '',
-        types_id: data.typesId,
+        content_types_id: data.typesId ?? null,
         is_published: data.isPublished,
         is_featured: data.isFeatured,
         author_id: authorized.user.id,
-        posted_by: authorized.roleId,
     });
 
     if (error) {
@@ -99,7 +97,7 @@ export async function updateNewsAction(values: UpdateNewsFormData) {
     const authorized = await getAuthorizedUser();
     if (!authorized) return { success: false as const, message: 'Unauthorized.' };
 
-    const validated = updateNewsSchema.safeParse(values);
+    const validated = UpdateNewsSchema.safeParse(values);
     if (!validated.success) {
         return { success: false as const, message: 'Invalid form data.' };
     }
@@ -113,11 +111,10 @@ export async function updateNewsAction(values: UpdateNewsFormData) {
             title: data.title,
             description: data.description,
             content: data.content ?? null,
-            date: data.date,
             slug: data.slug,
             image_url: data.imageUrl ?? '',
             image_alt: data.imageAlt ?? '',
-            types_id: data.typesId,
+            content_types_id: data.typesId,
             is_published: data.isPublished,
             is_featured: data.isFeatured,
         })

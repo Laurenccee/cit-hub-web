@@ -171,25 +171,25 @@ export default function PersonnelSetupForm({ ranks, designations }: { ranks: Ran
                             Work Assignments
                         </h1>
                         <div className="grid grid-cols-2 gap-3">
-                            <ComboboxField<Rank>
+                            <ComboboxField
                                 name="rankId"
                                 label="Rank"
                                 control={control}
                                 options={ranks}
-                                valueKey="id" // Grabs row.id for form value submission
-                                labelKey="name" // Visualizes row.name in the input selector list
+                                valueKey="id"
+                                labelKey="name"
                                 placeholder="Select rank"
                                 searchPlaceholder="Search ranks..."
                                 isPending={isPending}
                             />
 
-                            <ComboboxField<Designation>
+                            <ComboboxField
                                 name="designationId"
                                 label="Designation"
                                 control={control}
                                 options={designations}
-                                valueKey="id" // Grabs row.id for form value submission
-                                labelKey="name" // Visualizes row.name in the input selector list
+                                valueKey="id"
+                                labelKey="name"
                                 placeholder="Select designation"
                                 searchPlaceholder="Search designations..."
                                 isPending={isPending}

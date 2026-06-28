@@ -10,21 +10,35 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import AddNewsForm from './AddNewsForm';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
-import { LookupOption } from '@/types';
+import { ContentType } from '../types';
+import NewsForm from './NewsForm';
+import { NewsFormData } from '../schema/news';
+import { addNewsAction } from '../action';
 
 const FORM_ID = 'add-news-form';
 
-export default function AddNewsButton({ contentTypes }: { contentTypes: LookupOption[] }) {
+export default function AddNewsButton({ contentTypes }: { contentTypes: ContentType[] }) {
     const { isAdmin, isFaculty } = useAuth();
     const [isPending, setIsPending] = useState(false);
     const [open, setOpen] = useState(false);
     const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
 
     if (!isAdmin && !isFaculty) return null;
+
+    const INITIAL_VALUES: NewsFormData = {
+        title: '',
+        description: '',
+        content: '',
+        slug: '',
+        imageUrl: undefined,
+        imageAlt: '',
+        typesId: undefined,
+        isPublished: false,
+        isFeatured: false,
+    };
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -46,8 +60,11 @@ export default function AddNewsButton({ contentTypes }: { contentTypes: LookupOp
                             Fill in the details below to publish a new article or announcement.
                         </DialogDescription>
                     </DialogHeader>
-                    <AddNewsForm
+                    <NewsForm
                         id={FORM_ID}
+                        mode="create"
+                        initialValues={INITIAL_VALUES}
+                        submitAction={addNewsAction}
                         contentTypes={contentTypes}
                         onPendingChange={setIsPending}
                         onSuccess={() => setOpen(false)}

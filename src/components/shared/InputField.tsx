@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Controller, Control, FieldValues } from 'react-hook-form';
+import { Controller, FieldValues } from 'react-hook-form';
 import { Field, FieldDescription, FieldError, FieldLabel } from '../ui/field';
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '../ui/input-group';
 import Link from 'next/link';
-import { EyeIcon, EyeOff, EyeOffIcon } from 'lucide-react';
 import { InputFieldProps } from '@/types';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { EyeClosedIcon, EyeIcon } from '@hugeicons/core-free-icons';
 
-export default function InputField({
+export default function InputField<TFieldValues extends FieldValues>({
     name,
     label,
     control,
@@ -22,7 +23,7 @@ export default function InputField({
     readOnly = false,
     disabled = false,
     ...rest
-}: InputFieldProps) {
+}: InputFieldProps<TFieldValues>) {
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === 'password';
 
@@ -74,9 +75,9 @@ export default function InputField({
                                         onClick={() => setShowPassword((v) => !v)}
                                     >
                                         {showPassword ? (
-                                            <EyeIcon className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                                            <HugeiconsIcon icon={EyeIcon} />
                                         ) : (
-                                            <EyeOffIcon className="h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                                            <HugeiconsIcon icon={EyeClosedIcon} />
                                         )}
                                     </InputGroupButton>
                                 </InputGroupAddon>

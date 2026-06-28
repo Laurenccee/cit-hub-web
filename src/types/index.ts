@@ -1,3 +1,5 @@
+import { Control, FieldValues, Path } from 'react-hook-form';
+
 export interface EventItemProps {
     id: string;
     title: string;
@@ -24,33 +26,30 @@ export interface ScheduleItemProps {
     status: 'Ongoing' | 'Upcoming' | 'Done' | 'Cancelled';
 }
 
-export interface InputFieldProps {
-    name: string;
+export interface InputFieldProps<TFieldValues extends FieldValues = FieldValues> {
+    name: Path<TFieldValues>; // Updated from string
+    control: Control<TFieldValues>; // Updated from any
     label: string;
-    control: any;
     isPending?: boolean;
     type?: string;
     placeholder?: string;
     description?: string;
     error?: string;
     forgetPasswordLink?: boolean;
-
     readOnly?: boolean;
     disabled?: boolean;
-
     leadingIcon?: React.ReactNode;
     trailingIcon?: React.ReactNode;
-
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export interface ComboboxProps<T> {
-    name: string;
+export interface ComboboxProps<TData, TFieldValues extends FieldValues = FieldValues> {
+    name: Path<TFieldValues>; // Updated from string
+    control: Control<TFieldValues>; // Updated from any
+    options: TData[];
+    valueKey: keyof TData;
+    labelKey: keyof TData;
     label?: string;
-    control: any;
-    options: T[];
-    valueKey: keyof T; // property used for field value (e.g., 'id')
-    labelKey: keyof T; // property displayed to user (e.g., 'name')
     placeholder?: string;
     searchPlaceholder?: string;
     emptyMessage?: string;
@@ -58,4 +57,12 @@ export interface ComboboxProps<T> {
     error?: string;
     disabled?: boolean;
     isPending?: boolean;
+}
+
+export interface SwitchToggleProps<TFieldValues extends FieldValues = FieldValues> {
+    name: Path<TFieldValues>;
+    control: Control<TFieldValues>;
+    label: string;
+    description?: string;
+    disabled?: boolean;
 }

@@ -1,8 +1,7 @@
 export interface ContentType {
     id: string;
-    name: string;
     slug?: string;
-    description?: string;
+    label: string;
 }
 
 export interface NewsItem {
@@ -10,17 +9,15 @@ export interface NewsItem {
     title: string;
     description?: string;
     content?: string;
-    imageUrl: string;
-    imageAlt: string;
-    date: string;
+    image_url: string;
+    image_alt: string;
     slug: string;
-    typesId: number;
-    isPublished: boolean;
-    isFeatured: boolean;
+    content_type?: ContentType | null;
+    is_published: boolean;
+    is_featured: boolean;
 }
 export interface NewsCardProps {
     news: NewsItem;
-    contentTypes?: ContentType;
     variant?: 'featured' | 'grid' | 'list';
     priority?: boolean;
 }
