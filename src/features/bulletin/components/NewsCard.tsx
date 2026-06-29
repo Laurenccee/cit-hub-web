@@ -9,8 +9,9 @@ import Link from 'next/link';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import DeleteNewsButton from '@/features/bulletin/components/DeleteNewsButton';
 import { NewsCardProps } from '../types';
+import EditNewsButton from './EditNewsButton';
 
-export default function NewsCard({ news, variant = 'grid', priority = false }: NewsCardProps) {
+export default function NewsCard({ news, variant = 'grid', priority = false, contentTypes }: NewsCardProps) {
     const isFeatured = variant === 'featured';
     const { isAdmin, isFaculty } = useAuth();
     const canManage = isAdmin || isFaculty;
@@ -39,7 +40,7 @@ export default function NewsCard({ news, variant = 'grid', priority = false }: N
 
             <CardHeader className="gap-2 flex-1">
                 <p className={cn(isFeatured ? 'text-base' : 'text-xs line-clamp-1 text-primary')}>
-                    {formatDayDate(news.date)}
+                    {formatDayDate(news.created_at)}
                 </p>
                 <CardTitle className={cn(isFeatured ? 'text-lg' : 'text-base', 'leading-none')}>{news.title}</CardTitle>
                 <CardDescription
@@ -52,7 +53,7 @@ export default function NewsCard({ news, variant = 'grid', priority = false }: N
                 {canManage && (
                     <div className="flex gap-2">
                         <DeleteNewsButton id={news.id} title={news.title} />
-                        {/* <EditNewsButton news={news} contentTypes={contentTypes} /> */}
+                        <EditNewsButton news={news} contentTypes={contentTypes} />
                     </div>
                 )}
                 <Link href={`/bulletin/${news.slug}`}>

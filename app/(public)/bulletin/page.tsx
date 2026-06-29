@@ -62,7 +62,7 @@ export default async function NewsAndAnnouncementsPage() {
                         <TabsContent value="news">
                             <div className="mt-6">
                                 <Suspense fallback={<NewsLoadingGrid />}>
-                                    <NewsGrid news={news} />
+                                    <NewsGrid news={news} contentTypes={contentTypes} />
                                 </Suspense>
                             </div>
                         </TabsContent>

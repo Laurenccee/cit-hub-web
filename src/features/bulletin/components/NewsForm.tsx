@@ -6,7 +6,6 @@ import { type NewsFormData, NewsSchema } from '../schema/news';
 import NewsImageDropzone from './NewsImageDropzone';
 import { useEffect, useRef, useTransition } from 'react';
 import { toast } from 'sonner';
-import { uploadNewsImageAction, deleteNewsImageAction } from '../action';
 import { slugify } from '@/utils/formatters';
 import { ContentType, NewsItem } from '../types';
 import InputField from '@/components/shared/InputField';
@@ -15,8 +14,7 @@ import AreaField from '@/components/shared/AreaField';
 import ComboboxField from '@/components/shared/ComboboxField';
 import SwitchToggle from '@/components/shared/SwitchToggle';
 import { Image02Icon, Link01Icon, Link04Icon, NewsIcon, TextIcon } from '@hugeicons/core-free-icons';
-
-const FORM_ID_PREFIX = 'news-form';
+import { deleteStorageFileAction, uploadNewsImageAction } from '@/actions/image';
 
 interface NewsFormProps {
     id?: string;
@@ -31,7 +29,7 @@ interface NewsFormProps {
 }
 
 export default function NewsForm({
-    id = FORM_ID_PREFIX,
+    id,
     mode,
     news,
     initialValues,
@@ -80,11 +78,15 @@ export default function NewsForm({
     const handleFormSubmit: SubmitHandler<NewsFormData> = async (data) => {
         startTransition(async () => {
             let imageUrl: string | undefined = data.imageUrl || undefined;
+            let originalImageUrl = news?.image_url; // 👈 Track original state for cleanup checks
+
             try {
                 if (pendingBlobRef.current) {
                     const fd = new FormData();
                     fd.append('file', pendingBlobRef.current, 'news.jpg');
-                    const uploadResult = await uploadNewsImageAction(fd);
+
+                    // 1. Pass originalImageUrl here so it deletes the old file on upload success!
+                    const uploadResult = await uploadNewsImageAction(fd, originalImageUrl);
                     if (!uploadResult.success) {
                         toast.error(uploadResult.message ?? 'Failed to upload image.');
                         return;
@@ -96,8 +98,9 @@ export default function NewsForm({
                 const result = await submitAction({ ...data, imageUrl }, targetId);
 
                 if (!result.success) {
-                    if (imageUrl && imageUrl !== news?.image_url) {
-                        deleteNewsImageAction(imageUrl);
+                    // Rollback uploaded image if the DB update itself failed
+                    if (imageUrl && imageUrl !== originalImageUrl) {
+                        await deleteStorageFileAction(imageUrl, 'news-images');
                     }
                     toast.error(result.message || `Failed to ${isEditMode ? 'update' : 'add'} news`);
                     return;
@@ -107,8 +110,9 @@ export default function NewsForm({
                 if (!isEditMode) reset();
                 onSuccess?.();
             } catch {
-                if (imageUrl && imageUrl !== news?.image_url) {
-                    deleteNewsImageAction(imageUrl);
+                // Error safety rollback
+                if (imageUrl && imageUrl !== originalImageUrl) {
+                    await deleteStorageFileAction(imageUrl, 'news-images');
                 }
                 toast.error('An unexpected error occurred');
             }
@@ -130,18 +134,10 @@ export default function NewsForm({
                         </span>
                     </p>
                     <NewsImageDropzone
+                        initialUrl={news?.image_url}
                         onFile={(blob) => {
                             pendingBlobRef.current = blob;
                         }}
-                    />
-                    <InputField
-                        label="imageUrl"
-                        type="text"
-                        name="imageUrl"
-                        control={control}
-                        isPending={isPending}
-                        placeholder="Eg. https://example.com/image.jpg"
-                        leadingIcon={<HugeiconsIcon icon={Image02Icon} color="currentColor" strokeWidth={1.5} />}
                     />
                     <InputField
                         label="imageAlt"

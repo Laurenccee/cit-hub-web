@@ -11,12 +11,13 @@ import {
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { Loader2, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { ContentType } from '../types';
 import NewsForm from './NewsForm';
 import { NewsFormData } from '../schema/news';
 import { addNewsAction } from '../action';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Loading02Icon, PlusSignIcon } from '@hugeicons/core-free-icons';
 
 const FORM_ID = 'add-news-form';
 
@@ -46,7 +47,7 @@ export default function AddNewsButton({ contentTypes }: { contentTypes: ContentT
                 <TooltipTrigger asChild>
                     <DialogTrigger asChild>
                         <Button size="icon-xl" className="w-full aspect-square sm:w-auto">
-                            <Plus />
+                            <HugeiconsIcon icon={PlusSignIcon} />
                         </Button>
                     </DialogTrigger>
                 </TooltipTrigger>
@@ -72,7 +73,12 @@ export default function AddNewsButton({ contentTypes }: { contentTypes: ContentT
                     />
                     <DialogFooter className="px-6 py-4 border-t shrink-0">
                         <Button type="submit" form={FORM_ID} size="lg" disabled={isPending}>
-                            {isPending ? <Loader2 size={16} className="animate-spin" /> : 'Publish'}
+                            {isPending ? 'Publishing...' : 'Publish'}
+                            {isPending ? (
+                                <HugeiconsIcon icon={Loading02Icon} className="animate-spin" />
+                            ) : (
+                                <HugeiconsIcon icon={PlusSignIcon} />
+                            )}
                         </Button>
                     </DialogFooter>
                 </div>

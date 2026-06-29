@@ -185,7 +185,7 @@ export default function EditPersonnelForm({
                 <div className="flex flex-col gap-3">
                     <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Work</p>
                     <div className="grid grid-cols-2 gap-3">
-                        <ComboboxField<Rank>
+                        <ComboboxField
                             name="rankId"
                             label="Rank"
                             control={control}
@@ -197,7 +197,7 @@ export default function EditPersonnelForm({
                             isPending={isPending}
                         />
 
-                        <ComboboxField<Designation>
+                        <ComboboxField
                             name="designationId"
                             label="Designation"
                             control={control}

@@ -5,11 +5,20 @@ import NewsCard from '@/features/bulletin/components/NewsCard';
 import UpcomingEventsCard from '@/features/home/components/UpcomingEventsCard';
 import { Suspense } from 'react';
 import NewsCardSkeleton from '@/features/bulletin/components/skeletons/NewsCardSkeleton';
-import { getNewsDashboardData } from '@/features/bulletin/services/newsService';
 import { Button } from '@/components/ui/button';
+import { GetContentTypes, GetFeaturedNews, GetNews } from '@/features/bulletin/action/queries';
 
 export default async function HomePage() {
-    const { contentTypes, featuredNews, news } = await getNewsDashboardData();
+    const [contentTypeResult, featuredNewsResult, newsResult] = await Promise.all([
+        GetContentTypes(),
+        GetFeaturedNews(),
+        GetNews(),
+    ]);
+
+    const contentTypes = contentTypeResult.success ? contentTypeResult.data : [];
+    const featuredNews = featuredNewsResult.success ? featuredNewsResult.data : [];
+    const news = newsResult.success ? newsResult.data : [];
+
     const today = formatDayDate(new Date());
 
     return (
@@ -37,7 +46,12 @@ export default async function HomePage() {
                             <div className="flex flex-col gap-8 lg:gap-12">
                                 {featuredNews && (
                                     <Suspense fallback={<NewsCardSkeleton />}>
-                                        <NewsCard news={featuredNews} variant="featured" priority />
+                                        <NewsCard
+                                            news={featuredNews[0]}
+                                            variant="featured"
+                                            priority
+                                            contentTypes={contentTypes}
+                                        />
                                     </Suspense>
                                 )}
 
@@ -52,7 +66,7 @@ export default async function HomePage() {
                                         }
                                     >
                                         {news.slice(0, 6).map((item) => (
-                                            <NewsCard key={item.id} news={item} />
+                                            <NewsCard key={item.id} news={item} contentTypes={contentTypes} />
                                         ))}
                                     </Suspense>
                                 </div>

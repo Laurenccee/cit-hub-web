@@ -12,12 +12,16 @@ export interface NewsItem {
     image_url: string;
     image_alt: string;
     slug: string;
-    content_type?: ContentType | null;
+    content_type_id?: string;
     is_published: boolean;
     is_featured: boolean;
+
+    created_at: string;
+    updated_at: string;
 }
 export interface NewsCardProps {
     news: NewsItem;
     variant?: 'featured' | 'grid' | 'list';
     priority?: boolean;
+    contentTypes: ContentType[];
 }

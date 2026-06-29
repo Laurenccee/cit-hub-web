@@ -23,7 +23,7 @@ export async function GetFeaturedNews(): Promise<{ success: boolean; data: NewsI
         .eq('is_archived', false)
         .eq('is_published', true)
         .order('is_featured', { ascending: false })
-        .order('date', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -44,7 +44,7 @@ export async function GetNews(): Promise<{ success: boolean; data: NewsItem[] }>
         .select('*, content_type:content_types(label)')
         .eq('is_archived', false)
         .eq('is_published', true)
-        .order('date', { ascending: false });
+        .order('created_at', { ascending: false });
 
     if (error) {
         console.error('Error fetching news:', error.message);
