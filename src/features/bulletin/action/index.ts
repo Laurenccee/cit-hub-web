@@ -125,5 +125,5 @@ export async function deleteNewsAction(id: string) {
     if (error) return { success: false as const, message: error.message };
 
     revalidatePath('/bulletin');
-    return { success: true as const };
+    return { success: true as const, message: 'News successfully deleted.' };
 }

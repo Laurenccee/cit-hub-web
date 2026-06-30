@@ -1,5 +1,5 @@
 import { getDesignations, getRanks } from '@/features/personnel/action/queries';
-import PersonnelSetupForm from '@/features/personnel/components/PersonnelSetupForm';
+import SetupPersonnelForm from '@/features/personnel/components/SetupPersonnelForm';
 
 export default async function PersonnelSetupPage() {
     const [ranksResult, designationsResult] = await Promise.all([getRanks(), getDesignations()]);
@@ -16,7 +16,7 @@ export default async function PersonnelSetupPage() {
                         Let's start by setting up your profile. This will help us personalize.
                     </p>
                 </div>
-                <PersonnelSetupForm ranks={ranks} designations={designations} />
+                <SetupPersonnelForm ranks={ranks} designations={designations} />
             </div>
         </section>
     );

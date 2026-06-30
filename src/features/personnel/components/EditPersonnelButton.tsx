@@ -37,7 +37,7 @@ export default function EditPersonnelButton({
                     <ArrowRight size={14} />
                 </Button>
             </DialogTrigger>
-            <DialogContent className="lg:max-w-screen-2xl flex p-0 flex-row max-h-[80vh]">
+            <DialogContent className="sm:max-w-7xl flex p-0 flex-row max-h-[80vh]">
                 <div ref={setPortalContainer} className="flex flex-col flex-1 min-w-0 max-h-[90vh]">
                     <DialogHeader className="px-6 pt-6 pb-2">
                         <DialogTitle>Edit Personnel</DialogTitle>
@@ -50,7 +50,6 @@ export default function EditPersonnelButton({
                         onSuccess={() => setOpen(false)}
                         ranks={ranks}
                         designations={designations}
-                        portalContainer={portalContainer}
                     />
                     <DialogFooter className="px-6 py-4 border-t shrink-0">
                         <Button type="submit" form={FORM_ID} size="lg" disabled={isPending}>

@@ -9,7 +9,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { DeletePersonnelAction } from '../action';
+import { deletePersonnelAction } from '../action';
 import { Loader2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -21,7 +21,7 @@ export default function DeletePersonnelButton({ id, name }: { id: string; name: 
     async function handleDelete() {
         setIsPending(true);
         try {
-            const result = await DeletePersonnelAction(id);
+            const result = await deletePersonnelAction(id);
             if (!result.success) {
                 toast.error(result.message || 'Failed to delete personnel');
                 return;

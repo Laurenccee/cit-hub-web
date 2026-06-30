@@ -18,6 +18,10 @@ export interface NewsItem {
 
     created_at: string;
     updated_at: string;
+
+    content_type?: {
+        label: string;
+    } | null;
 }
 export interface NewsCardProps {
     news: NewsItem;

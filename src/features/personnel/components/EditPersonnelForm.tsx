@@ -5,14 +5,9 @@ import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { SiFacebook, SiInstagram, SiX } from '@icons-pack/react-simple-icons';
 import { Link } from 'lucide-react';
-import { Controller, SubmitHandler, useFieldArray, useForm, useWatch } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { UpdatePersonnelFormData, UpdatePersonnelSchema } from '../schema/personnel';
+import { Controller } from 'react-hook-form';
 import ProfilePictureDropzone from './ProfilePictureDropzone';
 import FormTextField from './FormTextField';
-import { useEffect, useRef, useTransition } from 'react';
-import { toast } from 'sonner';
-import { DeleteAvatarAction, UpdatePersonnelAction, UploadAvatarAction } from '../action';
 import { Designation, Personnel, Rank } from '../types';
 import InputField from '@/components/shared/InputField';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -28,6 +23,9 @@ import {
     X,
 } from '@hugeicons/core-free-icons';
 import ComboboxField from '@/components/shared/ComboboxField';
+import { updatePersonnelAction } from '../action';
+import { uploadAvatarAction } from '@/actions/image';
+import { usePersonnelForm } from '../hooks/usePersonnelForm'; // 👈 Hook import
 
 export default function EditPersonnelForm({
     id,
@@ -36,7 +34,6 @@ export default function EditPersonnelForm({
     onSuccess,
     ranks,
     designations,
-    portalContainer,
 }: {
     id: string;
     personnel: Personnel;
@@ -44,95 +41,19 @@ export default function EditPersonnelForm({
     onSuccess?: () => void;
     ranks: Rank[];
     designations: Designation[];
-    portalContainer?: HTMLElement | null;
 }) {
-    const nameParts = personnel.name.trim().split(/\s+/);
-    const firstName = nameParts[0] ?? '';
-    const lastName = nameParts.slice(1).join(' ');
-
-    const [isPending, startTransition] = useTransition();
-    console.log('EditPersonnelForm: personnel', personnel.ranks?.id);
-    const {
-        control,
-        handleSubmit,
-        formState: { isSubmitting },
-    } = useForm<UpdatePersonnelFormData>({
-        resolver: zodResolver(UpdatePersonnelSchema),
-        defaultValues: {
-            id: personnel.id,
-            employeeId: personnel.employee_id,
-            firstName,
-            lastName,
-            rankId: personnel.ranks?.id,
-            designationId: personnel.designations?.id,
-            office: personnel.office,
-            contactNumber: personnel.contact_number,
-            education:
-                personnel.education.length > 0
-                    ? personnel.education
-                    : [{ degree: '', major: '', institution: '', onGoing: false }],
-            socialMedia: {
-                facebook: personnel.social_media.facebook ?? '',
-                twitter: personnel.social_media.twitter ?? '',
-                instagram: personnel.social_media.instagram ?? '',
-                linkedin: personnel.social_media.linkedin ?? '',
-            },
-            profilePictureUrl: personnel.profile_picture_url ?? '',
-        },
+    const { control, isPending, fields, append, remove, educationValues, pendingBlobRef, onSubmit } = usePersonnelForm({
+        personnel,
+        mode: 'edit',
+        onPendingChange,
+        onSuccess,
+        submitAction: updatePersonnelAction,
+        uploadAvatarAction,
     });
-
-    useEffect(() => {
-        onPendingChange?.(isSubmitting);
-    }, [isSubmitting, onPendingChange]);
-
-    const pendingBlobRef = useRef<Blob | null>(null);
-    const educationValues = useWatch({ control, name: 'education' });
-
-    const { fields, append, remove } = useFieldArray({
-        control,
-        name: 'education',
-    });
-
-    const handleFormSubmit: SubmitHandler<UpdatePersonnelFormData> = async (data) => {
-        startTransition(async () => {
-            let profilePictureUrl = personnel.profile_picture_url;
-            try {
-                if (pendingBlobRef.current) {
-                    const fd = new FormData();
-                    fd.append('file', pendingBlobRef.current, 'profile.jpg');
-                    const uploadResult = await UploadAvatarAction(fd);
-                    if (!uploadResult.success) {
-                        toast.error(uploadResult.message ?? 'Failed to upload photo.');
-                        return;
-                    }
-                    profilePictureUrl = uploadResult.url;
-                }
-
-                const result = await UpdatePersonnelAction({
-                    ...data,
-                    profilePictureUrl,
-                });
-                if (!result.success) {
-                    if (profilePictureUrl !== personnel.profile_picture_url) {
-                        await DeleteAvatarAction(profilePictureUrl!);
-                    }
-                    toast.error(result.message || 'Failed to update personnel');
-                    return;
-                }
-                onSuccess?.();
-                toast.success('Personnel updated successfully.');
-            } catch {
-                toast.error('An unexpected error occurred');
-            }
-        });
-    };
 
     return (
-        <form
-            id={id}
-            className="flex flex-row overflow-hidden"
-            onSubmit={handleSubmit(handleFormSubmit, (errors) => console.log('❌ Form Validation Errors:', errors))}
-        >
+        <form id={id} className="flex flex-row overflow-hidden" onSubmit={onSubmit}>
+            {/* Left side column avatar graphic placement layout */}
             <div className="aspect-square h-full flex flex-col gap-3 py-4 px-6">
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Photo</p>
                 <div className="relative aspect-square rounded-full border-dashed border-2 border-muted-foreground/30">
@@ -145,6 +66,7 @@ export default function EditPersonnelForm({
                 </div>
             </div>
 
+            {/* Scrolling input container section */}
             <div className="flex flex-col gap-6 overflow-y-auto flex-1 py-4 px-6">
                 <div className="flex flex-col gap-3">
                     <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Identity</p>
@@ -155,10 +77,9 @@ export default function EditPersonnelForm({
                             control={control}
                             isPending={isPending}
                             type="text"
-                            placeholder="Enter Employee ID"
+                            placeholder="Enter ID"
                             leadingIcon={<HugeiconsIcon icon={IdIcon} />}
                         />
-
                         <InputField
                             name="firstName"
                             label="First Name"
@@ -190,20 +111,19 @@ export default function EditPersonnelForm({
                             label="Rank"
                             control={control}
                             options={ranks}
-                            valueKey="id" // Grabs row.id for form value submission
-                            labelKey="name" // Visualizes row.name in the input selector list
+                            valueKey="id"
+                            labelKey="name"
                             placeholder="Select rank"
                             searchPlaceholder="Search ranks..."
                             isPending={isPending}
                         />
-
                         <ComboboxField
                             name="designationId"
                             label="Designation"
                             control={control}
                             options={designations}
-                            valueKey="id" // Grabs row.id for form value submission
-                            labelKey="name" // Visualizes row.name in the input selector list
+                            valueKey="id"
+                            labelKey="name"
                             placeholder="Select designation"
                             searchPlaceholder="Search designations..."
                             isPending={isPending}
@@ -242,7 +162,7 @@ export default function EditPersonnelForm({
                                     control={control}
                                     isPending={isPending}
                                     type="text"
-                                    placeholder="e.g. Bachelor of Science in IT"
+                                    placeholder="e.g. Bachelor of Science"
                                     leadingIcon={<HugeiconsIcon icon={GraduationScrollIcon} />}
                                 />
                                 <Controller
@@ -270,20 +190,18 @@ export default function EditPersonnelForm({
                                     control={control}
                                     isPending={isPending}
                                     type="text"
-                                    placeholder="e.g. University of Cebu"
+                                    placeholder="e.g. School"
                                     leadingIcon={<HugeiconsIcon icon={School01Icon} />}
                                 />
-
                                 <InputField
                                     name={`education.${index}.major`}
                                     label="Major"
                                     control={control}
                                     isPending={isPending}
                                     type="text"
-                                    placeholder="e.g. Information Technology"
+                                    placeholder="e.g. IT"
                                     leadingIcon={<HugeiconsIcon icon={Mortarboard01Icon} />}
                                 />
-
                                 {!educationValues?.[index]?.onGoing && (
                                     <div className="w-2xs">
                                         <InputField
@@ -292,7 +210,7 @@ export default function EditPersonnelForm({
                                             control={control}
                                             isPending={isPending}
                                             type="text"
-                                            placeholder="e.g. 2024"
+                                            placeholder="2024"
                                             leadingIcon={<HugeiconsIcon icon={CalendarIcon} />}
                                         />
                                     </div>
@@ -305,15 +223,7 @@ export default function EditPersonnelForm({
                         variant="outline"
                         size="sm"
                         className="self-start"
-                        onClick={() =>
-                            append({
-                                degree: '',
-                                major: '',
-                                institution: '',
-                                yearGraduated: undefined,
-                                onGoing: false,
-                            })
-                        }
+                        onClick={() => append({ degree: '', major: '', institution: '', onGoing: false })}
                     >
                         + Add Education
                     </Button>

@@ -35,9 +35,9 @@ export function NewsHero({ news }: NewsHeroProps) {
                 <div className="flex flex-col gap-8">
                     <div className="flex items-center gap-4">
                         <Badge size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                            {news.content_type?.label ?? 'Uncategorized'}
+                            {(news as any).content_type?.label ?? 'Uncategorized'}
                         </Badge>
-                        <span className="text-base font-medium text-primary">{formatDayDate(news.date)}</span>
+                        <span className="text-base font-medium text-primary">{formatDayDate(news.created_at)}</span>
                     </div>
 
                     <div className="flex flex-col gap-4">

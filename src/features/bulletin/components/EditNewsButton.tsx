@@ -66,7 +66,7 @@ export default function EditNewsButton({ news, contentTypes }: { news: NewsItem;
                     <HugeiconsIcon icon={Edit01Icon} />
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl flex p-0 flex-row max-h-[80vh]">
+            <DialogContent className="sm:max-w-7xl flex p-0 flex-row max-h-[80vh]">
                 <div ref={setPortalContainer} className="flex flex-col flex-1 min-w-0 max-h-[80vh]">
                     <DialogHeader className="px-6 pt-6 pb-2">
                         <DialogTitle>Edit News</DialogTitle>

@@ -1,6 +1,11 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/server';
+import { ROLES } from '@/utils/constants/roles';
+import { revalidatePath } from 'next/cache';
+import { ROUTES } from '@/utils/constants/routes';
+import { PostgrestError } from '@supabase/supabase-js';
 import {
     PersonnelFormData,
     PersonnelSchema,
@@ -9,11 +14,13 @@ import {
     UpdatePersonnelFormData,
     UpdatePersonnelSchema,
 } from '../schema/personnel';
-import { createClient } from '@/lib/supabase/server';
-import { ROLES } from '@/utils/constants/roles';
-import { revalidatePath } from 'next/cache';
-import { ROUTES } from '@/utils/constants/routes';
 
+// 1. Centralized asset actions
+import { uploadAvatarAction, deleteStorageFileAction } from '@/actions/image'; // 👈 Adjust import path
+
+/**
+ * Step 1: Pre-flight Authorization check
+ */
 async function getAuthorizedUser() {
     const supabase = await createClient();
     const {
@@ -26,71 +33,81 @@ async function getAuthorizedUser() {
     if (profile?.role_id !== ROLES.ADMIN && profile?.role_id !== ROLES.FACULTY) {
         return null;
     }
-    return user;
+    return { user };
 }
 
-export async function DeleteAvatarAction(url: string) {
-    const user = await getAuthorizedUser();
-    if (!user) return { success: false, message: 'Authentication required.' };
+/**
+ * Step 2: Shared mutation executor (The abstraction engine)
+ */
+async function executePersonnelMutation(
+    values: PersonnelFormData | UpdatePersonnelFormData,
+    schema: typeof PersonnelSchema | typeof UpdatePersonnelSchema,
+    successMessage: string,
+    dbOperation: (supabase: any, payload: any, userId: string) => Promise<{ error: PostgrestError | null }>,
+) {
+    const authorized = await getAuthorizedUser();
+    if (!authorized) return { success: false as const, message: 'Unauthorized.' };
 
+    const validatedFields = schema.safeParse(values);
+    if (!validatedFields.success) {
+        return { success: false as const, message: 'Invalid form data.' };
+    }
+
+    const data = validatedFields.data;
     const supabase = await createClient();
 
+    // Map your CamelCase form fields cleanly to Snake_case DB equivalents
+    const payload = {
+        employee_id: data.employeeId,
+        name: `${data.firstName} ${data.lastName}`,
+        rank_id: data.rankId,
+        designation_id: data.designationId ?? null,
+        office: data.office,
+        contact_number: data.contactNumber,
+        social_media: data.socialMedia,
+        education: data.education,
+        profile_picture_url: data.profilePictureUrl ?? null,
+    };
+
     try {
-        const urlObj = new URL(url);
-        const parts = urlObj.pathname.split('/');
-        const bucketIndex = parts.indexOf('cit_hub');
+        const { error: dbError } = await dbOperation(supabase, payload, authorized.user.id);
+        if (dbError) throw dbError;
 
-        if (bucketIndex === -1) {
-            return { success: false, message: 'Invalid URL structure.' };
-        }
-
-        const path = parts.slice(bucketIndex + 1).join('/');
-
-        const expectedPrefix = `profile-pictures/${user.id}/`;
-        if (!path.startsWith(expectedPrefix)) {
-            return { success: false, message: 'Unauthorized access.' };
-        }
-
-        const { error } = await supabase.storage.from('cit_hub').remove([path]);
-        if (error) return { success: false, message: error.message };
-
-        return { success: true };
-    } catch {
-        return { success: false, message: 'An unexpected error occurred.' };
+        revalidatePath(ROUTES.PERSONNEL);
+        return { success: true as const, message: successMessage };
+    } catch (error: any) {
+        return {
+            success: false as const,
+            message: error?.message || 'An unexpected database error occurred.',
+        };
     }
 }
 
-export async function UploadAvatarAction(formData: FormData) {
-    const file = formData.get('file') as File | null;
-    if (!file || file.size === 0) {
-        return { success: false, message: 'No file provided.' };
-    }
+// --- Clean, Declarative One-Liner Personnel Actions ---
 
-    const user = await getAuthorizedUser();
-    if (!user) return { success: false, message: 'Authentication required.' };
-
-    const supabaseAdmin = createAdminClient();
-
-    const path = `profile-pictures/${user.id}/${Date.now()}.jpg`;
-
-    const { data, error } = await supabaseAdmin.storage
-        .from('cit_hub')
-        .upload(path, file, { upsert: true, contentType: 'image/jpeg' });
-
-    if (error || !data) {
-        return { success: false, message: error?.message ?? 'Upload failed.' };
-    }
-
-    const {
-        data: { publicUrl },
-    } = supabaseAdmin.storage.from('cit_hub').getPublicUrl(data.path);
-
-    return { success: true, url: publicUrl };
+export async function personnelSetupAction(values: PersonnelFormData) {
+    return executePersonnelMutation(
+        values,
+        PersonnelSchema,
+        'Personnel setup completed successfully!',
+        (supabase, payload, userId) => supabase.from('personnel').insert({ id: userId, ...payload }),
+    );
 }
 
-export async function RegisterPersonnelAction(values: RegisterPersonnelData) {
-    const user = await getAuthorizedUser();
-    if (!user) return { success: false, message: 'Unauthorized.' };
+export async function updatePersonnelAction(values: UpdatePersonnelFormData) {
+    return executePersonnelMutation(
+        values,
+        UpdatePersonnelSchema,
+        'Personnel profile updated successfully.',
+        (supabase, payload, userId) => supabase.from('personnel').update(payload).eq('id', userId),
+    );
+}
+
+// --- Authentication Identity Handlers ---
+
+export async function registerPersonnelAction(values: RegisterPersonnelData) {
+    const authorized = await getAuthorizedUser();
+    if (!authorized) return { success: false, message: 'Unauthorized.' };
 
     const validatedFields = RegisterPersonnelSchema.safeParse(values);
     if (!validatedFields.success) {
@@ -98,7 +115,6 @@ export async function RegisterPersonnelAction(values: RegisterPersonnelData) {
     }
 
     const data = validatedFields.data;
-
     const supabaseAdmin = createAdminClient();
 
     try {
@@ -148,135 +164,44 @@ export async function RegisterPersonnelAction(values: RegisterPersonnelData) {
     }
 }
 
-export async function PersonnelSetupAction(values: PersonnelFormData) {
-    const user = await getAuthorizedUser();
-    if (!user) return { success: false, message: 'Unauthorized.' };
+export async function deletePersonnelAction(id: string) {
+    const authorized = await getAuthorizedUser();
+    if (!authorized) return { success: false, message: 'Unauthorized.' };
 
-    const validatedFields = PersonnelSchema.safeParse(values);
-    if (!validatedFields.success) {
-        return { success: false, message: 'Invalid form data.' };
-    }
-
-    const data = validatedFields.data;
-    const supabase = await createClient();
-
-    try {
-        const { error: personnelError } = await supabase.from('personnel').insert({
-            id: user.id,
-            employee_id: data.employeeId,
-            name: `${data.firstName} ${data.lastName}`,
-            rank_id: data.rankId,
-            designation_id: data.designationId ?? null,
-            office: data.office,
-            contact_number: data.contactNumber,
-            social_media: data.socialMedia,
-            education: data.education,
-            profile_picture_url: data.profilePictureUrl,
-        });
-
-        if (personnelError) {
-            console.error('❌ Supabase Profile Error:', {
-                message: personnelError.message,
-                details: personnelError.details,
-                hint: personnelError.hint,
-                code: personnelError.code,
-            });
-            return { success: false, message: personnelError.message };
-        }
-
-        revalidatePath(ROUTES.PERSONNEL);
-        return { success: true };
-    } catch (error) {
-        return { success: false, message: 'An unexpected error occurred.' };
-    }
-}
-
-export async function UpdatePersonnelAction(values: UpdatePersonnelFormData) {
-    const user = await getAuthorizedUser();
-    if (!user) return { success: false, message: 'Unauthorized.' };
-
-    const validatedFields = UpdatePersonnelSchema.safeParse(values);
-    if (!validatedFields.success) {
-        return { success: false, message: 'Invalid form data.' };
-    }
-
-    const data = validatedFields.data;
-    const supabase = await createClient();
-
-    try {
-        const { data: avatarUrl, error: avatarError } = await supabase
-            .from('personnel')
-            .select('profile_picture_url')
-            .eq('id', data.id)
-            .single();
-
-        if (avatarError) {
-            return { success: false, message: avatarError.message };
-        }
-
-        const finalProfilePicture =
-            data.profilePictureUrl !== undefined ? data.profilePictureUrl : avatarUrl?.profile_picture_url;
-
-        const { error } = await supabase
-            .from('personnel')
-            .update({
-                profile_picture_url: data.profilePictureUrl ?? null,
-                employee_id: data.employeeId,
-                name: `${data.firstName} ${data.lastName}`,
-                rank_id: data.rankId,
-                designation_id: data.designationId ?? null,
-                office: data.office,
-                contact_number: data.contactNumber,
-                social_media: data.socialMedia,
-                education: data.education,
-            })
-            .eq('id', data.id);
-
-        if (error) return { success: false, message: error.message };
-
-        if (
-            avatarUrl?.profile_picture_url &&
-            data.profilePictureUrl &&
-            data.profilePictureUrl !== avatarUrl.profile_picture_url
-        ) {
-            await DeleteAvatarAction(avatarUrl.profile_picture_url);
-        }
-
-        revalidatePath(ROUTES.PERSONNEL);
-        return { success: true, message: 'Personnel updated successfully.' };
-    } catch (error) {
-        console.error('Update Action Error:', error);
-        return { success: false, message: 'An unexpected error occurred.' };
-    }
-}
-
-export async function DeletePersonnelAction(id: string) {
-    const user = await getAuthorizedUser();
-    if (!user) return { success: false, message: 'Unauthorized.' };
-
-    if (user.id === id) return { success: false, message: 'You cannot delete your own account from here.' };
+    if (authorized.user.id === id) return { success: false, message: 'You cannot delete your own account from here.' };
 
     const supabase = await createClient();
     const supabaseAdmin = createAdminClient();
 
     try {
-        const { data: existing } = await supabase.from('personnel').select('profile_picture_url').eq('id', id).single();
+        // 1. Fetch current profile image link first while row metadata exists
+        const { data: personnelRow } = await supabase
+            .from('personnel')
+            .select('profile_picture_url')
+            .eq('id', id)
+            .single();
 
+        // 2. Perform file removal FIRST so RLS validation passes cleanly
+        if (personnelRow?.profile_picture_url) {
+            const storageResult = await deleteStorageFileAction(personnelRow.profile_picture_url, 'cit_hub');
+
+            if (!storageResult.success) {
+                console.error('Storage deletion failed:', storageResult.message);
+            }
+        }
+
+        // 3. Wreak database record cascades in reverse-relational priority order
         const { error: personnelError } = await supabase.from('personnel').delete().eq('id', id);
         if (personnelError) throw personnelError;
 
         const { error: profileError } = await supabase.from('profiles').delete().eq('id', id);
         if (profileError) throw profileError;
 
-        if (existing?.profile_picture_url) {
-            await DeleteAvatarAction(existing.profile_picture_url);
-        }
-
         const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(id);
         if (authError) throw authError;
 
         revalidatePath(ROUTES.PERSONNEL);
-        return { success: true };
+        return { success: true, message: 'Personnel successfully deleted.' };
     } catch (error: any) {
         console.error('Deletion Failed:', error);
         return { success: false, message: error?.message ?? 'An unexpected error occurred.' };

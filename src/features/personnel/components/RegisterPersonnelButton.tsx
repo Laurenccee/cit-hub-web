@@ -19,7 +19,7 @@ import InputField from '@/components/shared/InputField';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { RegisterPersonnelData, RegisterPersonnelSchema } from '../schema/personnel';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { RegisterPersonnelAction } from '../action';
+import { registerPersonnelAction } from '../action';
 import { toast } from 'sonner';
 
 const FORM_ID = 'register-user';
@@ -41,7 +41,7 @@ export default function RegisterPersonnelButton() {
     const handleFormSubmit: SubmitHandler<RegisterPersonnelData> = async (data) => {
         startTransition(async () => {
             try {
-                const result = await RegisterPersonnelAction(data);
+                const result = await registerPersonnelAction(data);
 
                 if (!result.success) {
                     throw new Error(result.message || 'Failed to add personnel.');
