@@ -85,33 +85,33 @@ export async function updateSession(request: NextRequest) {
 
         const role = profile?.role_id;
 
-        if (role === 1) {
-            const { data: personnel, error } = await supabase
-                .from('personnel')
-                .select('id')
-                .eq('id', user.id)
-                .maybeSingle();
+        // if (role === 1) {
+        //     const { data: personnel, error } = await supabase
+        //         .from('personnel')
+        //         .select('id')
+        //         .eq('id', user.id)
+        //         .maybeSingle();
 
-            const hasPersonnelData = !!personnel;
+        //     const hasPersonnelData = !!personnel;
 
-            if (!hasPersonnelData) {
-                if (path !== ROUTES.PERSONNEL_SETUP) {
-                    return NextResponse.redirect(new URL(ROUTES.PERSONNEL_SETUP, request.url));
-                }
-            } else {
-                if (path === ROUTES.PERSONNEL_SETUP) {
-                    return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
-                }
-            }
-        } else if (role === 2) {
-            if (path !== ROUTES.STUDENT_SETUP) {
-                return NextResponse.redirect(new URL(ROUTES.STUDENT_SETUP, request.url));
-            }
-        } else if (role === 0) {
-            if (path === ROUTES.PERSONNEL_SETUP || path === ROUTES.STUDENT_SETUP) {
-                return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
-            }
-        }
+        //     if (!hasPersonnelData) {
+        //         if (path !== ROUTES.PERSONNEL_SETUP) {
+        //             return NextResponse.redirect(new URL(ROUTES.PERSONNEL_SETUP, request.url));
+        //         }
+        //     } else {
+        //         if (path === ROUTES.PERSONNEL_SETUP) {
+        //             return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
+        //         }
+        //     }
+        // } else if (role === 2) {
+        //     if (path !== ROUTES.STUDENT_SETUP) {
+        //         return NextResponse.redirect(new URL(ROUTES.STUDENT_SETUP, request.url));
+        //     }
+        // } else if (role === 0) {
+        //     if (path === ROUTES.PERSONNEL_SETUP || path === ROUTES.STUDENT_SETUP) {
+        //         return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
+        //     }
+        // }
     }
 
     return supabaseResponse;

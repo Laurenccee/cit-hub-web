@@ -40,7 +40,7 @@ export async function getPersonnel(): Promise<{ success: boolean; data: Personne
             designations ( id, name )
         `,
         )
-        .order('name', { ascending: true });
+        .order('created_at', { ascending: true });
 
     if (error) {
         console.error('Error fetching personnel:', error.message);

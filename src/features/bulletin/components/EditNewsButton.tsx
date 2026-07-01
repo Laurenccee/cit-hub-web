@@ -18,6 +18,7 @@ import NewsForm from './NewsForm';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Edit01Icon, Loading02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
+import DeleteNewsButton from './DeleteNewsButton';
 
 const FORM_ID = 'edit-news-form';
 
@@ -66,7 +67,7 @@ export default function EditNewsButton({ news, contentTypes }: { news: NewsItem;
                     <HugeiconsIcon icon={Edit01Icon} />
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-7xl flex p-0 flex-row max-h-[80vh]">
+            <DialogContent className="sm:max-w-2xl flex p-0 flex-row max-h-[80vh]">
                 <div ref={setPortalContainer} className="flex flex-col flex-1 min-w-0 max-h-[80vh]">
                     <DialogHeader className="px-6 pt-6 pb-2">
                         <DialogTitle>Edit News</DialogTitle>
@@ -85,7 +86,8 @@ export default function EditNewsButton({ news, contentTypes }: { news: NewsItem;
                         portalContainer={portalContainer}
                     />
 
-                    <DialogFooter className="px-6 py-4 border-t shrink-0">
+                    <DialogFooter className="flex justify-between px-6 py-4 border-t shrink-0">
+                        <DeleteNewsButton id={news.id} title={news.title} />
                         <Button type="submit" form={FORM_ID} size="lg" disabled={isPending}>
                             {isPending ? 'Saving...' : 'Save Changes'}
                             {isPending ? (

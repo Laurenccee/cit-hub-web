@@ -89,8 +89,8 @@ export async function uploadAvatarAction(formData: FormData, oldFilePath?: strin
         if (!user) return { success: false, message: 'Authentication required.' };
 
         const publicUrl = await uploadStorageFile({
-            bucket: 'cit_hub',
-            folderId: `user-avatar/${user.id}`,
+            bucket: 'avatar-images',
+            folderId: '',
             prefix: 'avatar',
             file,
             oldFilePath,

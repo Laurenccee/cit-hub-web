@@ -3,12 +3,7 @@ import { useForm, useFieldArray, useWatch, SubmitHandler } from 'react-hook-form
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import {
-    PersonnelFormData,
-    PersonnelSchema,
-    UpdatePersonnelFormData,
-    UpdatePersonnelSchema,
-} from '../schema/personnel';
+import { PersonnelSchema, UpdatePersonnelSchema } from '../schema/personnel';
 import { Personnel } from '../types';
 import { deleteStorageFileAction } from '@/actions/image';
 
@@ -34,17 +29,14 @@ export function usePersonnelForm({
     const pendingBlobRef = useRef<Blob | null>(null);
 
     // Compute pre-filled states if we are editing an existing profile
-    const nameParts = personnel?.name.trim().split(/\s+/) ?? [];
-    const firstName = nameParts ?? '';
-    const lastName = nameParts.slice(1).join(' ');
 
     const defaultValues =
         mode === 'edit' && personnel
             ? {
                   id: personnel.id,
                   employeeId: personnel.employee_id,
-                  firstName,
-                  lastName,
+                  firstName: personnel.first_name,
+                  lastName: personnel.last_name,
                   rankId: personnel.ranks?.id,
                   designationId: personnel.designations?.id,
                   office: personnel.office,
@@ -54,10 +46,10 @@ export function usePersonnelForm({
                           ? personnel.education
                           : [{ degree: '', major: '', institution: '', onGoing: false }],
                   socialMedia: {
-                      facebook: personnel.social_media.facebook ?? '',
-                      twitter: personnel.social_media.twitter ?? '',
-                      instagram: personnel.social_media.instagram ?? '',
-                      linkedin: personnel.social_media.linkedin ?? '',
+                      facebook: personnel.social_media?.facebook ?? '',
+                      twitter: personnel.social_media?.twitter ?? '',
+                      instagram: personnel.social_media?.instagram ?? '',
+                      linkedin: personnel.social_media?.linkedin ?? '',
                   },
                   profilePictureUrl: personnel.profile_picture_url ?? '',
               }
@@ -65,26 +57,22 @@ export function usePersonnelForm({
                   employeeId: '',
                   firstName: '',
                   lastName: '',
-                  office: '',
                   rankId: '',
                   designationId: null,
+                  office: '',
                   contactNumber: '',
                   education: [{ degree: '', major: '', institution: '', yearGraduated: '', onGoing: false }],
                   socialMedia: { facebook: '', twitter: '', instagram: '', linkedin: '' },
               };
 
-    const {
-        control,
-        handleSubmit,
-        formState: { isSubmitting },
-    } = useForm<any>({
+    const { control, handleSubmit } = useForm<any>({
         resolver: zodResolver(mode === 'edit' ? UpdatePersonnelSchema : PersonnelSchema),
         defaultValues,
     });
 
     useEffect(() => {
-        onPendingChange?.(isSubmitting);
-    }, [isSubmitting, onPendingChange]);
+        onPendingChange?.(isPending);
+    }, [isPending, onPendingChange]);
 
     const educationValues = useWatch({ control, name: 'education' });
     const { fields, append, remove } = useFieldArray({ control, name: 'education' });

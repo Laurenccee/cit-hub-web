@@ -6,20 +6,23 @@ import { Switch } from '@/components/ui/switch';
 import { SiFacebook, SiInstagram, SiX } from '@icons-pack/react-simple-icons';
 import { Controller } from 'react-hook-form';
 import ProfilePictureDropzone from './ProfilePictureDropzone';
-import FormTextField from './FormTextField';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
-    X,
-    IdIcon,
-    UserIcon,
-    OfficeIcon,
-    TelephoneIcon,
-    GraduationScrollIcon,
-    School01Icon,
-    CalendarIcon,
-    Mortarboard01Icon,
     ArrowRightIcon,
+    CalendarIcon,
+    FacebookIcon,
+    GraduationScrollIcon,
+    IdIcon,
+    InstagramIcon,
+    Linkedin02Icon,
     Loading02Icon,
+    Mortarboard01Icon,
+    OfficeIcon,
+    School01Icon,
+    TelephoneIcon,
+    TwitterIcon,
+    UserIcon,
+    X,
 } from '@hugeicons/core-free-icons';
 import InputField from '@/components/shared/InputField';
 import { Link } from 'lucide-react';
@@ -233,41 +236,41 @@ export default function SetupPersonnelForm({ ranks, designations }: { ranks: Ran
                             Social Channels
                         </h1>
                         <div className="grid grid-cols-2 gap-4">
-                            <FormTextField
-                                name="socialMedia.facebook"
-                                control={control}
+                            <InputField
+                                name={`socialMedia.facebook`}
                                 label="Facebook"
-                                type="url"
-                                placeholder="https://facebook.com/..."
-                                icon={<SiFacebook size={14} />}
-                                iconPosition="left"
-                            />
-                            <FormTextField
-                                name="socialMedia.twitter"
                                 control={control}
+                                isPending={isPending}
+                                type="text"
+                                placeholder="e.g. https://www.facebook.com/username"
+                                leadingIcon={<HugeiconsIcon icon={FacebookIcon} />}
+                            />
+                            <InputField
+                                name={`socialMedia.twitter`}
                                 label="Twitter / X"
-                                type="url"
-                                placeholder="https://x.com/..."
-                                icon={<SiX size={14} />}
-                                iconPosition="left"
-                            />
-                            <FormTextField
-                                name="socialMedia.instagram"
                                 control={control}
+                                isPending={isPending}
+                                type="text"
+                                placeholder="e.g. https://twitter.com/username"
+                                leadingIcon={<HugeiconsIcon icon={TwitterIcon} />}
+                            />
+                            <InputField
+                                name={`socialMedia.instagram`}
                                 label="Instagram"
-                                type="url"
-                                placeholder="https://instagram.com/..."
-                                icon={<SiInstagram size={14} />}
-                                iconPosition="left"
-                            />
-                            <FormTextField
-                                name="socialMedia.linkedin"
                                 control={control}
+                                isPending={isPending}
+                                type="text"
+                                placeholder="e.g. https://www.instagram.com/username"
+                                leadingIcon={<HugeiconsIcon icon={InstagramIcon} />}
+                            />
+                            <InputField
+                                name={`socialMedia.linkedin`}
                                 label="LinkedIn"
-                                type="url"
-                                placeholder="https://linkedin.com/..."
-                                icon={<Link size={14} />}
-                                iconPosition="left"
+                                control={control}
+                                isPending={isPending}
+                                type="text"
+                                placeholder="e.g. https://www.linkedin.com/in/username"
+                                leadingIcon={<HugeiconsIcon icon={Linkedin02Icon} />}
                             />
                         </div>
                     </div>

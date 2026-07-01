@@ -1,4 +1,3 @@
-import React from 'react';
 import PersonnelCard from './PersonnelCard';
 import { Designation, Rank } from '../types';
 import { getPersonnel } from '../action/queries';
@@ -23,10 +22,9 @@ export default async function PersonnelGrid({ ranks, designations }: { ranks: Ra
     }
 
     return (
-        <section className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            {/* 3. Map over the extracted list variable instead of the wrapper object */}
+        <section className="grid grid-cols-1 sm:grid-cols-5 gap-8">
             {personnelList.map((p) => (
-                <PersonnelCard key={p.id} personnel={p} ranks={ranks} designations={designations} />
+                <PersonnelCard key={p.id} data={p} editTarget={p} ranks={ranks} designations={designations} />
             ))}
         </section>
     );

@@ -22,9 +22,9 @@ export default async function NewsAndAnnouncementsPage() {
     const news = newsResult.success ? newsResult.data : [];
 
     return (
-        <section className="flex flex-col sm:py-8">
-            <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 sm:gap-8">
-                <div className="flex flex-col gap-16">
+        <section className="flex flex-col sm:py-16">
+            <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 sm:gap-16">
+                <div className="flex flex-col gap-8 sm:gap-8">
                     <div>
                         {featuredNews && featuredNews.length > 0 ? (
                             <NewsHero news={featuredNews[0]} />

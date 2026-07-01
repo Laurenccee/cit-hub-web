@@ -45,7 +45,7 @@ export default function NavigationBar() {
             <div className="mx-auto flex max-w-7xl justify-between items-center">
                 <div className="flex items-center gap-4">
                     <Link href="/home" className="hover:opacity-90 transition-opacity">
-                        <h1 className="text-3xl md:text-4xl uppercase text-primary font-serif">CIT</h1>
+                        <h1 className="text-lg sm:text-2xl uppercase text-primary font-serif">CIT</h1>
                     </Link>
                 </div>
                 <nav className="hidden md:flex items-center gap-8">
@@ -54,7 +54,7 @@ export default function NavigationBar() {
                             key={href}
                             href={href}
                             className={cn(
-                                'relative border-b-2 transition-all duration-300 font-serif',
+                                'relative border-b-2 text-sm transition-all duration-300 font-serif',
                                 pathname === href
                                     ? 'text-primary border-primary'
                                     : 'text-muted-foreground border-transparent hover:text-primary hover:border-primary',
@@ -65,24 +65,19 @@ export default function NavigationBar() {
                     ))}
                 </nav>
 
-                <div className="flex items-center gap-2 md:gap-3">
+                <div className="flex items-center gap-2 md:gap-2">
                     <ThemeToggle />
 
                     {isAuthenticated ? (
-                        <Button
-                            onClick={handleSignOut}
-                            size="xl"
-                            className="hidden md:flex gap-2 font-medium"
-                            disabled={isPending}
-                        >
+                        <Button onClick={handleSignOut} size="lg" className="hidden md:flex gap-2" disabled={isPending}>
                             <span className="hidden sm:inline">Sign Out</span>
                             <HugeiconsIcon icon={Logout} />
                         </Button>
                     ) : (
                         <Button
                             onClick={() => router.push('/sign-in')}
-                            size="xl"
-                            className="hidden md:flex gap-2 font-medium"
+                            size="lg"
+                            className="hidden md:flex gap-2"
                             disabled={isPending}
                         >
                             <span className="hidden sm:inline">Sign In</span>

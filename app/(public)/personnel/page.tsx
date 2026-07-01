@@ -18,10 +18,10 @@ export default async function PersonnelPage() {
                 <div className="flex flex-col gap-10 lg:gap-16">
                     <section className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div className="space-y-2">
-                            <span className="text-sm lg:text-base text-primary/80 font-bold tracking-wide uppercase">
+                            <span className="text-xs sm:text-sm text-primary/80 font-bold tracking-wide uppercase">
                                 Directory
                             </span>
-                            <h1 className="text-4xl md:text-5xl lg:text-7xl text-mauve-800 tracking-tight lg:tracking-wide leading-tight">
+                            <h1 className="text-4xl sm:text-5xl text-mauve-800 tracking-tight lg:tracking-wide leading-tight">
                                 CIT Faculty & Staff
                             </h1>
                         </div>

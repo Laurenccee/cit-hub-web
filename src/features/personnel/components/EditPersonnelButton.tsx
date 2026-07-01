@@ -13,6 +13,7 @@ import EditPersonnelForm from './EditPersonnelForm';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { Designation, Rank, Personnel } from '../types';
+import DeletePersonnelButton from './DeletePersonnelButton';
 
 const FORM_ID = 'edit-personnel-form';
 
@@ -41,7 +42,9 @@ export default function EditPersonnelButton({
                 <div ref={setPortalContainer} className="flex flex-col flex-1 min-w-0 max-h-[90vh]">
                     <DialogHeader className="px-6 pt-6 pb-2">
                         <DialogTitle>Edit Personnel</DialogTitle>
-                        <DialogDescription>Update the details for {personnel.name}.</DialogDescription>
+                        <DialogDescription>
+                            Update the details for {`${personnel.first_name} ${personnel.last_name}`}.
+                        </DialogDescription>
                     </DialogHeader>
                     <EditPersonnelForm
                         id={FORM_ID}
@@ -51,7 +54,11 @@ export default function EditPersonnelButton({
                         ranks={ranks}
                         designations={designations}
                     />
-                    <DialogFooter className="px-6 py-4 border-t shrink-0">
+                    <DialogFooter className="flex gap-2 px-6 py-4 border-t shrink-0">
+                        <DeletePersonnelButton
+                            id={personnel.id || ''}
+                            name={`${personnel.first_name} ${personnel.last_name}`}
+                        />
                         <Button type="submit" form={FORM_ID} size="lg" disabled={isPending}>
                             {isPending ? <Loader2 size={16} className="animate-spin" /> : 'Save Changes'}
                         </Button>

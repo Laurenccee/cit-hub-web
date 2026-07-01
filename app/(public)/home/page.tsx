@@ -22,20 +22,20 @@ export default async function HomePage() {
     const today = formatDayDate(new Date());
 
     return (
-        <section className="flex flex-col sm:py-8">
-            <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 sm:gap-8">
-                <div className="flex flex-col gap-10 lg:gap-16">
+        <section className="flex flex-col sm:py-16">
+            <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 sm:gap-16">
+                <div className="flex flex-col gap-8 sm:gap-8">
                     <div className="space-y-1">
-                        <span className="text-sm lg:text-base text-primary/80 font-medium">Academic overview</span>
-                        <h1 className="text-4xl md:text-6xl lg:text-7xl text-mauve-800 tracking-tight lg:tracking-wide leading-tight lg:leading-tighter">
+                        <span className="text-xs lg:text-sm text-primary/80 font-medium">Academic overview</span>
+                        <h1 className="text-4xl sm:text-5xl text-mauve-800 tracking-tight lg:tracking-wide leading-tight lg:leading-tighter">
                             Welcome CIT Students
                         </h1>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-16">
                         <section className="lg:col-span-2 flex flex-col gap-6 lg:gap-8">
                             <div className="flex items-end justify-between border-b pb-2">
-                                <h1 className="text-2xl lg:text-3xl text-primary">News & Announcements</h1>
+                                <h1 className="text-xl sm:text-2xl text-primary">News & Announcements</h1>
                                 <Link href="/bulletin">
                                     <Button variant="ghost" size="sm">
                                         View all
@@ -75,8 +75,8 @@ export default async function HomePage() {
 
                         <section className="flex flex-col gap-6 lg:gap-8">
                             <div className="flex items-end justify-between border-b pb-2">
-                                <h1 className="text-2xl lg:text-3xl text-primary">Dashboard</h1>
-                                <h1 className="text-sm lg:text-base text-muted-foreground">{today}</h1>
+                                <h1 className="text-xl sm:text-2xl text-primary">Dashboard</h1>
+                                <h1 className="text-xs lg:text-sm text-muted-foreground">{today}</h1>
                             </div>
 
                             <div className="flex flex-col gap-6 lg:gap-8">

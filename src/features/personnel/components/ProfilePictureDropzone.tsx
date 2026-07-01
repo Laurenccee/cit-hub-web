@@ -103,7 +103,7 @@ export default function ProfilePictureDropzone({ onFile, initialUrl }: Props) {
                 {!preview && (
                     <>
                         <ImagePlus size={24} className="text-muted-foreground/50" />
-                        <p className="text-xs text-muted-foreground text-center px-2">
+                        <p className="text-[10px] text-muted-foreground text-center px-2">
                             {isDragging ? 'Drop to upload' : 'Click or drag to upload'}
                         </p>
                     </>

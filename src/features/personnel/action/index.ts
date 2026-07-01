@@ -59,7 +59,8 @@ async function executePersonnelMutation(
     // Map your CamelCase form fields cleanly to Snake_case DB equivalents
     const payload = {
         employee_id: data.employeeId,
-        name: `${data.firstName} ${data.lastName}`,
+        first_name: data.firstName,
+        last_name: data.lastName,
         rank_id: data.rankId,
         designation_id: data.designationId ?? null,
         office: data.office,
@@ -183,7 +184,7 @@ export async function deletePersonnelAction(id: string) {
 
         // 2. Perform file removal FIRST so RLS validation passes cleanly
         if (personnelRow?.profile_picture_url) {
-            const storageResult = await deleteStorageFileAction(personnelRow.profile_picture_url, 'cit_hub');
+            const storageResult = await deleteStorageFileAction(personnelRow.profile_picture_url, 'avatar-images');
 
             if (!storageResult.success) {
                 console.error('Storage deletion failed:', storageResult.message);

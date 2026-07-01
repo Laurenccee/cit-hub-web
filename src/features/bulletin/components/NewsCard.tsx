@@ -50,12 +50,7 @@ export default function NewsCard({ news, variant = 'grid', priority = false, con
                 </CardDescription>
             </CardHeader>
             <CardFooter className="flex justify-between">
-                {canManage && (
-                    <div className="flex gap-2">
-                        <DeleteNewsButton id={news.id} title={news.title} />
-                        <EditNewsButton news={news} contentTypes={contentTypes} />
-                    </div>
-                )}
+                {canManage && <EditNewsButton news={news} contentTypes={contentTypes} />}
                 <Link href={`/bulletin/${news.slug}`}>
                     <Button size="xl" variant="ghost" className="text-xs text-muted-foreground">
                         View Full Article
