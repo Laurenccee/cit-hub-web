@@ -1,13 +1,14 @@
-// 1. Define raw Supabase structures
+import type React from 'react';
+
 export interface Rank {
-    id: string; // or number, matching your Supabase PK
+    id: string;
     name: string;
     description?: string | null;
     created_at?: string;
 }
 
 export interface Designation {
-    id: string; // or number, matching your Supabase PK
+    id: string;
     name: string;
     code?: string | null;
     created_at?: string;
@@ -28,41 +29,86 @@ export interface EducationEntry {
     onGoing: boolean;
 }
 
-// 2. Main Personnel Interface using raw relation schemas
 export interface Personnel {
     id?: string;
     first_name: string;
     last_name: string;
     office: string;
-
     employee_id: string;
     contact_number?: string | null;
     social_media: SocialMedia;
     profile_picture_url?: string;
-
-    // 1. The raw IDs (what your form uses and saves to the database)
     rank_id?: string | null;
     designation_id?: string | null;
-
-    // 2. The expanded joined objects (what Supabase returns when you query relations)
     ranks?: Rank | null;
     designations?: Designation | null;
-
     education: EducationEntry[];
-
     is_active?: boolean;
     must_change_password?: boolean;
     created_at?: string;
     updated_at?: string;
 }
 
-export type PersonnelPreviewData = {
-    profile_picture_url: string;
+type PersonnelBase = {
     first_name: string;
     last_name: string;
+    education: EducationEntry[];
+};
+
+export type CardData = PersonnelBase & {
+    profile_picture_url?: string | null;
+    office?: string | null;
+    rank_id?: string | null;
+    designation_id?: string | null;
+    contact_number?: string | null;
+    ranks?: Rank | null;
+    designations?: Designation | null;
+};
+
+export type PersonnelPreviewData = PersonnelBase & {
+    profile_picture_url: string;
     office: string;
     rank_id: string | null;
     designation_id: string | null;
     contact_number: string;
-    education: EducationEntry[]; // Or your specific Education type
 };
+
+export interface PersonnelCardProps {
+    data: CardData;
+    ranks: Rank[];
+    designations: Designation[];
+    editTarget?: Personnel;
+    actions?: React.ReactNode;
+}
+
+export interface SetupPersonnelCardProps {
+    ranks: Rank[];
+    designations: Designation[];
+    initialPreview?: PersonnelPreviewData;
+}
+
+export interface EditPersonnelButtonProps {
+    personnel: Personnel;
+    ranks: Rank[];
+    designations: Designation[];
+}
+
+export interface PersonnelFormProps {
+    id?: string;
+    mode: 'setup' | 'edit';
+    personnel?: Personnel;
+    ranks: Rank[];
+    designations: Designation[];
+    onPreviewChange?: (preview: PersonnelPreviewData) => void;
+    onPendingChange?: (isPending: boolean) => void;
+    onSuccess?: () => void;
+}
+
+export interface UsePersonnelFormProps {
+    personnel?: Personnel;
+    mode: 'setup' | 'edit';
+    onPendingChange?: (isPending: boolean) => void;
+    onSuccess?: () => void;
+    submitAction: (data: any) => Promise<any>;
+    uploadAvatarAction: (formData: FormData, oldUrl?: string | null) => Promise<any>;
+}

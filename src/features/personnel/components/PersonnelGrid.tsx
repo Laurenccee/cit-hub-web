@@ -1,4 +1,5 @@
 import PersonnelCard from './PersonnelCard';
+import EditPersonnelButton from './EditPersonnelButton';
 import { Designation, Rank } from '../types';
 import { getPersonnel } from '../action/queries';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -24,7 +25,14 @@ export default async function PersonnelGrid({ ranks, designations }: { ranks: Ra
     return (
         <section className="grid grid-cols-1 sm:grid-cols-5 gap-8">
             {personnelList.map((p) => (
-                <PersonnelCard key={p.id} data={p} editTarget={p} ranks={ranks} designations={designations} />
+                <PersonnelCard
+                    key={p.id}
+                    data={p}
+                    editTarget={p}
+                    ranks={ranks}
+                    designations={designations}
+                    actions={<EditPersonnelButton personnel={p} ranks={ranks} designations={designations} />}
+                />
             ))}
         </section>
     );

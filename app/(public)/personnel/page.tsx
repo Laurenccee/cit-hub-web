@@ -4,13 +4,10 @@ import { Suspense } from 'react';
 import RegisterPersonnelButton from '@/features/personnel/components/RegisterPersonnelButton';
 import PersonnelGrid from '@/features/personnel/components/PersonnelGrid';
 import PersonnelCardSkeleton from '@/features/personnel/components/skeletons/PersonalCardSkeleton';
-import { getDesignations, getRanks } from '@/features/personnel/action/queries';
+import { getPersonnelPageData } from '@/features/personnel/action/queries';
 
 export default async function PersonnelPage() {
-    const [ranksResult, designationsResult] = await Promise.all([getRanks(), getDesignations()]);
-
-    const ranks = ranksResult.success ? ranksResult.data : [];
-    const designations = designationsResult.success ? designationsResult.data : [];
+    const { ranks, designations } = await getPersonnelPageData();
 
     return (
         <section className="flex flex-col sm:py-8">

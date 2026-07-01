@@ -22,4 +22,3 @@ export const NewsSchema = NewsBaseSchema;
 export const UpdateNewsSchema = NewsBaseSchema.extend({ id: z.string() });
 
 export type NewsFormData = z.infer<typeof NewsSchema>;
-export type UpdateNewsFormData = z.infer<typeof UpdateNewsSchema>;

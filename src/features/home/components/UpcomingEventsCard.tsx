@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { CardEmptyState } from '@/components/shared/CardEmptyState';
 import { EventItemProps } from '../../../types';
 import { formatDayDate } from '@/utils/formatters';
 import { CalendarX } from 'lucide-react';
@@ -38,15 +39,11 @@ export default function UpcomingEventsCard({ events = [] }: { events: EventItemP
                         </div>
                     ))
                 ) : (
-                    <div className="flex flex-col items-center justify-center py-10 text-center gap-2">
-                        <div className="bg-muted rounded-full p-3">
-                            <CalendarX className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground">No upcoming events</p>
-                            <p className="text-xs text-muted-foreground/70">Check back later for updates.</p>
-                        </div>
-                    </div>
+                    <CardEmptyState
+                        icon={<CalendarX className="h-6 w-6 text-muted-foreground" />}
+                        title="No upcoming events"
+                        description="Check back later for updates."
+                    />
                 )}
             </CardContent>
 

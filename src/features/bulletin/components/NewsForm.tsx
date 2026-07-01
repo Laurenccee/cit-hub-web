@@ -3,7 +3,7 @@ import { Separator } from '@/components/ui/separator';
 import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type NewsFormData, NewsSchema } from '../schema/news';
-import NewsImageDropzone from './NewsImageDropzone';
+import ImageDropzone from '@/components/shared/ImageDropzone';
 import { useEffect, useRef, useTransition } from 'react';
 import { toast } from 'sonner';
 import { slugify } from '@/utils/formatters';
@@ -13,7 +13,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import AreaField from '@/components/shared/AreaField';
 import ComboboxField from '@/components/shared/ComboboxField';
 import SwitchToggle from '@/components/shared/SwitchToggle';
-import { Image02Icon, Link01Icon, Link04Icon, NewsIcon, TextIcon } from '@hugeicons/core-free-icons';
+import { Link01Icon, Link04Icon, NewsIcon, TextIcon } from '@hugeicons/core-free-icons';
 import { deleteStorageFileAction, uploadNewsImageAction } from '@/actions/image';
 
 interface NewsFormProps {
@@ -133,7 +133,8 @@ export default function NewsForm({
                             (optional)
                         </span>
                     </p>
-                    <NewsImageDropzone
+                    <ImageDropzone
+                        variant="news"
                         initialUrl={news?.image_url}
                         onFile={(blob) => {
                             pendingBlobRef.current = blob;

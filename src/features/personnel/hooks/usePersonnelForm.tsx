@@ -4,17 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { PersonnelSchema, UpdatePersonnelSchema } from '../schema/personnel';
-import { Personnel } from '../types';
+import { Personnel, UsePersonnelFormProps } from '../types';
 import { deleteStorageFileAction } from '@/actions/image';
-
-interface UsePersonnelFormProps {
-    personnel?: Personnel;
-    mode: 'setup' | 'edit';
-    onPendingChange?: (isPending: boolean) => void;
-    onSuccess?: () => void;
-    submitAction: (data: any) => Promise<any>;
-    uploadAvatarAction: (formData: FormData, oldUrl?: string | null) => Promise<any>;
-}
 
 export function usePersonnelForm({
     personnel,

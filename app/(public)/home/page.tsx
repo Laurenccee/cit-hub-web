@@ -6,18 +6,10 @@ import UpcomingEventsCard from '@/features/home/components/UpcomingEventsCard';
 import { Suspense } from 'react';
 import NewsCardSkeleton from '@/features/bulletin/components/skeletons/NewsCardSkeleton';
 import { Button } from '@/components/ui/button';
-import { GetContentTypes, GetFeaturedNews, GetNews } from '@/features/bulletin/action/queries';
+import { getBulletinPageData } from '@/features/bulletin/action/queries';
 
 export default async function HomePage() {
-    const [contentTypeResult, featuredNewsResult, newsResult] = await Promise.all([
-        GetContentTypes(),
-        GetFeaturedNews(),
-        GetNews(),
-    ]);
-
-    const contentTypes = contentTypeResult.success ? contentTypeResult.data : [];
-    const featuredNews = featuredNewsResult.success ? featuredNewsResult.data : [];
-    const news = newsResult.success ? newsResult.data : [];
+    const { contentTypes, featuredNews, news } = await getBulletinPageData();
 
     const today = formatDayDate(new Date());
 

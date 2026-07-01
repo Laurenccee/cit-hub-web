@@ -76,11 +76,11 @@ async function uploadStorageFile({ bucket, folderId, prefix, file, oldFilePath }
    EXPORTED DOMAIN SPECIFIC HANDLERS
    ========================================================================== */
 
-/**
- * Universally handles Personnel Profile Pictures
- * Bucket layout: 'cit_hub' -> 'profile-pictures/USER_ID/avatar-timestamp.jpg'
- */
-export async function uploadAvatarAction(formData: FormData, oldFilePath?: string | null) {
+async function handleImageUpload(
+    formData: FormData,
+    oldFilePath: string | null | undefined,
+    options: Pick<UploadConfig, 'bucket' | 'folderId' | 'prefix'>,
+) {
     try {
         const file = formData.get('file') as File | null;
         if (!file || file.size === 0) return { success: false, message: 'No file provided.' };
@@ -88,14 +88,7 @@ export async function uploadAvatarAction(formData: FormData, oldFilePath?: strin
         const user = await getAuthorizedUser();
         if (!user) return { success: false, message: 'Authentication required.' };
 
-        const publicUrl = await uploadStorageFile({
-            bucket: 'avatar-images',
-            folderId: '',
-            prefix: 'avatar',
-            file,
-            oldFilePath,
-        });
-
+        const publicUrl = await uploadStorageFile({ ...options, file, oldFilePath });
         return { success: true, url: publicUrl };
     } catch (err: any) {
         return { success: false, message: err?.message || 'An unexpected error occurred.' };
@@ -103,29 +96,19 @@ export async function uploadAvatarAction(formData: FormData, oldFilePath?: strin
 }
 
 /**
+ * Universally handles Personnel Profile Pictures
+ * Bucket layout: 'cit_hub' -> 'profile-pictures/USER_ID/avatar-timestamp.jpg'
+ */
+export async function uploadAvatarAction(formData: FormData, oldFilePath?: string | null) {
+    return handleImageUpload(formData, oldFilePath, { bucket: 'avatar-images', folderId: '', prefix: 'avatar' });
+}
+
+/**
  * Universally handles Bulletin Board Cover Images
  * Bucket layout: 'news-images' -> 'news-timestamp.jpg' (Flat layout structure)
  */
 export async function uploadNewsImageAction(formData: FormData, oldFilePath?: string | null) {
-    try {
-        const file = formData.get('file') as File | null;
-        if (!file || file.size === 0) return { success: false, message: 'No file provided.' };
-
-        const user = await getAuthorizedUser();
-        if (!user) return { success: false, message: 'Authentication required.' };
-
-        const publicUrl = await uploadStorageFile({
-            bucket: 'news-images',
-            folderId: '', // Keeps layout flat inside your 'news-images' bucket
-            prefix: 'news',
-            file,
-            oldFilePath,
-        });
-
-        return { success: true, url: publicUrl };
-    } catch (err: any) {
-        return { success: false, message: err?.message || 'An unexpected error occurred.' };
-    }
+    return handleImageUpload(formData, oldFilePath, { bucket: 'news-images', folderId: '', prefix: 'news' });
 }
 
 /**

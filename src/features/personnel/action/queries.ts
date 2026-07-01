@@ -27,6 +27,15 @@ export async function getDesignations(): Promise<{ success: boolean; data: Desig
     return { success: true, data: (data ?? []) as Designation[] };
 }
 
+export async function getPersonnelPageData() {
+    const [ranksResult, designationsResult] = await Promise.all([getRanks(), getDesignations()]);
+
+    return {
+        ranks: ranksResult.success ? ranksResult.data : [],
+        designations: designationsResult.success ? designationsResult.data : [],
+    };
+}
+
 export async function getPersonnel(): Promise<{ success: boolean; data: Personnel[] }> {
     const supabase = await createClient();
 

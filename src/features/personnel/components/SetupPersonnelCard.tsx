@@ -6,13 +6,7 @@ import PersonnelForm from './PersonnelForm';
 import { Button } from '@/components/ui/button';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowRightIcon, Loading02Icon } from '@hugeicons/core-free-icons';
-import { Designation, PersonnelPreviewData, Rank } from '../types';
-
-interface SetupPersonnelCardProps {
-    ranks: Rank[];
-    designations: Designation[];
-    initialPreview?: PersonnelPreviewData;
-}
+import { Designation, PersonnelPreviewData, Rank, SetupPersonnelCardProps } from '../types';
 
 const DEFAULT_PREVIEW: PersonnelPreviewData = {
     profile_picture_url: '',

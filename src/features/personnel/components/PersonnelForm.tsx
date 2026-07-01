@@ -1,12 +1,12 @@
 'use client';
-import { useDeferredValue, useEffect, useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { SiFacebook, SiInstagram, SiX } from '@icons-pack/react-simple-icons';
 import { Controller, useWatch } from 'react-hook-form';
-import ProfilePictureDropzone from './ProfilePictureDropzone';
+import ImageDropzone from '@/components/shared/ImageDropzone';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
     ArrowRightIcon,
@@ -28,65 +28,70 @@ import {
 import InputField from '@/components/shared/InputField';
 import { Label } from '@/components/ui/label';
 import ComboboxField from '@/components/shared/ComboboxField';
-import { Designation, PersonnelPreviewData, Rank } from '../types';
-import { personnelSetupAction } from '../action';
+import { Designation, Personnel, PersonnelFormProps, PersonnelPreviewData, Rank } from '../types';
+import { personnelSetupAction, updatePersonnelAction } from '../action';
 import { uploadAvatarAction } from '@/actions/image';
 import { usePersonnelForm } from '../hooks/usePersonnelForm';
 
 export default function PersonnelForm({
+    id,
     mode,
+    personnel,
     ranks,
     designations,
     onPreviewChange,
     onPendingChange,
     onSuccess,
-}: {
-    mode: 'setup' | 'edit';
-    ranks: Rank[];
-    designations: Designation[];
-    onPreviewChange?: (preview: PersonnelPreviewData) => void;
-    onPendingChange?: (isPending: boolean) => void;
-    onSuccess?: () => void;
-}) {
+}: PersonnelFormProps) {
     const { control, isPending, fields, append, remove, educationValues, pendingBlobRef, onSubmit } = usePersonnelForm({
+        personnel,
         mode,
-        submitAction: personnelSetupAction,
+        submitAction: mode === 'edit' ? updatePersonnelAction : personnelSetupAction,
         uploadAvatarAction,
         onPendingChange,
         onSuccess,
     });
 
     const watchedValues = useWatch({ control });
-    const deferredValues = useDeferredValue(watchedValues);
 
-    // Blob URL created locally when the user picks/crops a photo.
-    // `deferredValues.profilePictureUrl` only holds the persisted URL (edit mode),
-    // so we need a separate channel for freshly-selected files.
-    const [profilePreviewUrl, setProfilePreviewUrl] = useState((deferredValues?.profilePictureUrl as string) || '');
+    const [profilePreviewUrl, setProfilePreviewUrl] = useState(personnel?.profile_picture_url || '');
 
     useEffect(() => {
         if (!onPreviewChange) return;
 
         const preview = {
-            profile_picture_url: profilePreviewUrl || deferredValues?.profilePictureUrl || '',
-            first_name: deferredValues?.firstName?.trim() || '',
-            last_name: deferredValues?.lastName?.trim() || '',
-            office: deferredValues?.office?.trim() || '',
-            rank_id: deferredValues?.rankId || null,
-            designation_id: deferredValues?.designationId ?? null,
-            contact_number: deferredValues?.contactNumber?.trim() || '',
-            education: deferredValues?.education?.length ? deferredValues.education : [],
+            profile_picture_url: profilePreviewUrl || watchedValues?.profilePictureUrl || '',
+            first_name: watchedValues?.firstName?.trim() || '',
+            last_name: watchedValues?.lastName?.trim() || '',
+            office: watchedValues?.office?.trim() || '',
+            rank_id: watchedValues?.rankId || null,
+            designation_id: watchedValues?.designationId ?? null,
+            contact_number: watchedValues?.contactNumber?.trim() || '',
+            education: watchedValues?.education?.length ? watchedValues.education : [],
         };
 
-        onPreviewChange(preview);
-    }, [deferredValues, profilePreviewUrl, onPreviewChange]);
+        startTransition(() => onPreviewChange(preview));
+    }, [
+        onPreviewChange,
+        profilePreviewUrl,
+        watchedValues?.firstName,
+        watchedValues?.lastName,
+        watchedValues?.office,
+        watchedValues?.rankId,
+        watchedValues?.designationId,
+        watchedValues?.contactNumber,
+        watchedValues?.education,
+    ]);
     return (
-        <form id="personnel-form" className="flex flex-col gap-8" onSubmit={onSubmit}>
+        <form id={id ?? 'personnel-form'} className="flex flex-col gap-8" onSubmit={onSubmit}>
             <div className="flex flex-col gap-2 w-full items-center pt-6">
                 <h1 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/80">Profile Picture</h1>
                 <div className="w-40 aspect-square p-1 border-2 border-dashed rounded-full border-primary">
-                    <ProfilePictureDropzone
+                    <ImageDropzone
+                        variant="avatar"
+                        initialUrl={personnel?.profile_picture_url}
                         onFile={(blob) => {
+                            if (!blob) return;
                             pendingBlobRef.current = blob;
                             setProfilePreviewUrl(URL.createObjectURL(blob));
                         }}

@@ -15,5 +15,5 @@ export async function getAuthorizedUser() {
     if (profile?.role_id !== ROLES.ADMIN && profile?.role_id !== ROLES.FACULTY) {
         return null;
     }
-    return user;
+    return { user, roleId: profile.role_id as number };
 }

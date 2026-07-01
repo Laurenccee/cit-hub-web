@@ -1,49 +1,18 @@
 'use client';
 import Image from 'next/image';
-import { Building2, GraduationCap, Phone, User } from 'lucide-react';
+import { Building2, GraduationCap, Phone } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import EditPersonnelButton from './EditPersonnelButton';
-import { Designation, EducationEntry, Personnel, Rank } from '../types';
+import { PersonnelCardProps } from '../types';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { UserIcon } from '@hugeicons/core-free-icons';
 
-/**
- * Common shape accepted by both preview (form) and display (grid) modes.
- * `Personnel` and `PersonnelPreviewData` both satisfy this type.
- */
-type CardData = {
-    profile_picture_url?: string | null;
-    first_name: string;
-    last_name: string;
-    office?: string | null;
-    rank_id?: string | null;
-    designation_id?: string | null;
-    contact_number?: string | null;
-    education: EducationEntry[];
-    /** Present when data originates from a DB join (display mode). */
-    ranks?: Rank | null;
-    designations?: Designation | null;
-};
-
-interface PersonnelCardProps {
-    data: CardData;
-    ranks: Rank[];
-    designations: Designation[];
-    /**
-     * Provide the full Personnel record to enable the edit button.
-     * Omit in preview/form mode.
-     */
-    editTarget?: Personnel;
-}
-
-export default function PersonnelCard({ data, ranks, designations, editTarget }: PersonnelCardProps) {
+export default function PersonnelCard({ data, ranks, designations, editTarget, actions }: PersonnelCardProps) {
     const { isAdmin, isFaculty } = useAuth();
     const canEdit = !!editTarget && (isAdmin || isFaculty);
 
-    // Prefer the joined relation name (display mode), fall back to array look-up (preview mode).
     const rankName = data.ranks?.name ?? ranks.find((r) => r.id === data.rank_id)?.name ?? null;
     const designationName =
         data.designations?.name ?? designations.find((d) => d.id === data.designation_id)?.name ?? null;
@@ -56,16 +25,16 @@ export default function PersonnelCard({ data, ranks, designations, editTarget }:
 
     return (
         <div className=" relative w-full flex flex-col bg-card text-card-foreground rounded-xl overflow-hidden border">
-            {designationName ? (
-                <Badge
-                    size="default"
-                    className={`absolute top-2 right-2 z-10 transition-all duration-200 bg-primary/80`}
-                >
-                    {designationName}
-                </Badge>
-            ) : (
-                <Skeleton className="h-5 w-20 rounded-md absolute top-2 right-2 z-10 transition-all duration-200 bg-primary/80" />
-            )}
+            <div className="absolute p-2 justify-between w-full z-10 flex items-center gap-2">
+                {canEdit && actions}
+                {designationName ? (
+                    <Badge size="default" className={`transition-all duration-200 bg-primary/80`}>
+                        {designationName}
+                    </Badge>
+                ) : (
+                    <Skeleton className="h-5 w-20 rounded-md transition-all duration-200 bg-primary/80" />
+                )}
+            </div>
             <div className="relative aspect-square bg-muted">
                 {data.profile_picture_url ? (
                     <Image
@@ -142,28 +111,22 @@ export default function PersonnelCard({ data, ranks, designations, editTarget }:
 
                 {/* Office / Contact + optional edit button */}
                 <div className="flex items-end justify-between gap-2">
-                    <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-                        {data.office?.trim() ? (
-                            <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                                <Building2 className="size-3 shrink-0" strokeWidth={1.5} />
-                                {data.office.trim()}
-                            </span>
-                        ) : (
-                            <Skeleton className="h-3.5 w-24" />
-                        )}
+                    {data.office?.trim() ? (
+                        <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                            <Building2 className="size-3 shrink-0" strokeWidth={1.5} />
+                            {data.office.trim()}
+                        </span>
+                    ) : (
+                        <Skeleton className="h-3.5 w-24" />
+                    )}
 
-                        {data.contact_number?.trim() ? (
-                            <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                                <Phone className="size-3 shrink-0" strokeWidth={1.5} />
-                                {data.contact_number.trim()}
-                            </span>
-                        ) : (
-                            <Skeleton className="h-3.5 w-20" />
-                        )}
-                    </div>
-
-                    {canEdit && (
-                        <EditPersonnelButton personnel={editTarget!} ranks={ranks} designations={designations} />
+                    {data.contact_number?.trim() ? (
+                        <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                            <Phone className="size-3 shrink-0" strokeWidth={1.5} />
+                            {data.contact_number.trim()}
+                        </span>
+                    ) : (
+                        <Skeleton className="h-3.5 w-20" />
                     )}
                 </div>
             </div>

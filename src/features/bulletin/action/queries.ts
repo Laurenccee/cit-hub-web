@@ -1,6 +1,14 @@
 import { createClient } from '@/lib/supabase/server';
 import { ContentType, NewsItem } from '../types';
 
+function publishedNewsQuery(supabase: Awaited<ReturnType<typeof createClient>>) {
+    return supabase
+        .from('news')
+        .select('*, content_type:content_types(label)')
+        .eq('is_archived', false)
+        .eq('is_published', true);
+}
+
 export async function GetContentTypes(): Promise<{ success: boolean; data: ContentType[] }> {
     const supabase = await createClient();
 
@@ -17,11 +25,7 @@ export async function GetContentTypes(): Promise<{ success: boolean; data: Conte
 export async function GetFeaturedNews(): Promise<{ success: boolean; data: NewsItem[] }> {
     const supabase = await createClient();
 
-    const { data, error } = await supabase
-        .from('news')
-        .select('*, content_type:content_types(label)')
-        .eq('is_archived', false)
-        .eq('is_published', true)
+    const { data, error } = await publishedNewsQuery(supabase)
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(1)
@@ -39,12 +43,7 @@ export async function GetFeaturedNews(): Promise<{ success: boolean; data: NewsI
 export async function GetNews(): Promise<{ success: boolean; data: NewsItem[] }> {
     const supabase = await createClient();
 
-    const { data, error } = await supabase
-        .from('news')
-        .select('*, content_type:content_types(label)')
-        .eq('is_archived', false)
-        .eq('is_published', true)
-        .order('created_at', { ascending: false });
+    const { data, error } = await publishedNewsQuery(supabase).order('created_at', { ascending: false });
 
     if (error) {
         console.error('Error fetching news:', error.message);
@@ -52,4 +51,18 @@ export async function GetNews(): Promise<{ success: boolean; data: NewsItem[] }>
     }
 
     return { success: true, data: (data ?? []) as NewsItem[] };
+}
+
+export async function getBulletinPageData() {
+    const [contentTypeResult, featuredNewsResult, newsResult] = await Promise.all([
+        GetContentTypes(),
+        GetFeaturedNews(),
+        GetNews(),
+    ]);
+
+    return {
+        contentTypes: contentTypeResult.success ? contentTypeResult.data : [],
+        featuredNews: featuredNewsResult.success ? featuredNewsResult.data : [],
+        news: newsResult.success ? newsResult.data : [],
+    };
 }

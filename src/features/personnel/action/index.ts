@@ -2,7 +2,6 @@
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
-import { ROLES } from '@/utils/constants/roles';
 import { revalidatePath } from 'next/cache';
 import { ROUTES } from '@/utils/constants/routes';
 import { PostgrestError } from '@supabase/supabase-js';
@@ -15,30 +14,9 @@ import {
     UpdatePersonnelSchema,
 } from '../schema/personnel';
 
-// 1. Centralized asset actions
-import { uploadAvatarAction, deleteStorageFileAction } from '@/actions/image'; // 👈 Adjust import path
+import { getAuthorizedUser } from '@/actions';
+import { deleteStorageFileAction } from '@/actions/image';
 
-/**
- * Step 1: Pre-flight Authorization check
- */
-async function getAuthorizedUser() {
-    const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return null;
-
-    const { data: profile } = await supabase.from('profiles').select('role_id').eq('id', user.id).single();
-
-    if (profile?.role_id !== ROLES.ADMIN && profile?.role_id !== ROLES.FACULTY) {
-        return null;
-    }
-    return { user };
-}
-
-/**
- * Step 2: Shared mutation executor (The abstraction engine)
- */
 async function executePersonnelMutation(
     values: PersonnelFormData | UpdatePersonnelFormData,
     schema: typeof PersonnelSchema | typeof UpdatePersonnelSchema,
@@ -56,7 +34,6 @@ async function executePersonnelMutation(
     const data = validatedFields.data;
     const supabase = await createClient();
 
-    // Map your CamelCase form fields cleanly to Snake_case DB equivalents
     const payload = {
         employee_id: data.employeeId,
         first_name: data.firstName,
@@ -84,8 +61,6 @@ async function executePersonnelMutation(
     }
 }
 
-// --- Clean, Declarative One-Liner Personnel Actions ---
-
 export async function personnelSetupAction(values: PersonnelFormData) {
     return executePersonnelMutation(
         values,
@@ -103,8 +78,6 @@ export async function updatePersonnelAction(values: UpdatePersonnelFormData) {
         (supabase, payload, userId) => supabase.from('personnel').update(payload).eq('id', userId),
     );
 }
-
-// --- Authentication Identity Handlers ---
 
 export async function registerPersonnelAction(values: RegisterPersonnelData) {
     const authorized = await getAuthorizedUser();
@@ -175,14 +148,12 @@ export async function deletePersonnelAction(id: string) {
     const supabaseAdmin = createAdminClient();
 
     try {
-        // 1. Fetch current profile image link first while row metadata exists
         const { data: personnelRow } = await supabase
             .from('personnel')
             .select('profile_picture_url')
             .eq('id', id)
             .single();
 
-        // 2. Perform file removal FIRST so RLS validation passes cleanly
         if (personnelRow?.profile_picture_url) {
             const storageResult = await deleteStorageFileAction(personnelRow.profile_picture_url, 'avatar-images');
 
@@ -191,7 +162,6 @@ export async function deletePersonnelAction(id: string) {
             }
         }
 
-        // 3. Wreak database record cascades in reverse-relational priority order
         const { error: personnelError } = await supabase.from('personnel').delete().eq('id', id);
         if (personnelError) throw personnelError;
 
