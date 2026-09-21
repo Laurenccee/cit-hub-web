@@ -10,56 +10,61 @@ export default function ClassScheduleCard({ schedule = [] }: { schedule: Schedul
 
     return (
         <Card className="flex flex-col h-full">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-xl">Today's Schedule</CardTitle>
-                {hasSchedule && (
-                    <Badge variant="outline" className="ml-2">
-                        {schedule.length} {schedule.length === 1 ? 'Class' : 'Classes'}
-                    </Badge>
-                )}
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-lg font-serif">Today's Schedule</CardTitle>
+                <Badge variant="outline" className="ml-2 text-xs">
+                    {hasSchedule ? `${schedule.length} ${schedule.length === 1 ? 'Class' : 'Classes'}` : '0 Classes'}
+                </Badge>
             </CardHeader>
 
-            <CardContent className="gap-4 flex flex-col flex-1">
+            <CardContent className="flex flex-col flex-1">
                 {hasSchedule ? (
-                    schedule.map((scheduleItem) => (
-                        <div key={scheduleItem.id} className="grid grid-cols-6 items-center gap-2.5 group">
-                            <div className="col-span-1 flex items-center justify-center aspect-square rounded-md border bg-accent transition-colors group-hover:bg-primary/10">
-                                <Clock className="h-4 w-4 text-primary" />
-                            </div>
+                    <div className="flex flex-col gap-3">
+                        {schedule.map((scheduleItem) => (
+                            <div key={scheduleItem.id} className="grid grid-cols-6 items-center gap-2.5 group">
+                                <div className="col-span-1 flex items-center justify-center aspect-square rounded-md border bg-accent transition-colors group-hover:bg-primary/10">
+                                    <Clock className="h-4 w-4 text-primary" />
+                                </div>
 
-                            <div className="col-span-4">
-                                <h1 className="text-base font-medium text-primary leading-tight">
-                                    {scheduleItem.class}
-                                </h1>
-                                <p className="text-xs text-muted-foreground">
-                                    {scheduleItem.room} • {scheduleItem.type}
-                                </p>
-                                <p className="text-xs text-muted-foreground/80 mt-0.5">
-                                    {scheduleItem.startTime} – {scheduleItem.endTime}
-                                </p>
-                            </div>
+                                <div className="col-span-4">
+                                    <h1 className="text-sm font-medium text-primary leading-tight">
+                                        {scheduleItem.class}
+                                    </h1>
+                                    <p className="text-xs text-muted-foreground">
+                                        {scheduleItem.room} • {scheduleItem.type}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground/80 mt-0.5">
+                                        {scheduleItem.startTime} – {scheduleItem.endTime}
+                                    </p>
+                                </div>
 
-                            <div className="col-span-1 flex justify-end">
-                                <Badge
-                                    variant={scheduleItem.status === 'Cancelled' ? 'destructive' : 'secondary'}
-                                    className="text-[10px] px-1.5 py-0"
-                                >
-                                    {scheduleItem.status}
-                                </Badge>
+                                <div className="col-span-1 flex justify-end">
+                                    <Badge
+                                        variant={scheduleItem.status === 'Cancelled' ? 'destructive' : 'secondary'}
+                                        className="text-[10px] px-1.5 py-0"
+                                    >
+                                        {scheduleItem.status}
+                                    </Badge>
+                                </div>
                             </div>
-                        </div>
-                    ))
+                        ))}
+                    </div>
                 ) : (
                     <CardEmptyState
-                        icon={<BookOpenCheck className="h-6 w-6 text-muted-foreground" />}
+                        icon={<BookOpenCheck className="h-8 w-8 text-muted-foreground" />}
                         title="No classes scheduled"
-                        description="Enjoy your free time or catch up on studies!"
+                        description="Enjoy your free time or catch up on studies! Check your syllabus for upcoming quizzes."
                     />
                 )}
             </CardContent>
 
-            <CardFooter className="mt-auto">
-                <Button size="lg" variant="secondary" className="w-full h-10 text-sm" disabled={!hasSchedule}>
+            <CardFooter className="mt-auto pt-4">
+                <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full h-10 text-sm"
+                    disabled={!hasSchedule}
+                >
                     View Full Schedule
                 </Button>
             </CardFooter>

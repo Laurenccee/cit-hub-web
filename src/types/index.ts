@@ -68,7 +68,8 @@ export interface SwitchToggleProps<TFieldValues extends FieldValues = FieldValue
 }
 
 export interface ImageDropzoneProps {
-    variant?: 'avatar' | 'news';
+    variant?: 'avatar' | 'news' | 'onboarding';
     onFile?: (blob: Blob | null) => void;
     initialUrl?: string;
+    inputId?: string;
 }

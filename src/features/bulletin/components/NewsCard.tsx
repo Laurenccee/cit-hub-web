@@ -1,60 +1,65 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Calendar, Clock } from 'lucide-react';
 import { formatDayDate } from '@/utils/formatters';
 import Link from 'next/link';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import DeleteNewsButton from '@/features/bulletin/components/DeleteNewsButton';
 import { NewsCardProps } from '../types';
-import EditNewsButton from './EditNewsButton';
 
 export default function NewsCard({ news, variant = 'grid', priority = false, contentTypes }: NewsCardProps) {
-    const isFeatured = variant === 'featured';
     const { isAdmin, isFaculty } = useAuth();
-    const canManage = isAdmin || isFaculty;
+
+    const getCategoryBadgeColor = () => {
+        const label = (news as any).content_type?.label?.toLowerCase() || '';
+        if (label.includes('event')) return 'bg-[#8B1A1A]';
+        if (label.includes('advisory') || label.includes('campus')) return 'bg-orange-500';
+        if (label.includes('guidance') || label.includes('health')) return 'bg-[#8B1A1A]';
+        return 'bg-[#8B1A1A]';
+    };
+
     return (
-        <Card className="pt-0 gap-8">
+        <Card className="overflow-hidden flex flex-col h-full">
             <div className="relative aspect-video overflow-hidden bg-muted">
                 {news.image_url && (
                     <Image
                         src={news.image_url}
                         alt={news.image_alt ?? news.title}
                         fill
-                        priority={priority || isFeatured}
+                        priority={priority}
                         className="object-cover transition-all"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                 )}
-                <div className="absolute inset-0 bg-black/30" />
-                <div
-                    className="absolute inset-0 
-            bg-linear-to-t from-primary/60 via-primary/20 to-transparent 
-            backdrop-blur-md 
-            mask-[linear-gradient(to_top,black_0%,transparent_50%)] 
-            transition-opacity duration-300 "
-                />
+                <div className="absolute top-3 left-3 z-10">
+                    <Badge className={`${getCategoryBadgeColor()} text-white text-xs px-2 py-0.5`}>
+                        {(news as any).content_type?.label || 'News'}
+                    </Badge>
+                </div>
             </div>
 
-            <CardHeader className="gap-2 flex-1">
-                <p className={cn(isFeatured ? 'text-base' : 'text-xs line-clamp-1 text-primary')}>
-                    {formatDayDate(news.created_at)}
-                </p>
-                <CardTitle className={cn(isFeatured ? 'text-lg' : 'text-base', 'leading-none')}>{news.title}</CardTitle>
-                <CardDescription
-                    className={isFeatured ? 'line-clamp-3 text-xs' : 'line-clamp-2 text-xs text-muted-foreground'}
-                >
+            <CardHeader className="gap-2 p-4">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>{formatDayDate(news.created_at)}</span>
+                </div>
+                <CardTitle className="text-base font-semibold leading-snug line-clamp-2">{news.title}</CardTitle>
+                <CardDescription className="line-clamp-2 text-sm text-muted-foreground leading-relaxed">
                     {news.description || news.content || 'No description available.'}
                 </CardDescription>
             </CardHeader>
-            <CardFooter className="flex justify-between">
-                {canManage && <EditNewsButton news={news} contentTypes={contentTypes} />}
+
+            <CardFooter className="flex items-center justify-between px-4 pb-4 pt-0">
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="w-3.5 h-3.5" />
+                    4 min read
+                </span>
                 <Link href={`/bulletin/${news.slug}`}>
-                    <Button size="xl" variant="ghost" className="text-xs text-muted-foreground">
+                    <Button variant="ghost" size="sm" className="gap-1.5 text-[#8B1A1A] text-sm">
                         View Full Article
-                        <ArrowRight size={14} />
+                        <ArrowRight className="w-3.5 h-3.5" />
                     </Button>
                 </Link>
             </CardFooter>

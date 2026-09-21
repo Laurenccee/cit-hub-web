@@ -36,6 +36,37 @@ export async function getPersonnelPageData() {
     };
 }
 
+export async function getCurrentUserPersonnel() {
+    const supabase = await createClient();
+
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { success: false, data: null };
+    }
+
+    const { data, error } = await supabase
+        .from('personnel')
+        .select(
+            `
+            *,
+            ranks ( id, name ),
+            designations ( id, name )
+        `,
+        )
+        .eq('id', user.id)
+        .single();
+
+    if (error) {
+        console.error('Error fetching current user personnel:', error.message);
+        return { success: false, data: null };
+    }
+
+    return { success: true, data: data as Personnel | null };
+}
+
 export async function getPersonnel(): Promise<{ success: boolean; data: Personnel[] }> {
     const supabase = await createClient();
 
@@ -57,4 +88,27 @@ export async function getPersonnel(): Promise<{ success: boolean; data: Personne
     }
 
     return { success: true, data: (data ?? []) as Personnel[] };
+}
+
+export async function getPersonnelById(id: string): Promise<{ success: boolean; data: Personnel | null }> {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+        .from('personnel')
+        .select(
+            `
+            *,
+            ranks ( id, name ),
+            designations ( id, name )
+        `,
+        )
+        .eq('id', id)
+        .single();
+
+    if (error) {
+        console.error('Error fetching personnel by id:', error.message);
+        return { success: false, data: null };
+    }
+
+    return { success: true, data: data as Personnel | null };
 }

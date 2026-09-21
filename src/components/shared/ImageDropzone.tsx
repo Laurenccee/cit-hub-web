@@ -22,7 +22,7 @@ import { ImageDropzoneProps } from '@/types';
 async function getCroppedBlob(
     imageSrc: string,
     pixelCrop: Area,
-    variant: 'avatar' | 'news',
+    variant: 'avatar' | 'news' | 'onboarding',
     quality = 0.85,
 ): Promise<Blob> {
     const image = new Image();
@@ -84,9 +84,19 @@ const VARIANT_CONFIG = {
         showDescription: true,
         cropPreviewClass: 'relative w-full aspect-video bg-black rounded-md overflow-hidden',
     },
+    onboarding: {
+        aspect: 1 as const,
+        cropperAspect: 1 as const,
+        containerClass:
+            'relative h-full aspect-square max-h-full rounded-full border-2 border-dashed border-primary/30 bg-primary/[0.03] flex flex-col items-center justify-center gap-4 cursor-pointer transition-colors overflow-hidden hover:border-primary/50',
+        dialogMaxW: 'max-w-sm',
+        showClear: false,
+        showDescription: false,
+        cropPreviewClass: 'relative w-full aspect-square bg-black rounded-md overflow-hidden',
+    },
 } satisfies Record<string, object>;
 
-export default function ImageDropzone({ variant = 'avatar', onFile, initialUrl }: ImageDropzoneProps) {
+export default function ImageDropzone({ variant = 'avatar', onFile, initialUrl, inputId }: ImageDropzoneProps) {
     const config = VARIANT_CONFIG[variant];
 
     const inputRef = useRef<HTMLInputElement>(null);
@@ -166,19 +176,38 @@ export default function ImageDropzone({ variant = 'avatar', onFile, initialUrl }
                 )}
                 {!preview && (
                     <>
-                        <ImagePlus size={24} className="text-muted-foreground/50" />
-                        <p
-                            className={cn(
-                                'text-muted-foreground text-center px-2',
-                                variant === 'avatar' ? 'text-[10px]' : 'text-xs',
-                            )}
-                        >
-                            {isDragging ? 'Drop to upload' : 'Click or drag to upload'}
-                        </p>
+                        {variant === 'onboarding' ? (
+                            <>
+                                <span className="flex size-16 items-center justify-center rounded-full bg-card shadow-sm">
+                                    <ImagePlus size={28} className="text-primary" />
+                                </span>
+                                <span className="flex flex-col gap-1 px-6 text-center">
+                                    <span className="text-base font-semibold text-foreground">
+                                        {isDragging ? 'Drop photo here' : 'Click or drag photo here'}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                        High-res portrait preferred
+                                    </span>
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <ImagePlus size={24} className="text-muted-foreground/50" />
+                                <p
+                                    className={cn(
+                                        'text-muted-foreground text-center px-2',
+                                        variant === 'avatar' ? 'text-[10px]' : 'text-xs',
+                                    )}
+                                >
+                                    {isDragging ? 'Drop to upload' : 'Click or drag to upload'}
+                                </p>
+                            </>
+                        )}
                     </>
                 )}
                 <input
                     ref={inputRef}
+                    id={inputId}
                     type="file"
                     accept="image/*"
                     className="hidden"

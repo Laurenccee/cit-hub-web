@@ -84,7 +84,7 @@ export interface PersonnelCardProps {
 export interface SetupPersonnelCardProps {
     ranks: Rank[];
     designations: Designation[];
-    initialPreview?: PersonnelPreviewData;
+    initialPreview?: Personnel | null;
 }
 
 export interface EditPersonnelButtonProps {
