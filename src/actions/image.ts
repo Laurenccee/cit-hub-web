@@ -76,17 +76,30 @@ async function uploadStorageFile({ bucket, folderId, prefix, file, oldFilePath }
    EXPORTED DOMAIN SPECIFIC HANDLERS
    ========================================================================== */
 
+/**
+ * Avatars are a self-service upload (any signed-in user manages their own), unlike news
+ * images which are editorial content restricted to Admin/Faculty via `getAuthorizedUser`.
+ */
+async function getAuthenticatedUser() {
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+    return user ? { user } : null;
+}
+
 async function handleImageUpload(
     formData: FormData,
     oldFilePath: string | null | undefined,
     options: Pick<UploadConfig, 'bucket' | 'folderId' | 'prefix'>,
+    authorize: () => Promise<unknown | null>,
 ) {
     try {
         const file = formData.get('file') as File | null;
         if (!file || file.size === 0) return { success: false, message: 'No file provided.' };
 
-        const user = await getAuthorizedUser();
-        if (!user) return { success: false, message: 'Authentication required.' };
+        const authorized = await authorize();
+        if (!authorized) return { success: false, message: 'Authentication required.' };
 
         const publicUrl = await uploadStorageFile({ ...options, file, oldFilePath });
         return { success: true, url: publicUrl };
@@ -100,7 +113,12 @@ async function handleImageUpload(
  * Bucket layout: 'cit_hub' -> 'profile-pictures/USER_ID/avatar-timestamp.jpg'
  */
 export async function uploadAvatarAction(formData: FormData, oldFilePath?: string | null) {
-    return handleImageUpload(formData, oldFilePath, { bucket: 'avatar-images', folderId: '', prefix: 'avatar' });
+    return handleImageUpload(
+        formData,
+        oldFilePath,
+        { bucket: 'avatar-images', folderId: '', prefix: 'avatar' },
+        getAuthenticatedUser,
+    );
 }
 
 /**
@@ -108,15 +126,20 @@ export async function uploadAvatarAction(formData: FormData, oldFilePath?: strin
  * Bucket layout: 'news-images' -> 'news-timestamp.jpg' (Flat layout structure)
  */
 export async function uploadNewsImageAction(formData: FormData, oldFilePath?: string | null) {
-    return handleImageUpload(formData, oldFilePath, { bucket: 'news-images', folderId: '', prefix: 'news' });
+    return handleImageUpload(
+        formData,
+        oldFilePath,
+        { bucket: 'news-images', folderId: '', prefix: 'news' },
+        getAuthorizedUser,
+    );
 }
 
 /**
  * Helper mechanism to standalone-delete image URLs when removing database records entirely.
  */
 export async function deleteStorageFileAction(url: string, bucket: string) {
-    const user = await getAuthorizedUser();
-    if (!user) return { success: false, message: 'Authentication required.' };
+    const authorized = bucket === 'avatar-images' ? await getAuthenticatedUser() : await getAuthorizedUser();
+    if (!authorized) return { success: false, message: 'Authentication required.' };
 
     try {
         const path = getStoragePath(url);

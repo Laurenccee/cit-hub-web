@@ -1,3 +1,4 @@
+import { ROLES } from "@/utils/constants/roles";
 import { ROUTES } from "@/utils/constants/routes";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
@@ -50,10 +51,11 @@ export async function updateSession(request: NextRequest) {
     ROUTES.SCHEDULE,
     ROUTES.PERSONNEL,
     ROUTES.PIONEERS,
+    ROUTES.EVENTS,
   ];
   const PUBLIC_ROUTE_PREFIXES = [
     "/personnel/", // Matches /personnel/[id]
-    "/bulletin/",  // Matches /bulletin/[slug]
+    "/bulletin/", // Matches /bulletin/[slug]
   ];
 
   if (!user) {
@@ -119,15 +121,39 @@ export async function updateSession(request: NextRequest) {
         }
       }
     } else if (role === 2) {
-      if (path !== ROUTES.STUDENT_SETUP) {
-        return NextResponse.redirect(
-          new URL(ROUTES.STUDENT_SETUP, request.url),
-        );
+      // Pioneer: completes their own student profile.
+      const { data: student } = await supabase
+        .from("students")
+        .select("id")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const hasStudentData = !!student;
+
+      if (!hasStudentData) {
+        if (path !== ROUTES.STUDENT_SETUP) {
+          return NextResponse.redirect(
+            new URL(ROUTES.STUDENT_SETUP, request.url),
+          );
+        }
+      } else {
+        if (path === ROUTES.STUDENT_SETUP) {
+          return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
+        }
       }
     } else if (role === 0) {
       if (path === ROUTES.PERSONNEL_SETUP || path === ROUTES.STUDENT_SETUP) {
         return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
       }
+    }
+
+    // Only Admins and Pioneers (student officers) may access the Students directory.
+    if (
+      path === ROUTES.STUDENTS &&
+      role !== ROLES.ADMIN &&
+      role !== ROLES.PIONEER
+    ) {
+      return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
     }
   }
 
