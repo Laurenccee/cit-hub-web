@@ -13,6 +13,7 @@ export const ROUTES = {
   PIONEERS: "/pioneers",
   EVENTS: "/events",
   STUDENTS: "/students",
+  DESK: "/desk",
 
   PERSONNEL_SETUP: "/personnel/setup",
   PERSONNEL_EDIT: (id: string) => `/personnel/${id}/edit` as const,

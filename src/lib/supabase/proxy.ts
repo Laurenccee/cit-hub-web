@@ -52,10 +52,12 @@ export async function updateSession(request: NextRequest) {
     ROUTES.PERSONNEL,
     ROUTES.PIONEERS,
     ROUTES.EVENTS,
+    ROUTES.DESK,
   ];
   const PUBLIC_ROUTE_PREFIXES = [
     "/personnel/", // Matches /personnel/[id]
     "/bulletin/", // Matches /bulletin/[slug]
+    "/events/", // Matches /events/[slug]
   ];
 
   if (!user) {

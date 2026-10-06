@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useState } from "react";
 import Link from "next/link";
 import {
   Clock,
@@ -13,51 +12,39 @@ import {
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { EventItem } from "../types";
-import { EventCover } from "./EventCover";
+import { EventAttendance, EventItem } from "../types";
+import { EventImage } from "./EventImage";
 import { LiveActivityFeed } from "./LiveActivityFeed";
+import { isEventLive } from "../utils";
 
 interface EventHeroProps {
   event: EventItem;
+  attendance: EventAttendance;
 }
 
-const departedCount = 18;
-
-export function EventHero({ event }: EventHeroProps) {
-  const [present, setPresent] = useState(event.capacity_filled ?? 342);
-  const [logging, setLogging] = useState(false);
-
-  const total = present + departedCount;
-
-  const handleScan = useCallback(() => {
-    setPresent((count) => count + 1);
-  }, []);
-
-  const handleLog = () => {
-    setLogging(true);
-    window.setTimeout(() => {
-      setPresent((count) => count + 1);
-      setLogging(false);
-    }, 600);
-  };
+export function EventHero({ event, attendance }: EventHeroProps) {
+  const { present, departed, total } = attendance;
+  const live = isEventLive(event);
 
   return (
     <div className="grid overflow-hidden rounded-xl border bg-white shadow-sm lg:grid-cols-[minmax(0,1fr)_340px]">
       {/* Left: event spotlight */}
       <div className="min-w-0 p-4 sm:p-5">
         <div className="relative">
-          <EventCover
-            cover={event.cover ?? "symposium"}
+          <EventImage
+            event={event}
             rounded="rounded-lg"
-            className="aspect-[21/9]"
+            className="aspect-21/9"
+            priority
+            sizes="(max-width: 1024px) 100vw, 60vw"
           />
           <div className="absolute left-3 top-3 flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#c2172b] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white shadow">
               <span className="h-1.5 w-1.5 rounded-full bg-white" />
-              Live in progress
+              {live ? "Live in progress" : "Upcoming event"}
             </span>
             <span className="text-[11px] font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-              Ends in 2h 45m
+              {sessionLabel(event.start_date, event.end_date)}
             </span>
           </div>
         </div>
@@ -116,7 +103,7 @@ export function EventHero({ event }: EventHeroProps) {
               className="h-8 gap-1.5 bg-white text-xs"
             >
               <FileText className="h-3.5 w-3.5" />
-              View Roster ({present})
+              View Roster ({total})
             </Button>
           </div>
           <span className="text-[11px] text-slate-400">
@@ -171,30 +158,32 @@ export function EventHero({ event }: EventHeroProps) {
           <Button
             type="button"
             size="sm"
-            disabled={logging}
-            onClick={handleLog}
             className="h-9 gap-1.5 bg-[#8B1A1A] text-xs font-semibold hover:bg-[#6B1515]"
+            asChild
           >
-            <LogIn className="h-3.5 w-3.5" />
-            Event Log In
+            <Link href={`/events/${event.id}/login`}>
+              <LogIn className="h-3.5 w-3.5" />
+              Event Log In
+            </Link>
           </Button>
           <Button
             type="button"
             size="sm"
             variant="outline"
-            disabled={logging}
-            onClick={handleLog}
             className="h-9 gap-1.5 bg-white text-xs font-semibold"
+            asChild
           >
-            <LogOut className="h-3.5 w-3.5" />
-            Event Log Out
+            <Link href={`/events/${event.id}/logout`}>
+              <LogOut className="h-3.5 w-3.5" />
+              Event Log Out
+            </Link>
           </Button>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
           {[
             { label: "Present", value: String(present), accent: false },
-            { label: "Departed", value: String(departedCount), accent: false },
+            { label: "Departed", value: String(departed), accent: false },
             { label: "Total Pass", value: String(total), accent: true },
           ].map((stat) => (
             <div
@@ -214,7 +203,10 @@ export function EventHero({ event }: EventHeroProps) {
         </div>
 
         <div className="mt-auto border-t border-slate-100 pt-3">
-          <LiveActivityFeed onScan={handleScan} />
+          <LiveActivityFeed
+            eventId={event.id}
+            initialRecent={attendance.recent}
+          />
         </div>
       </div>
     </div>
@@ -230,4 +222,27 @@ function formatRange(start: string, end?: string) {
   const startLabel = format(start);
   if (!end) return startLabel;
   return `${startLabel} – ${format(end)}`;
+}
+
+function sessionLabel(start: string, end?: string | null) {
+  const now = Date.now();
+  const startAt = new Date(start).getTime();
+  if (end) {
+    const endAt = new Date(end).getTime();
+    if (now > endAt) return "Session ended";
+    if (now >= startAt) {
+      const mins = Math.max(1, Math.round((endAt - now) / 60000));
+      if (mins < 60) return `Ends in ${mins} min${mins === 1 ? "" : "s"}`;
+      const hours = Math.floor(mins / 60);
+      const rest = mins % 60;
+      return rest === 0 ? `Ends in ${hours} hr${hours === 1 ? "" : "s"}` : `Ends in ${hours}h ${rest}m`;
+    }
+  }
+  if (now < startAt) {
+    return `Starts ${new Date(start).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    })}`;
+  }
+  return "Live now";
 }

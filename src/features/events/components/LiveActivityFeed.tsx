@@ -1,95 +1,154 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { DeskCheckin, EventAttendanceRecord } from '../types';
+import { getRecentCheckinsAction } from '../action';
 
 interface ScanRow {
-    key: string;
-    cardId: string;
-    name: string;
-    elapsed: number;
+  key: string;
+  title: string;
+  subtitle: string;
+  direction: 'in' | 'out';
+  elapsed: number;
 }
-
-const scanPool = [
-    { cardId: 'CIT-2023-8812', name: 'Marc V. (CCS)' },
-    { cardId: 'CIT-2022-0419', name: 'Clarisse D. (COE)' },
-    { cardId: 'CIT-2024-1103', name: 'Jessa R. (CIT)' },
-    { cardId: 'CIT-2021-7756', name: 'Paolo S. (CCS)' },
-    { cardId: 'CIT-2023-5521', name: 'Aerol T. (COE)' },
-];
 
 function formatAgo(elapsed: number) {
-    if (elapsed < 60) return `${elapsed}s ago`;
-    return `${Math.floor(elapsed / 60)}m ago`;
+  if (elapsed < 60) return `${elapsed}s ago`;
+  return `${Math.floor(elapsed / 60)}m ago`;
 }
 
-export function LiveActivityFeed({ onScan }: { onScan?: () => void }) {
-    const [rows, setRows] = useState<ScanRow[]>([
-        { key: 'row-0', ...scanPool[0], elapsed: 12 },
-        { key: 'row-1', ...scanPool[1], elapsed: 45 },
-    ]);
-    const [poolIndex, setPoolIndex] = useState(2);
+function recordToScanRow(record: DeskCheckin | EventAttendanceRecord): ScanRow {
+  const isCheckIn = Boolean(record.check_in) && !record.check_out;
+  const timestamp = (isCheckIn ? record.check_in : record.check_out) ?? record.created_at;
+  const student = (record as DeskCheckin).student ?? null;
 
-    useEffect(() => {
-        const timer = window.setInterval(() => {
-            setRows((current) =>
-                current.map((row) => ({ ...row, elapsed: row.elapsed + 1 })),
-            );
-        }, 1000);
-        return () => window.clearInterval(timer);
-    }, []);
+  const title = student
+    ? `${student.first_name} ${student.last_name}`
+    : 'Unknown visitor';
+  const subtitle = student?.student_id ?? 'Unregistered';
 
-    useEffect(() => {
-        const timer = window.setInterval(() => {
-            const next = scanPool[poolIndex % scanPool.length];
-            setRows((current) =>
-                [
-                    {
-                        key: `row-${Date.now()}`,
-                        ...next,
-                        elapsed: 3,
-                    },
-                    ...current,
-                ].slice(0, 3),
-            );
-            setPoolIndex((index) => index + 1);
-            onScan?.();
-        }, 18000);
-        return () => window.clearInterval(timer);
-    }, [poolIndex, onScan]);
+  return {
+    key: record.id,
+    title,
+    subtitle,
+    direction: isCheckIn ? 'in' : 'out',
+    elapsed: Math.max(0, Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000)),
+  };
+}
 
-    return (
-        <div>
-            <div className="flex items-center justify-between">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                    Recent live activity
-                </p>
-                <p className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                    <span className="relative flex h-1.5 w-1.5">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-60" />
-                        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-500" />
-                    </span>
-                    Auto-syncing • Gate A
-                </p>
-            </div>
-            <ul className="mt-2 flex flex-col gap-1.5">
-                {rows.map((row) => (
-                    <li
-                        key={row.key}
-                        className="flex items-center gap-2 rounded-md border border-slate-100 bg-white px-2.5 py-1.5"
-                    >
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" />
-                        <span className="truncate text-[11px] font-bold text-slate-800">
-                            {row.cardId}
-                        </span>
-                        <span className="truncate text-[11px] text-slate-400">
-                            {row.name}
-                        </span>
-                        <span className="ml-auto shrink-0 rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-semibold text-green-700">
-                            In • {formatAgo(row.elapsed)}
-                        </span>
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
+export function LiveActivityFeed({
+  eventId,
+  initialRecent = [],
+}: {
+  eventId: string;
+  initialRecent?: (DeskCheckin | EventAttendanceRecord)[];
+}) {
+  const [rows, setRows] = useState<ScanRow[]>(() =>
+    initialRecent.slice(0, 3).map(recordToScanRow),
+  );
+
+  // Keep the "Xs ago" labels ticking.
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setRows((current) =>
+        current.map((row) => ({ ...row, elapsed: row.elapsed + 1 })),
+      );
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  // Real-time taps, with a slow poll only as a fallback.
+  useEffect(() => {
+    let cancelled = false;
+    let inflight = false;
+
+    const fetchRecent = async () => {
+      if (inflight || cancelled) return;
+      inflight = true;
+      try {
+        const data = await getRecentCheckinsAction(eventId);
+        if (cancelled) return;
+        const records = (data.checkins ?? []) as DeskCheckin[];
+        setRows(records.slice(0, 3).map(recordToScanRow));
+      } catch {
+        // Keep the last known rows on network failure.
+      } finally {
+        inflight = false;
+      }
+    };
+
+    const channel = createClient()
+      .channel(`attendance-feed:${eventId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'event_attendance',
+          filter: `event_id=eq.${eventId}`,
+        },
+        () => {
+          void fetchRecent();
+        },
+      )
+      .subscribe();
+
+    const timer = window.setInterval(fetchRecent, 45000);
+    fetchRecent();
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      void createClient().removeChannel(channel);
+    };
+  }, [eventId]);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+          Recent live activity
+        </p>
+        <p className="flex items-center gap-1.5 text-[10px] text-slate-400">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-60" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-500" />
+          </span>
+          Auto-syncing • Gate A
+        </p>
+      </div>
+      <ul className="mt-2 flex flex-col gap-1.5">
+        {rows.map((row) => (
+          <li
+            key={row.key}
+            className="flex items-center gap-2 rounded-md border border-slate-100 bg-white px-2.5 py-1.5"
+          >
+            <span
+              className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                row.direction === 'in' ? 'bg-green-500' : 'bg-amber-500'
+              }`}
+            />
+            <span className="truncate text-[11px] font-bold text-slate-800">
+              {row.title}
+            </span>
+            <span className="truncate text-[11px] text-slate-400">{row.subtitle}</span>
+            <span
+              className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                row.direction === 'in'
+                  ? 'bg-green-50 text-green-700'
+                  : 'bg-amber-50 text-amber-700'
+              }`}
+            >
+              {row.direction === 'in' ? 'In' : 'Out'} • {formatAgo(row.elapsed)}
+            </span>
+          </li>
+        ))}
+        {rows.length === 0 && (
+          <li className="text-center text-xs text-slate-400 py-2">
+            No recent activity
+          </li>
+        )}
+      </ul>
+    </div>
+  );
 }

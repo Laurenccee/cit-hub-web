@@ -2,12 +2,19 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { UserGroup03Icon } from "@hugeicons/core-free-icons";
-import { getStudents } from "../action/queries";
+import { getStudents, getStudentsPageData } from "../action/queries";
 import EditStudentDialog from "./EditStudentDialog";
 import PromoteToPioneerButton from "./PromoteToPioneerButton";
+import { Course, Major } from "../types";
 
 export default async function StudentsTable() {
-  const { success, data: students } = await getStudents();
+  const [studentsResult, pageDataResult] = await Promise.all([
+    getStudents(),
+    getStudentsPageData(),
+  ]);
+
+  const { success, data: students } = studentsResult;
+  const { courses, majors } = pageDataResult;
 
   if (!success || students.length === 0) {
     return (
@@ -65,8 +72,8 @@ export default async function StudentsTable() {
                   </div>
                 </div>
               </td>
-              <td className="px-4 py-3">{student.student_number || "—"}</td>
-              <td className="px-4 py-3">{student.program || "—"}</td>
+              <td className="px-4 py-3">{student.student_id || "—"}</td>
+              <td className="px-4 py-3">{student.courses?.name || student.majors?.name || "—"}</td>
               <td className="px-4 py-3">
                 {[student.year_level, student.section]
                   .filter(Boolean)
@@ -85,7 +92,7 @@ export default async function StudentsTable() {
               <td className="px-4 py-3 text-right">
                 <div className="flex items-center justify-end gap-2">
                   <PromoteToPioneerButton student={student} />
-                  <EditStudentDialog student={student} />
+                  <EditStudentDialog student={student} courses={courses} majors={majors} />
                 </div>
               </td>
             </tr>

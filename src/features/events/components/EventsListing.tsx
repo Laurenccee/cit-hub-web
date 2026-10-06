@@ -1,19 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import {
-  endOfMonth,
-  endOfWeek,
-  isWithinInterval,
-  startOfMonth,
-  startOfWeek,
-} from "date-fns";
 import { CalendarX2, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EventCategory, EventItem } from "../types";
 import EventCard, { isAcademicEvent } from "./EventCard";
+import { CardEmptyState } from "@/components/shared/CardEmptyState";
 
 type Tab = "all" | "upcoming" | "week" | "month" | "academic" | "student-life";
 type SortOrder = "soonest" | "latest" | "alphabetical";
@@ -46,20 +40,35 @@ export function EventsListing({ events }: EventsListingProps) {
   };
 
   const now = new Date();
-  const weekInterval = {
-    start: startOfWeek(now, { weekStartsOn: 1 }),
-    end: endOfWeek(now, { weekStartsOn: 1 }),
+  
+  // Week interval (Monday to Sunday)
+  const currentDay = now.getDay();
+  const diffToMonday = (currentDay + 6) % 7;
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - diffToMonday);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+
+  // Month interval
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+  const isWithinInterval = (date: Date, start: Date, end: Date) => {
+    return date >= start && date <= end;
   };
-  const monthInterval = { start: startOfMonth(now), end: endOfMonth(now) };
+
   const normalizedSearch = searchTerm.trim().toLocaleLowerCase();
 
   const filteredEvents = events
     .filter((event) => {
       const eventDate = new Date(event.start_date);
       if (activeTab === "upcoming" && !(eventDate >= now)) return false;
-      if (activeTab === "week" && !isWithinInterval(eventDate, weekInterval))
+      if (activeTab === "week" && !isWithinInterval(eventDate, startOfWeek, endOfWeek))
         return false;
-      if (activeTab === "month" && !isWithinInterval(eventDate, monthInterval))
+      if (activeTab === "month" && !isWithinInterval(eventDate, startOfMonth, endOfMonth))
         return false;
       if (activeTab === "academic" && !isAcademicEvent(event)) return false;
       if (activeTab === "student-life" && isAcademicEvent(event)) return false;
@@ -187,29 +196,25 @@ export function EventsListing({ events }: EventsListingProps) {
           ))}
         </div>
       ) : (
-        <Card className="border-dashed bg-white/80 py-12 text-center">
-          <CardContent className="flex flex-col items-center gap-2">
-            <CalendarX2 className="h-10 w-10 text-slate-300" />
-            <p className="text-sm font-medium text-slate-600">
-              No events match these filters
-            </p>
-            <p className="text-xs text-slate-400">
-              Try another tab, category, or search term.
-            </p>
+        <Card className="border-dashed bg-white/80 py-6">
+          <CardEmptyState
+            icon={<CalendarX2 className="h-8 w-8 text-slate-400" />}
+            title="No events match these filters"
+            description="Try another tab, category, or search term."
+          />
+          <div className="flex justify-center mt-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={clearFilters}
-              className="mt-2"
             >
               Clear filters
             </Button>
-          </CardContent>
+          </div>
         </Card>
       )}
 
-      {/* Pagination */}
       {pageCount > 1 && (
         <nav
           className="flex items-center justify-center gap-1.5 pt-2"
