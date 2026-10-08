@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { EventSchema, type EventFormData } from "../schema/event";
 import { createEventAction } from "../action";
+import { deleteStorageFileAction, uploadEventImageAction } from "@/actions/image";
 import type { UseEventFormProps } from "../types";
 
 function slugify(text: string): string {
@@ -52,27 +53,36 @@ export function useEventForm({ onSuccess, onClose }: UseEventFormProps) {
 
   /**
    * Submit handler. Receives a validated EventFormData object from RHF.
-   * Image upload is handled separately: the blob is converted to a base64
-   * data URL so it can cross the server-action boundary.
+   * The cover image is uploaded first through `uploadEventImageAction` (the
+   * same FormData flow used by useStudentForm/usePersonnelForm/NewsForm) and
+   * the resulting public URL is passed to the action.
    */
   const onSubmit = (imageBlobRef: React.RefObject<Blob | null>) =>
     handleSubmit((data: EventFormData) => {
       startTransition(async () => {
         try {
-          let imageBlobDataUrl: string | null = null;
+          let imageUrl: string | undefined;
 
           if (imageBlobRef.current) {
-            imageBlobDataUrl = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result as string);
-              reader.onerror = () => reject(new Error("Failed to read image"));
-              reader.readAsDataURL(imageBlobRef.current!);
-            });
+            const fd = new FormData();
+            fd.append("file", imageBlobRef.current, "event.jpg");
+
+            const uploadResult = await uploadEventImageAction(fd);
+            if (!uploadResult.success) {
+              toast.error(uploadResult.message ?? "Failed to upload image.");
+              return;
+            }
+            imageUrl = uploadResult.url;
           }
 
-          const result = await createEventAction(data, imageBlobDataUrl);
+          const result = await createEventAction(data, imageUrl);
 
           if (!result.success) {
+            // Roll back the uploaded cover image so a failed insert does not
+            // leave an orphaned file in storage.
+            if (imageUrl) {
+              await deleteStorageFileAction(imageUrl, "event-images");
+            }
             // Map server-side field errors back to RHF so they render inline.
             if (result.fieldErrors) {
               Object.entries(result.fieldErrors).forEach(([field, messages]) => {

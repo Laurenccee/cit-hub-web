@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EventAttendance, EventItem } from "../types";
-import { EventImage } from "./EventImage";
-import { LiveActivityFeed } from "./LiveActivityFeed";
+import EventImage from "./EventImage";
+import LiveActivityFeed from "./LiveActivityFeed";
 import { isEventLive } from "../utils";
 
 interface EventHeroProps {
@@ -22,7 +22,7 @@ interface EventHeroProps {
   attendance: EventAttendance;
 }
 
-export function EventHero({ event, attendance }: EventHeroProps) {
+export default function EventHero({ event, attendance }: EventHeroProps) {
   const { present, departed, total } = attendance;
   const live = isEventLive(event);
 

@@ -4,7 +4,7 @@ import {
   GetEventAttendance,
   GetEventByIdOrSlug,
 } from "@/features/events/action/queries";
-import { GateTerminal } from "@/features/events/components/GateTerminal";
+import GateTerminal from "@/features/events/components/GateTerminal";
 
 interface GatePageProps {
   params: Promise<{ slug: string }>;

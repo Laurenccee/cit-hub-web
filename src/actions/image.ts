@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { getAuthorizedUser } from '.';
+import { getAuthorizedAdmin, getAuthorizedUser } from '.';
 
 interface UploadConfig {
     bucket: string;
@@ -135,10 +135,28 @@ export async function uploadNewsImageAction(formData: FormData, oldFilePath?: st
 }
 
 /**
+ * Universally handles Event Cover Images
+ * Bucket layout: 'event-images' -> 'event-timestamp.jpg' (Flat layout structure)
+ */
+export async function uploadEventImageAction(formData: FormData, oldFilePath?: string | null) {
+    return handleImageUpload(
+        formData,
+        oldFilePath,
+        { bucket: 'event-images', folderId: '', prefix: 'event' },
+        getAuthorizedAdmin,
+    );
+}
+
+/**
  * Helper mechanism to standalone-delete image URLs when removing database records entirely.
  */
 export async function deleteStorageFileAction(url: string, bucket: string) {
-    const authorized = bucket === 'avatar-images' ? await getAuthenticatedUser() : await getAuthorizedUser();
+    const authorized =
+        bucket === 'avatar-images'
+            ? await getAuthenticatedUser()
+            : bucket === 'event-images'
+              ? await getAuthorizedAdmin()
+              : await getAuthorizedUser();
     if (!authorized) return { success: false, message: 'Authentication required.' };
 
     try {

@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { DeskCheckin, EventAttendanceRecord } from '../types';
-import { getRecentCheckinsAction } from '../action';
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { DeskCheckin, EventAttendanceRecord } from "../types";
+import { getRecentCheckinsAction } from "../action";
+import { createDebouncer } from "../utils";
 
 interface ScanRow {
   key: string;
@@ -37,7 +38,7 @@ function recordToScanRow(record: DeskCheckin | EventAttendanceRecord): ScanRow {
   };
 }
 
-export function LiveActivityFeed({
+export default function LiveActivityFeed({
   eventId,
   initialRecent = [],
 }: {
@@ -78,6 +79,7 @@ export function LiveActivityFeed({
       }
     };
 
+    const debouncedFetch = createDebouncer();
     const channel = createClient()
       .channel(`attendance-feed:${eventId}`)
       .on(
@@ -88,9 +90,7 @@ export function LiveActivityFeed({
           table: 'event_attendance',
           filter: `event_id=eq.${eventId}`,
         },
-        () => {
-          void fetchRecent();
-        },
+        () => debouncedFetch.schedule(() => void fetchRecent()),
       )
       .subscribe();
 
@@ -99,6 +99,7 @@ export function LiveActivityFeed({
     return () => {
       cancelled = true;
       window.clearInterval(timer);
+      debouncedFetch.cancel();
       void createClient().removeChannel(channel);
     };
   }, [eventId]);

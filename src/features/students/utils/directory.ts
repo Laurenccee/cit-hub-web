@@ -1,30 +1,25 @@
-import { DirectoryStudent, Student, StudentDepartment } from "../types";
+import { DirectoryStudent, Student } from "../types";
 
-export function departmentFromProgram(course?: string | null): {
-  department: StudentDepartment;
-  college: string;
-} {
+/** Map a course name to the college label shown under each row. */
+export function collegeFromProgram(course?: string | null): string {
   const text = (course ?? "").toLowerCase();
   if (
     /computer science|information systems|information technology|software|data science/.test(
       text,
     )
   ) {
-    return { department: "CCS", college: "College of Computer Studies (CCS)" };
+    return "College of Computer Studies (CCS)";
   }
   if (/engineering/.test(text)) {
-    return { department: "COE", college: "College of Engineering (COE)" };
+    return "College of Engineering (COE)";
   }
   if (/accountancy|business|marketing|management|administration/.test(text)) {
-    return {
-      department: "CBA",
-      college: "College of Business & Accountancy (CBA)",
-    };
+    return "College of Business & Accountancy (CBA)";
   }
   if (/communication|arts|media|multimedia/.test(text)) {
-    return { department: "CAS", college: "College of Arts & Sciences (CAS)" };
+    return "College of Arts & Sciences (CAS)";
   }
-  return { department: "OTHER", college: "CIT" };
+  return "CIT";
 }
 
 export function formatYearLevel(yearLevel?: string | null) {
@@ -36,7 +31,6 @@ export function formatYearLevel(yearLevel?: string | null) {
 
 export function mapStudentToDirectory(student: Student): DirectoryStudent {
   const courseName = student.courses?.name ?? student.courses?.code ?? null;
-  const { department, college } = departmentFromProgram(courseName);
   const linked = Boolean(student.rfid_uid);
   return {
     id: student.id,
@@ -44,12 +38,12 @@ export function mapStudentToDirectory(student: Student): DirectoryStudent {
     lastName: student.last_name,
     photoUrl: student.profile_picture_url,
     yearLevel: formatYearLevel(student.year_level),
-    standing: "Good Standing",
     studentId: student.student_id ?? "—",
     course: courseName ?? "—",
     major: student.majors?.name ?? null,
-    college,
-    department,
+    majorId: student.major_id ?? student.majors?.id ?? null,
+    majorCode: student.majors?.code ?? null,
+    college: collegeFromProgram(courseName),
     rfidStatus: linked ? "linked" : "unlinked",
     nfcTag: linked ? `NFC-${student.rfid_uid!.slice(-6).toUpperCase()}` : null,
     rfidUid: student.rfid_uid,

@@ -2,14 +2,17 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { v4 as uuidv4 } from 'uuid';
+import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
+import { getAuthorizedAdmin } from '@/actions';
+import { ROUTES } from '@/utils/constants/routes';
 import { EventSchema, type EventFormData } from '../schema/event';
 import { GetEventCategories, GetDeskCheckins, GetEventAttendance } from './queries';
+import { uidVariants } from '../utils';
 import type {
   DeskCheckinRecord,
   DeskCheckinResult,
   DeskStudent,
+  DeskTapContext,
   OpenVisitMessages,
   CreateEventResult,
 } from '../types';
@@ -21,29 +24,22 @@ export async function getEventCategoriesAction() {
 }
 
 /**
- * Create a new event. Accepts a validated, typed EventFormData object —
- * the caller (useEventForm) owns form validation via zodResolver.
- * Form keys use camelCase; this action maps them to snake_case DB columns.
+ * Shared pipeline for event mutations: authorize, re-validate, map camelCase
+ * form keys to snake_case columns, run the DB operation, revalidate and
+ * translate failures into the `CreateEventResult` contract the form expects.
  */
-export async function createEventAction(
-  values: EventFormData & { imageBlob?: string | null },
-  imageBlobDataUrl?: string | null,
+async function executeEventMutation(
+  values: EventFormData,
+  imageUrl: string | null | undefined,
+  failureMessage: string,
+  dbOperation: (
+    supabase: SupabaseClient,
+    payload: Record<string, unknown>,
+    userId: string,
+  ) => PromiseLike<{ data: { id: string } | null; error: PostgrestError | null }>,
 ): Promise<CreateEventResult> {
-  const supabase = await createClient();
-
-  // Check if user is admin
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return { success: false, error: 'Unauthorized' };
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role_id')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile || profile.role_id !== 0) {
+  const authorized = await getAuthorizedAdmin();
+  if (!authorized) {
     return { success: false, error: 'Forbidden: Admin only' };
   }
 
@@ -61,97 +57,61 @@ export async function createEventAction(
   }
 
   const data = validation.data;
+  const supabase = await createClient();
 
-  let image_url: string | null = null;
+  const payload = {
+    title: data.title,
+    slug: data.slug,
+    description: data.description || null,
+    location: data.location,
+    start_date: data.startDate ? new Date(data.startDate).toISOString() : data.startDate,
+    end_date: data.endDate ? new Date(data.endDate).toISOString() : null,
+    category_id: data.categoryId || null,
+    image_url: imageUrl ?? null,
+    image_alt: data.imageAlt || null,
+    is_published: data.isPublished,
+    is_featured: data.isFeatured,
+    is_archived: false,
+  };
 
-  // Handle image upload if provided (passed as a base64 data URL from the
-  // client because File/Blob objects cannot cross the server action boundary).
-  if (imageBlobDataUrl) {
-    try {
-      const base64 = imageBlobDataUrl.split(',')[1];
-      const mimeMatch = imageBlobDataUrl.match(/data:([^;]+);/);
-      const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-      const ext = mime.split('/')[1] || 'jpg';
-      const buffer = Buffer.from(base64, 'base64');
-      const fileName = `${uuidv4()}.${ext}`;
-      const filePath = `events/${fileName}`;
+  try {
+    const { data: event, error: dbError } = await dbOperation(supabase, payload, authorized.user.id);
+    if (dbError) throw dbError;
 
-      const { error: uploadError } = await supabase.storage
-        .from('news-images')
-        .upload(filePath, buffer, {
-          contentType: mime,
-          upsert: false,
-        });
+    revalidatePath(ROUTES.EVENTS);
+    revalidatePath(`${ROUTES.EVENTS}/[slug]`, 'page');
 
-      if (uploadError) {
-        console.error('Image upload error:', uploadError);
-        return { success: false, error: 'Failed to upload image' };
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('news-images')
-        .getPublicUrl(filePath);
-
-      image_url = publicUrl;
-    } catch (err) {
-      console.error('Image upload failed:', err);
-      return { success: false, error: 'Failed to upload image' };
-    }
-  }
-
-  // Map camelCase form keys to snake_case DB columns.
-  const { data: event, error: eventError } = await supabase
-    .from('events')
-    .insert({
-      title: data.title,
-      slug: data.slug,
-      description: data.description || null,
-      location: data.location,
-      start_date: data.startDate ? new Date(data.startDate).toISOString() : data.startDate,
-      end_date: data.endDate ? new Date(data.endDate).toISOString() : null,
-      category_id: data.categoryId || null,
-      image_url,
-      image_alt: data.imageAlt || null,
-      is_published: data.isPublished,
-      is_featured: data.isFeatured,
-      is_archived: false,
-      created_by: user.id,
-      updated_by: user.id,
-    })
-    .select('id, slug')
-    .single();
-
-  if (eventError) {
-    console.error('Event creation error:', eventError);
+    return { success: true, eventId: event?.id };
+  } catch (error) {
+    console.error('Event mutation error:', error);
     // Handle unique constraint violations
-    if (eventError.code === '23505') {
+    if ((error as { code?: string } | null)?.code === '23505') {
       return { success: false, error: 'An event with this slug already exists' };
     }
-    return { success: false, error: 'Failed to create event' };
+    return { success: false, error: failureMessage };
   }
-
-  // Revalidate events page
-  revalidatePath('/events');
-  revalidatePath('/events/[slug]', 'page');
-
-  return { success: true, eventId: event.id };
 }
 
-// ---------------------------------------------------------------------------
-// Re-export DeskStudent and DeskDirection for backward compat. New code should
-// import them from ../types.
-// ---------------------------------------------------------------------------
-
-/** @see types/index.ts — DeskStudent is now the canonical location. */
-export type { DeskStudent } from '../types';
+/**
+ * Create a new event. Accepts a validated, typed EventFormData object —
+ * the caller (useEventForm) owns form validation via zodResolver and uploads
+ * the cover image through `uploadEventImageAction` before submitting.
+ * Form keys use camelCase; this action maps them to snake_case DB columns.
+ */
+export async function createEventAction(
+  values: EventFormData,
+  imageUrl?: string | null,
+): Promise<CreateEventResult> {
+  return executeEventMutation(values, imageUrl, 'Failed to create event', (supabase, payload, userId) =>
+    supabase
+      .from('events')
+      .insert({ ...payload, created_by: userId, updated_by: userId })
+      .select('id')
+      .single(),
+  );
+}
 
 export type DeskDirection = 'in' | 'out';
-
-function uidVariants(cardUid: string) {
-  const raw = cardUid.trim();
-  const compact = raw.replace(/[\s:.-]/g, '').toUpperCase();
-  return Array.from(new Set([raw, raw.toUpperCase(), compact]));
-}
 
 /**
  * Resolve a tapped card to a student. Uses the service-role client because
@@ -182,22 +142,61 @@ export async function lookupStudentByCardAction(
 }
 
 /**
+ * Has this exact device tap already been committed? Offline replays retry
+ * taps whose response was lost, so the answer decides between "success" and a
+ * duplicate check-in. Returns null when there is no client id to match on.
+ *
+ * Each tap owns its own key column, so only the column for this direction is
+ * consulted — a key is never shared between a check-in and a check-out.
+ */
+async function findAppliedTap(
+  supabase: SupabaseClient,
+  clientId: string | null,
+  direction: DeskDirection,
+): Promise<DeskCheckinRecord | null> {
+  if (!clientId) return null;
+
+  const { data, error } = await supabase
+    .from('event_attendance')
+    .select('id, event_id, check_in, check_out, student_id, created_at')
+    .eq(direction === 'in' ? 'check_in_client_id' : 'check_out_client_id', clientId)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Idempotency lookup error:', error.message);
+    return null;
+  }
+
+  return (data as DeskCheckinRecord | null) ?? null;
+}
+
+/**
  * Log one RFID tap at the check-in desk. IN opens a visit row (or warns when
  * the student is already inside); OUT stamps `check_out` on their open visit.
  * Unregistered cards are rejected at the gate, never recorded.
  *
  * The created/updated row is returned so the UI can update instantly without
  * refetching the page. Event validation and card lookup run in parallel.
+ *
+ * `context` carries the device-side identity of the tap. When the desk was
+ * offline the tap is replayed later, and the same `clientId` may already have
+ * been committed by an attempt whose response never arrived — that case
+ * resolves to success rather than a duplicate check-in.
  */
 export async function logDeskCheckinAction(
   eventId: string,
   cardUid: string,
   direction: DeskDirection,
+  context?: DeskTapContext,
 ): Promise<DeskCheckinResult> {
   const trimmedUid = cardUid.trim();
   if (!trimmedUid) {
     return { success: false, message: 'Empty card UID.' };
   }
+
+  const clientId = context?.clientId?.trim() || null;
+  const clientTimestamp = context?.clientTimestamp ?? null;
 
   const supabase = await createClient();
 
@@ -237,6 +236,14 @@ export async function logDeskCheckinAction(
 
   const now = new Date().toISOString();
 
+  // A replayed tap may already be committed — the original attempt could have
+  // written the row and then lost its response. Resolve that before the
+  // open-visit pre-check so a retry reports success, not "already checked in".
+  const applied = await findAppliedTap(supabase, clientId, direction);
+  if (applied) {
+    return { success: true, message: 'Tap already recorded.', student, record: applied };
+  }
+
   if (direction === 'in') {
     // Read the student's open visit alongside the event and card lookup so
     // duplicates are caught before the insert without adding a round trip.
@@ -267,13 +274,21 @@ export async function logDeskCheckinAction(
       .insert({
         event_id: eventId,
         student_id: student.id,
-        check_in: now,
+        check_in: clientTimestamp ?? now,
+        check_in_client_id: clientId,
       })
       .select('id, event_id, check_in, check_out, student_id')
       .single();
 
     if (insertError) {
       if (insertError.code === '23505') {
+        // Two unique indexes can raise this: the check_in_client_id key (this
+        // exact tap already landed) and the one-open-visit key (they are
+        // already inside).
+        const replayed = await findAppliedTap(supabase, clientId, direction);
+        if (replayed) {
+          return { success: true, message: 'Tap already recorded.', student, record: replayed };
+        }
         return {
           success: false,
           message: await describeOpenVisit(supabase, student, eventId, {
@@ -306,10 +321,14 @@ export async function logDeskCheckinAction(
   // Close the student's open visit for this event, or failing that any of
   // their open visits — a card scanned in at one desk still has to be able to
   // leave at whichever kiosk is in front of them.
+  //
+  // Only `check_out_client_id` is written: `check_in_client_id` belongs to the
+  // IN tap that opened the visit, and overwriting it would let a replayed IN
+  // slip past the idempotency check and open a second visit.
   const closeVisitForEvent = () =>
     supabase
       .from('event_attendance')
-      .update({ check_out: now })
+      .update({ check_out: clientTimestamp ?? now, check_out_client_id: clientId })
       .eq('event_id', eventId)
       .eq('student_id', student.id)
       .not('check_in', 'is', null)
@@ -319,7 +338,7 @@ export async function logDeskCheckinAction(
   const closeAnyOpenVisit = () =>
     supabase
       .from('event_attendance')
-      .update({ check_out: now })
+      .update({ check_out: clientTimestamp ?? now, check_out_client_id: clientId })
       .eq('student_id', student.id)
       .not('check_in', 'is', null)
       .is('check_out', null)

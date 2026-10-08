@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   Clock,
+  CloudOff,
   LogIn,
   LogOut,
   MapPin,
@@ -23,7 +24,8 @@ import {
 } from "../types";
 import { DeskDirection } from "../action";
 import { isEventLive } from "../utils";
-import { CheckinLogList } from "./CheckinLogList";
+import CheckinLogList from "./CheckinLogList";
+import DeskSyncBadge from "./DeskSyncBadge";
 import { useScanTerminal } from "../hooks/useScanTerminal";
 
 interface GateTerminalProps {
@@ -43,7 +45,7 @@ function formatRange(start: string, end?: string | null) {
   return `${format(start)} – ${format(end)}`;
 }
 
-export function GateTerminal({
+export default function GateTerminal({
   event,
   mode,
   initialCheckins,
@@ -60,6 +62,7 @@ export function GateTerminal({
     setManualUid,
     checkins,
     attendance,
+    syncStatus,
     processScan,
     handleManualSubmit,
   } = useScanTerminal({
@@ -95,6 +98,7 @@ export function GateTerminal({
               <span className={cn("h-1.5 w-1.5 rounded-full", live ? "bg-red-500" : "bg-slate-300")} />
               {live ? "Live now" : "Upcoming"}
             </span>
+            <DeskSyncBadge status={syncStatus} />
           </p>
           <h2 className="mt-2 truncate font-serif text-2xl font-semibold text-slate-900">
             {event.title}
@@ -137,6 +141,7 @@ export function GateTerminal({
               "flex min-h-40 flex-col items-center justify-center gap-1.5 rounded-lg border px-4 py-8 text-center",
               scan.kind === "success" && "border-green-200 bg-green-50",
               scan.kind === "warning" && "border-amber-200 bg-amber-50",
+              scan.kind === "queued" && "border-sky-200 bg-sky-50",
               scan.kind === "error" && "border-red-200 bg-red-50",
               (scan.kind === "idle" || scan.kind === "processing") &&
                 "border-dashed border-slate-200 bg-slate-50/60",
@@ -180,6 +185,15 @@ export function GateTerminal({
               <>
                 <AlertTriangle className="h-9 w-9 text-amber-500" />
                 <p className="text-sm font-semibold text-amber-800">{scan.message}</p>
+              </>
+            )}
+            {scan.kind === "queued" && (
+              <>
+                <CloudOff className="h-9 w-9 text-sky-600" />
+                <p className="text-sm font-semibold text-sky-800">{scan.message}</p>
+                <p className="text-[11px] uppercase tracking-wide text-sky-600">
+                  {scan.direction === "in" ? "Check-in" : "Check-out"} queued on this device
+                </p>
               </>
             )}
             {scan.kind === "error" && (

@@ -28,7 +28,7 @@ const tabs: { label: string; value: Tab }[] = [
   { label: "Student Life", value: "student-life" },
 ];
 
-export function EventsListing({ events }: EventsListingProps) {
+export default function EventsListing({ events }: EventsListingProps) {
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState<SortOrder>("soonest");

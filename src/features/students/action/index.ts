@@ -13,9 +13,9 @@ import {
   RegisterStudentSchema,
   StudentFormData,
   StudentSchema,
-  UpdateStudentFormData,
   UpdateStudentSchema,
 } from "../schema/student";
+import { StudentSubmitPayload } from "../types";
 
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
@@ -223,7 +223,7 @@ export async function studentSetupAction(values: StudentFormData) {
   }
 }
 
-export async function updateStudentAction(values: UpdateStudentFormData) {
+export async function updateStudentAction(values: StudentSubmitPayload) {
   const authorized = await getAuthorizedStudentManager();
   if (!authorized) return { success: false, message: "Unauthorized." };
 

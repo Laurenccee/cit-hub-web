@@ -7,7 +7,7 @@ import {
   EventItem,
 } from "../types";
 
-export { isEventLive } from "../utils/index";
+export { isEventLive } from "../utils";
 
 const RECENT_CHECKIN_LIMIT = 5;
 
@@ -105,10 +105,7 @@ export async function GetEventBySlug(
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/**
- * Resolve an event by primary key first, falling back to slug — so gate
- * links work as /events/<id>/login whether given a UUID or a slug.
- */
+
 export async function GetEventByIdOrSlug(
   value: string,
 ): Promise<{ success: boolean; data: EventItem | null }> {
@@ -140,8 +137,7 @@ export async function GetEventAttendance(
   };
   const supabase = await createClient();
 
-  // Counts and the recent slice are separate, parallel queries: counting in the
-  // database avoids shipping every attendance row just to tally it in JS.
+
   const [presentRes, departedRes, totalRes, recentRes] = await Promise.all([
     supabase
       .from("event_attendance")
@@ -182,10 +178,6 @@ export async function GetEventAttendance(
   };
 }
 
-/**
- * Live events first (started, not yet ended), then upcoming — the pool the
- * check-in desk operates on.
- */
 export async function GetDeskEvents(): Promise<{
   success: boolean;
   data: EventItem[];
@@ -205,14 +197,6 @@ export async function GetDeskEvents(): Promise<{
   return { success: true, data: (data ?? []) as EventItem[] };
 }
 
-/**
- * Recent taps for one event with the student joined, newest first.
- *
- * The student is joined in code (not via a PostgREST embed) for two reasons:
- * the desk runs on public kiosk sessions whose RLS cannot read the students
- * table, and embeds fail outright when the FK is missing from the schema
- * cache. Only minimal identity fields are returned.
- */
 export async function GetDeskCheckins(
   eventId: string,
   limit = 50,
@@ -285,5 +269,3 @@ export async function getEventsPageData() {
   };
 }
 
-/** @deprecated Use getEventsPageData instead. */
-export const getEventsData = getEventsPageData;

@@ -42,13 +42,5 @@ export const EventSchema = z.object({
 
 export const UpdateEventSchema = EventSchema.extend({ id: z.string() });
 
-// Keep the old name as an alias so any code that still references it during
-// the transition does not break at runtime before it is updated.
-/** @deprecated Use EventSchema instead. */
-export const createEventSchema = EventSchema;
-
 export type EventFormData = z.infer<typeof EventSchema>;
 export type UpdateEventFormData = z.infer<typeof UpdateEventSchema>;
-
-/** @deprecated Use EventFormData. */
-export type CreateEventInput = EventFormData;

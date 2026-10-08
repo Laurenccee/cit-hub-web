@@ -36,7 +36,7 @@ interface CreateEventDialogProps {
   onSuccess?: () => void;
 }
 
-export function CreateEventDialog({
+export default function CreateEventDialog({
   children,
   onSuccess,
 }: CreateEventDialogProps) {

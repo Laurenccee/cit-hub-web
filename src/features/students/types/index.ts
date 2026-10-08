@@ -1,3 +1,5 @@
+import type { StudentFormData } from "../schema/student";
+
 export interface Course {
   id: string;
   code: string;
@@ -29,8 +31,6 @@ export interface Student {
   majors?: Major | null;
 }
 
-export type StudentDepartment = "CCS" | "COE" | "CBA" | "CAS" | "OTHER";
-
 export type RfidStatus = "linked" | "pending" | "unlinked";
 
 export interface DirectoryStudent {
@@ -39,12 +39,15 @@ export interface DirectoryStudent {
   lastName: string;
   photoUrl?: string | null;
   yearLevel: string;
-  standing: string;
   studentId: string;
   course: string;
+  /** Display name from public.majors */
   major?: string | null;
+  /** Foreign key to public.majors.id */
+  majorId?: string | null;
+  /** Code from public.majors — drives the major filter */
+  majorCode?: string | null;
   college: string;
-  department: StudentDepartment;
   rfidStatus: RfidStatus;
   nfcTag?: string | null;
   rfidUid?: string | null;
@@ -72,12 +75,19 @@ export interface UploadActionResult {
   url?: string;
 }
 
+/**
+ * Payload `useStudentForm` hands to `submitAction`. It serves both flows: setup
+ * (no `id`) and edit (with `id`). The server action re-validates with zod, which
+ * is what enforces `id` for updates.
+ */
+export type StudentSubmitPayload = StudentFormData & { id?: string };
+
 export interface UseStudentFormProps {
   student?: Student;
   mode: "setup" | "edit";
   onPendingChange?: (isPending: boolean) => void;
   onSuccess?: () => void;
-  submitAction: (data: any) => Promise<StudentActionResult>;
+  submitAction: (data: StudentSubmitPayload) => Promise<StudentActionResult>;
   uploadAvatarAction: (
     formData: FormData,
     oldUrl?: string | null,

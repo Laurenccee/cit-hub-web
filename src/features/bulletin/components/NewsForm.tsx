@@ -78,7 +78,7 @@ export default function NewsForm({
     const handleFormSubmit: SubmitHandler<NewsFormData> = async (data) => {
         startTransition(async () => {
             let imageUrl: string | undefined = data.imageUrl || undefined;
-            let originalImageUrl = news?.image_url; // 👈 Track original state for cleanup checks
+            const originalImageUrl = news?.image_url; // 👈 Track original state for cleanup checks
 
             try {
                 if (pendingBlobRef.current) {

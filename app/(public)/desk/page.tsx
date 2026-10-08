@@ -6,7 +6,7 @@ import {
   GetEventAttendance,
   isEventLive,
 } from "@/features/events/action/queries";
-import { DeskTerminal } from "@/features/events/components/DeskTerminal";
+import DeskTerminal from "@/features/events/components/DeskTerminal";
 
 interface DeskPageProps {
   searchParams: Promise<{ event?: string }>;

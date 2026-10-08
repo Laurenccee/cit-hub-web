@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin, Pencil, QrCode, Users } from "lucide-react";
 import Link from "next/link";
 import { EventItem } from "../types";
-import { EventImage } from "./EventImage";
+import EventImage from "./EventImage";
 
 interface EventCardProps {
   event: EventItem;
@@ -61,7 +61,7 @@ export default function EventCard({ event }: EventCardProps) {
 
   return (
     <Card className="flex h-full flex-col overflow-hidden rounded-xl bg-white shadow-sm transition-shadow hover:shadow-md">
-      <EventImage event={event} className="aspect-[16/9]" />
+      <EventImage event={event} className="aspect-video" />
 
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-start justify-between gap-3">

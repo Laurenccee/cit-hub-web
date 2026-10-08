@@ -20,8 +20,8 @@ import { GetEventBySlug } from "@/features/events/action/queries";
 import { GetEventAttendance } from "@/features/events/action/queries";
 import { GetEvents } from "@/features/events/action/queries";
 import { EventItem } from "@/features/events/types";
-import { EventImage } from "@/features/events/components/EventImage";
-import { LiveActivityFeed } from "@/features/events/components/LiveActivityFeed";
+import EventImage from "@/features/events/components/EventImage";
+import LiveActivityFeed from "@/features/events/components/LiveActivityFeed";
 import {
   formatDateShort,
   formatFullDate,

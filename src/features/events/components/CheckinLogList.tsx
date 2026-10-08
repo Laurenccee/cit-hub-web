@@ -2,12 +2,12 @@
 
 import { cn } from "@/lib/utils";
 import { DeskCheckin } from "../types";
-import { StudentAvatar } from "./StudentAvatar";
+import StudentAvatar from "./StudentAvatar";
 
-export function CheckinLogList({ checkins }: { checkins: DeskCheckin[] }) {
+export default function CheckinLogList({ checkins }: { checkins: DeskCheckin[] }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-slate-100">
-      <table className="w-full min-w-[480px] text-sm">
+      <table className="w-full min-w-120 text-sm">
         <thead>
           <tr className="bg-slate-50/70 text-left text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">
             <th className="px-4 py-2.5">Time</th>

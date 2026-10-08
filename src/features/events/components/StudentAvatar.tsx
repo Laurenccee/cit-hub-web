@@ -12,7 +12,7 @@ interface StudentAvatarProps {
   size?: number;
 }
 
-export function StudentAvatar({
+export default function StudentAvatar({
   url,
   name,
   initials,

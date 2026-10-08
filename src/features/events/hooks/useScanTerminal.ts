@@ -1,9 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { DeskCheckin, EventAttendance, ScanState } from "../types";
+import {
+  DeskCheckin,
+  DeskCheckinRecord,
+  DeskStudent,
+  DeskSyncStatus,
+  EventAttendance,
+  ScanState,
+} from "../types";
 import { DeskDirection, logDeskCheckinAction, getRecentCheckinsAction } from "../action";
+import { getRosterSnapshotAction } from "../action/roster";
+import { createClientId, createDebouncer } from "../utils";
+import {
+  countPendingTaps,
+  enqueueTap,
+  findStudentByUid,
+  getRosterSyncedAt,
+  listPendingTaps,
+  removePendingTap,
+  replaceRoster,
+  toCachedStudent,
+} from "../lib/offline-db";
 
 interface UseScanTerminalOptions {
   eventId: string;
@@ -34,8 +53,77 @@ export function useScanTerminal({
   const [manualUid, setManualUid] = useState("");
   const [checkins, setCheckins] = useState(initialCheckins);
   const [attendance, setAttendance] = useState(initialAttendance);
+  const [online, setOnline] = useState(true);
+  const [pending, setPending] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+  const [rosterSyncedAt, setRosterSyncedAt] = useState<string | null>(null);
   const bufferRef = useRef("");
   const processingRef = useRef(false);
+  const flushingRef = useRef(false);
+
+  /** Fold one committed tap into the visible list and the counters. */
+  const applyTapResult = useCallback(
+    (record: DeskCheckinRecord, student: DeskStudent, tapDirection: DeskDirection) => {
+      const entry: DeskCheckin = {
+        ...record,
+        student: {
+          first_name: student.first_name,
+          last_name: student.last_name,
+          student_id: student.student_id,
+          profile_picture_url: student.profile_picture_url,
+        },
+      };
+      setCheckins((prev) => mergeCheckins(prev, [entry]));
+      setAttendance((prev) =>
+        tapDirection === "in"
+          ? { ...prev, present: prev.present + 1, total: prev.total + 1 }
+          : {
+              ...prev,
+              present: Math.max(0, prev.present - 1),
+              departed: prev.departed + 1,
+            },
+      );
+    },
+    [],
+  );
+
+  /**
+   * The server was unreachable. Resolve the card from the local roster so the
+   * operator still sees a name, then park the tap in IndexedDB for replay.
+   */
+  const queueOfflineTap = useCallback(
+    async (uid: string, clientId: string, clientTimestamp: string) => {
+      try {
+        const cached = await findStudentByUid(uid);
+        await enqueueTap({ id: clientId, eventId, cardUid: uid, direction, clientTimestamp });
+        const queued = await countPendingTaps();
+        setPending(queued);
+
+        // A no-op enqueue means this device cannot store taps at all.
+        if (queued === 0) {
+          setScan({
+            kind: "error",
+            message: "Offline, and this device cannot store taps. Reconnect to record.",
+          });
+          return;
+        }
+
+        setScan({
+          kind: "queued",
+          message: cached
+            ? `${cached.first_name} ${cached.last_name} — saved on this device.`
+            : `Card ${uid} — saved on this device.`,
+          direction,
+        });
+      } catch {
+        setScan({
+          kind: "error",
+          message: "Offline, and this device cannot store taps. Reconnect to record.",
+        });
+      }
+    },
+    [eventId, direction],
+  );
 
   const processScan = useCallback(
     async (cardUid: string) => {
@@ -44,29 +132,19 @@ export function useScanTerminal({
       processingRef.current = true;
       setScan({ kind: "processing", uid });
 
+      // The tap's own identity, so a retry of this exact tap is recognised as
+      // already applied instead of opening a second visit.
+      const clientId = createClientId();
+      const clientTimestamp = new Date().toISOString();
+
       try {
-        const result = await logDeskCheckinAction(eventId, uid, direction);
+        const result = await logDeskCheckinAction(eventId, uid, direction, {
+          clientId,
+          clientTimestamp,
+        });
         if (result.success && result.record && result.student) {
           // Instant local update — no page refetch.
-          const entry: DeskCheckin = {
-            ...result.record,
-            student: {
-              first_name: result.student.first_name,
-              last_name: result.student.last_name,
-              student_id: result.student.student_id,
-              profile_picture_url: result.student.profile_picture_url,
-            },
-          };
-          setCheckins((prev) => mergeCheckins(prev, [entry]));
-          setAttendance((prev) =>
-            direction === "in"
-              ? { ...prev, present: prev.present + 1, total: prev.total + 1 }
-              : {
-                  ...prev,
-                  present: Math.max(0, prev.present - 1),
-                  departed: prev.departed + 1,
-                },
-          );
+          applyTapResult(result.record, result.student, direction);
           setScan({ kind: "success", message: result.message, direction });
         } else if (result.alreadyInside || result.noActiveVisit) {
           setScan({ kind: "warning", message: result.message });
@@ -74,12 +152,103 @@ export function useScanTerminal({
           setScan({ kind: "error", message: result.message });
         }
       } catch {
-        setScan({ kind: "error", message: "Connection error. Try again." });
+        await queueOfflineTap(uid, clientId, clientTimestamp);
       } finally {
         processingRef.current = false;
       }
     },
-    [eventId, direction],
+    [eventId, direction, applyTapResult, queueOfflineTap],
+  );
+
+  /**
+   * Replay queued taps oldest-first. `listPendingTaps` sorts by client
+   * timestamp, so a check-out never lands before the check-in that opened it.
+   */
+  const flushQueue = useCallback(async () => {
+    if (flushingRef.current) return;
+    flushingRef.current = true;
+    setSyncing(true);
+    try {
+      const taps = await listPendingTaps();
+      for (const tap of taps) {
+        let result;
+        try {
+          result = await logDeskCheckinAction(tap.eventId, tap.cardUid, tap.direction, {
+            clientId: tap.id,
+            clientTimestamp: tap.clientTimestamp,
+          });
+        } catch {
+          // Still unreachable — leave the rest queued for the next attempt.
+          break;
+        }
+
+        if (result.success) {
+          await removePendingTap(tap.id);
+          if (result.record && result.student && result.record.event_id === eventId) {
+            applyTapResult(result.record, result.student, tap.direction);
+          }
+        } else if (result.alreadyInside || result.noActiveVisit) {
+          // Permanently rejected by the server; retrying will never help.
+          await removePendingTap(tap.id);
+        } else {
+          break;
+        }
+      }
+    } finally {
+      flushingRef.current = false;
+      setSyncing(false);
+      setPending(await countPendingTaps().catch(() => 0));
+    }
+  }, [eventId, applyTapResult]);
+
+  // Track connectivity so the badge and the flush trigger stay honest.
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+
+  // Cache the roster so taps can still be resolved to a name while offline.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const cachedAt = await getRosterSyncedAt();
+        if (!cancelled && cachedAt) setRosterSyncedAt(cachedAt);
+
+        const snapshot = await getRosterSnapshotAction();
+        if (cancelled || !snapshot.success) return;
+        await replaceRoster(snapshot.students.map((s) => toCachedStudent(s, s.uid)));
+        if (!cancelled) setRosterSyncedAt(snapshot.syncedAt);
+      } catch {
+        // Offline or IndexedDB unavailable — keep whatever is cached.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Drain the queue on mount, whenever the connection comes back, and on a slow
+  // retry while taps are still waiting. The retry matters because the network
+  // can be up while the server is unreachable, which `navigator.onLine` cannot
+  // see — without it those taps would sit until the next reload.
+  useEffect(() => {
+    if (!online) return;
+    void flushQueue();
+    if (pending === 0) return;
+    const timer = window.setInterval(() => void flushQueue(), 15000);
+    return () => window.clearInterval(timer);
+  }, [online, pending, flushQueue]);
+
+  const syncStatus: DeskSyncStatus = useMemo(
+    () => ({ online, pending, syncing, rosterSyncedAt }),
+    [online, pending, syncing, rosterSyncedAt],
   );
 
   // USB HID wedge capture: scanners type the UID + Enter.
@@ -139,6 +308,7 @@ export function useScanTerminal({
       }
     };
 
+    const debouncedSync = createDebouncer();
     const channel = createClient()
       .channel(`attendance:${eventId}`)
       .on(
@@ -149,9 +319,7 @@ export function useScanTerminal({
           table: "event_attendance",
           filter: `event_id=eq.${eventId}`,
         },
-        () => {
-          void sync();
-        },
+        () => debouncedSync.schedule(() => void sync()),
       )
       .subscribe();
 
@@ -162,6 +330,7 @@ export function useScanTerminal({
     return () => {
       cancelled = true;
       window.clearInterval(timer);
+      debouncedSync.cancel();
       void createClient().removeChannel(channel);
     };
   }, [eventId]);
@@ -184,6 +353,7 @@ export function useScanTerminal({
     setManualUid,
     checkins,
     attendance,
+    syncStatus,
     processScan,
     handleManualSubmit,
   };

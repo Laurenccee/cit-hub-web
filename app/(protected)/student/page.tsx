@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ROLES } from "@/utils/constants/roles";
 import { ROUTES } from "@/utils/constants/routes";
 import { Button } from "@/components/ui/button";
-import { ArrowDownUp, Download, Nfc } from "lucide-react";
+import { ArrowDownUp, Download } from "lucide-react";
 import {
   getStudents,
   getStudentsPageData,
@@ -80,14 +80,6 @@ export default async function StudentsPage() {
               >
                 <Download className="h-4 w-4 text-slate-500" />
                 Export Roster
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 gap-2 bg-white text-xs font-semibold"
-              >
-                <Nfc className="h-4 w-4 text-slate-500" />
-                Batch RFID
               </Button>
             </div>
             <RegisterStudentButton />

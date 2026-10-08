@@ -1,16 +1,12 @@
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { EventHero } from "@/features/events/components/EventHero";
-import { EventsListing } from "@/features/events/components/EventsListing";
-import { CreateEventButton } from "@/features/events/components/CreateEventButton";
+import EventHero from "@/features/events/components/EventHero";
+import EventsListing from "@/features/events/components/EventsListing";
+import CreateEventButton from "@/features/events/components/CreateEventButton";
 import {
   getEventsPageData,
   GetEventAttendance,
 } from "@/features/events/action/queries";
 import {
   EventAttendance,
-  EventCategory,
-  EventItem,
 } from "@/features/events/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "lucide-react";

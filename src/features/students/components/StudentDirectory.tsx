@@ -5,7 +5,6 @@ import Image from "next/image";
 import {
   ChevronLeft,
   ChevronRight,
-  IdCard,
   Pencil,
   Search,
   SearchX,
@@ -25,18 +24,22 @@ interface StudentDirectoryProps {
   majors: Major[];
 }
 
-type DepartmentFilter = "ALL" | "CCS" | "COE" | "CBA" | "CAS";
+type MajorFilter = "ALL" | "AT" | "MT" | "ET" | "ELX" | "CT" | "ARDT" | "CLT" | "BCWT" | "AFT";
 
 const pageSize = 8;
 
-const departments: { label: string; value: DepartmentFilter; short: string }[] =
-  [
-    { label: "All Departments", value: "ALL", short: "All" },
-    { label: "CCS • Computer Studies", value: "CCS", short: "CCS" },
-    { label: "COE • Engineering", value: "COE", short: "COE" },
-    { label: "CBA • Business Admin", value: "CBA", short: "CBA" },
-    { label: "CAS • Arts & Sciences", value: "CAS", short: "CAS" },
-  ];
+const majorFilters: { label: string; value: MajorFilter }[] = [
+  { label: "All Majors", value: "ALL" },
+  { label: "Automotive Technology", value: "AT" },
+  { label: "Mechanical Technology", value: "MT" },
+  { label: "Electrical Technology", value: "ET" },
+  { label: "Electronics Technology", value: "ELX" },
+  { label: "Construction Technology", value: "CT" },
+  { label: "Architectural Drafting Technology", value: "ARDT" },
+  { label: "Culinary Technology", value: "CLT" },
+  { label: "Beauty Care and Wellness Technology", value: "BCWT" },
+  { label: "Apparel and Fashion Technology", value: "AFT" },
+];
 
 const avatarPalette = [
   "bg-red-100 text-[#8B1A1A]",
@@ -58,14 +61,6 @@ function initials(first: string, last: string) {
   return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
 }
 
-function standingClasses(standing: string) {
-  if (/dean/i.test(standing))
-    return "border-amber-200 bg-amber-50 text-amber-700";
-  if (/probation|suspension/i.test(standing))
-    return "border-red-200 bg-red-50 text-red-700";
-  return "border-green-200 bg-green-50 text-green-700";
-}
-
 function presenceDot(presence: DirectoryStudent["presence"]) {
   if (presence === "inside") return "bg-green-500";
   if (presence === "issue") return "bg-amber-500";
@@ -80,19 +75,15 @@ export default function StudentDirectory({
   const [search, setSearch] = useState("");
   const [yearFilter, setYearFilter] = useState("all");
   const [rfidFilter, setRfidFilter] = useState("all");
-  const [standingFilter, setStandingFilter] = useState("all");
-  const [department, setDepartment] = useState<DepartmentFilter>("ALL");
+  const [major, setMajor] = useState<MajorFilter>("ALL");
   const [page, setPage] = useState(1);
-
-  const standings = useMemo(
-    () => Array.from(new Set(students.map((s) => s.standing))).sort(),
-    [students],
-  );
 
   const counts = useMemo(() => {
     const result: Record<string, number> = { ALL: students.length };
-    for (const s of students)
-      result[s.department] = (result[s.department] ?? 0) + 1;
+    for (const s of students) {
+      if (!s.majorCode) continue;
+      result[s.majorCode] = (result[s.majorCode] ?? 0) + 1;
+    }
     return result;
   }, [students]);
 
@@ -101,15 +92,13 @@ export default function StudentDirectory({
   const filtered = useMemo(
     () =>
       students.filter((s) => {
-        if (department !== "ALL" && s.department !== department) return false;
+        if (major !== "ALL" && s.majorCode !== major) return false;
         if (
           yearFilter !== "all" &&
           !s.yearLevel.toLowerCase().startsWith(yearFilter)
         )
           return false;
         if (rfidFilter !== "all" && s.rfidStatus !== rfidFilter) return false;
-        if (standingFilter !== "all" && s.standing !== standingFilter)
-          return false;
         if (!normalizedSearch) return true;
         return [
           `${s.firstName} ${s.lastName}`,
@@ -119,21 +108,13 @@ export default function StudentDirectory({
           s.course,
           s.major,
           s.college,
-          s.standing,
         ]
           .filter(Boolean)
           .join(" ")
           .toLowerCase()
           .includes(normalizedSearch);
       }),
-    [
-      students,
-      department,
-      yearFilter,
-      rfidFilter,
-      standingFilter,
-      normalizedSearch,
-    ],
+    [students, major, yearFilter, rfidFilter, normalizedSearch],
   );
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -147,8 +128,7 @@ export default function StudentDirectory({
     setSearch("");
     setYearFilter("all");
     setRfidFilter("all");
-    setStandingFilter("all");
-    setDepartment("ALL");
+    setMajor("ALL");
     setPage(1);
   };
 
@@ -168,7 +148,7 @@ export default function StudentDirectory({
                 setSearch(e.target.value);
                 resetPage();
               }}
-              placeholder="Search by student name, ID (CIT-202X), RFID UID, program, or standing..."
+              placeholder="Search by student name, ID (CIT-202X), RFID UID, or program..."
               aria-label="Search students"
               className="h-10 bg-white pl-9 pr-9 text-xs"
             />
@@ -186,7 +166,7 @@ export default function StudentDirectory({
               </button>
             )}
           </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 xl:w-auto">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:w-auto">
             <select
               value={yearFilter}
               onChange={(e) => {
@@ -216,50 +196,45 @@ export default function StudentDirectory({
               <option value="pending">Pending Assignment</option>
               <option value="unlinked">Not Linked</option>
             </select>
-            <select
-              value={standingFilter}
-              onChange={(e) => {
-                setStandingFilter(e.target.value);
-                resetPage();
-              }}
-              aria-label="Filter by academic standing"
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#8B1A1A]/30"
-            >
-              <option value="all">Academic Standing: All</option>
-              {standings.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
           </div>
         </div>
 
         <div
-          className="-mx-1 mt-3 flex gap-2 overflow-x-auto border-t border-slate-100 px-1 pt-3"
+          className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3"
           role="group"
-          aria-label="Filter by department"
+          aria-label="Filter by major"
         >
-          {departments.map(({ label, value }) => {
-            const active = department === value;
+          {majorFilters.map(({ label, value }) => {
+            const active = major === value;
             const count = counts[value] ?? 0;
             return (
               <button
                 key={value}
                 type="button"
                 aria-pressed={active}
+                aria-label={`${label} (${count.toLocaleString()})`}
                 onClick={() => {
-                  setDepartment(value);
+                  setMajor(value);
                   resetPage();
                 }}
                 className={cn(
-                  "h-8 shrink-0 rounded-lg border px-3 text-xs font-semibold transition-colors",
+                  "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors",
                   active
                     ? "border-[#8B1A1A] bg-[#8B1A1A] text-white"
                     : "border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-800",
                 )}
               >
-                {label} ({count.toLocaleString()})
+                {label}
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 py-px text-[10px] font-bold leading-4",
+                    active
+                      ? "bg-white/20 text-white"
+                      : "bg-slate-100 text-slate-500",
+                  )}
+                >
+                  {count.toLocaleString()}
+                </span>
               </button>
             );
           })}
@@ -335,17 +310,8 @@ export default function StudentDirectory({
                         <span className="block truncate text-sm font-bold text-slate-900">
                           {s.firstName} {s.lastName}
                         </span>
-                        <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-slate-500">
+                        <span className="mt-0.5 block text-xs text-slate-500">
                           {s.yearLevel}
-                          <span className="text-slate-300">•</span>
-                          <span
-                            className={cn(
-                              "rounded border px-1.5 py-px text-[10px] font-semibold leading-4",
-                              standingClasses(s.standing),
-                            )}
-                          >
-                            {s.standing}
-                          </span>
                         </span>
                       </span>
                     </div>
