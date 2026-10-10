@@ -12,6 +12,19 @@ import { PersonnelSchema, UpdatePersonnelSchema } from "../schema/personnel";
 import { Personnel, UsePersonnelFormProps } from "../types";
 import { deleteStorageFileAction } from "@/actions/image";
 
+function getFirstErrorMessage(error: unknown): string | null {
+  if (!error || typeof error !== "object") return null;
+  if ("message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message) return message;
+  }
+  for (const value of Object.values(error as Record<string, unknown>)) {
+    const nested = getFirstErrorMessage(value);
+    if (nested) return nested;
+  }
+  return null;
+}
+
 export function usePersonnelForm({
   personnel,
   mode,
@@ -138,8 +151,11 @@ export function usePersonnelForm({
     educationValues,
     formValues,
     pendingBlobRef,
-    onSubmit: handleSubmit(handleFormSubmit, (errors) =>
-      console.log("❌ Validation Errors:", errors),
-    ),
+    onSubmit: handleSubmit(handleFormSubmit, (errors) => {
+      toast.error(
+        getFirstErrorMessage(errors) ??
+          "Please complete all required fields before submitting.",
+      );
+    }),
   };
 }

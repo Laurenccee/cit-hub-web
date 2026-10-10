@@ -5,9 +5,7 @@ import {
   getEventsPageData,
   GetEventAttendance,
 } from "@/features/events/action/queries";
-import {
-  EventAttendance,
-} from "@/features/events/types";
+import { EventAttendance } from "@/features/events/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
 

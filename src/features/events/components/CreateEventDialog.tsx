@@ -22,7 +22,6 @@ import {
   Calendar,
   MapPin,
   Image,
-  AlertCircle,
 } from "lucide-react";
 import ComboboxField from "@/components/shared/ComboboxField";
 import ImageDropzone from "@/components/shared/ImageDropzone";

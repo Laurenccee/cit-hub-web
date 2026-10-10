@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CalendarX2, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { EventCategory, EventItem } from "../types";
 import EventCard, { isAcademicEvent } from "./EventCard";

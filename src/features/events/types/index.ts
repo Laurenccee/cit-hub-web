@@ -49,6 +49,12 @@ export interface DeskCheckin extends EventAttendanceRecord {
     last_name: string;
     student_id: string | null;
     profile_picture_url: string | null;
+    /** Year level as stored (e.g. "3rd Year"). */
+    year_level?: string | null;
+    course_code?: string | null;
+    course_name?: string | null;
+    major_code?: string | null;
+    major_name?: string | null;
   } | null;
 }
 
@@ -105,6 +111,21 @@ export type ScanState =
   | { kind: 'queued'; message: string; direction: 'in' | 'out' }
   | { kind: 'error'; message: string };
 
+/**
+ * The latest tap outcome, shown on the gate's ID card whether it succeeded
+ * or not — an unknown card or a duplicate tap is still a result the operator
+ * needs to see.
+ */
+export interface LastTapResult {
+  /** Resolved student, or null when the identifier matched nobody. */
+  student: DeskStudent | null;
+  /** Whatever was tapped or typed — card UID or student ID. */
+  identifier: string;
+  message: string;
+  tone: 'success' | 'warning' | 'error' | 'queued';
+  at: string;
+}
+
 // ---------------------------------------------------------------------------
 // Form / hook prop types
 // ---------------------------------------------------------------------------
@@ -131,6 +152,12 @@ export interface DeskStudent {
   last_name: string;
   student_id: string | null;
   profile_picture_url: string | null;
+  /** Year level as stored (e.g. "3rd Year"). */
+  year_level?: string | null;
+  course_code?: string | null;
+  course_name?: string | null;
+  major_code?: string | null;
+  major_name?: string | null;
 }
 
 /** One row of the desk's local card → student cache. */

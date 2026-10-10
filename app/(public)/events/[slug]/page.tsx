@@ -15,11 +15,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { GetEventBySlug } from "@/features/events/action/queries";
 import { GetEventAttendance } from "@/features/events/action/queries";
 import { GetEvents } from "@/features/events/action/queries";
-import { EventItem } from "@/features/events/types";
 import EventImage from "@/features/events/components/EventImage";
 import LiveActivityFeed from "@/features/events/components/LiveActivityFeed";
 import {
@@ -27,19 +25,19 @@ import {
   formatFullDate,
   formatRange,
 } from "@/utils/formatters";
+import { createClient } from "@/lib/supabase/server";
+import { ROLES } from "@/utils/constants/roles";
 
 interface EventDetailPageProps {
   params: Promise<{ slug: string }>;
 }
-
-const departedCount = 18;
 
 export default async function EventDetailPage({
   params,
 }: EventDetailPageProps) {
   const { slug } = await params;
 
-  const [eventResult, attendance, eventsResult] = await Promise.all([
+  const [eventResult, attendance, eventsResult, viewerRoleId] = await Promise.all([
     GetEventBySlug(slug),
     (async () => {
       const eventRes = await GetEventBySlug(slug);
@@ -49,7 +47,22 @@ export default async function EventDetailPage({
       return { present: 0, departed: 0, total: 0, recent: [] };
     })(),
     GetEvents(),
+    (async () => {
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role_id")
+        .eq("id", user.id)
+        .single();
+      return profile?.role_id ?? null;
+    })(),
   ]);
+
+  const isStudent = viewerRoleId === ROLES.STUDENT;
 
   if (!eventResult.success || !eventResult.data) {
     notFound();
@@ -298,32 +311,34 @@ export default async function EventDetailPage({
                   </div>
                 </div>
 
-                {/* Check-in buttons */}
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="h-9 gap-1.5 bg-[#8B1A1A] text-xs font-semibold hover:bg-[#6B1515]"
-                    asChild
-                  >
-                    <Link href={`/events/${event.id}/login`}>
-                      <LogIn className="h-3.5 w-3.5" />
-                      Check In
-                    </Link>
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-9 gap-1.5 bg-white text-xs font-semibold"
-                    asChild
-                  >
-                    <Link href={`/events/${event.id}/logout`}>
-                      <LogOut className="h-3.5 w-3.5" />
-                      Check Out
-                    </Link>
-                  </Button>
-                </div>
+                {/* Check-in buttons — hidden for students, who cannot operate the gate terminals */}
+                {!isStudent && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-9 gap-1.5 bg-[#8B1A1A] text-xs font-semibold hover:bg-[#6B1515]"
+                      asChild
+                    >
+                      <Link href={`/events/${event.id}/login`}>
+                        <LogIn className="h-3.5 w-3.5" />
+                        Check In
+                      </Link>
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-9 gap-1.5 bg-white text-xs font-semibold"
+                      asChild
+                    >
+                      <Link href={`/events/${event.id}/logout`}>
+                        <LogOut className="h-3.5 w-3.5" />
+                        Check Out
+                      </Link>
+                    </Button>
+                  </div>
+                )}
 
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-2">

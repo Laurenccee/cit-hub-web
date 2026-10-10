@@ -8,9 +8,10 @@ import {
   DeskStudent,
   DeskSyncStatus,
   EventAttendance,
+  LastTapResult,
   ScanState,
 } from "../types";
-import { DeskDirection, logDeskCheckinAction, getRecentCheckinsAction } from "../action";
+import { DeskDirection, deleteAttendanceRecordAction, logDeskCheckinAction, getRecentCheckinsAction } from "../action";
 import { getRosterSnapshotAction } from "../action/roster";
 import { createClientId, createDebouncer } from "../utils";
 import {
@@ -49,10 +50,10 @@ export function useScanTerminal({
   initialAttendance,
 }: UseScanTerminalOptions) {
   const [scan, setScan] = useState<ScanState>({ kind: "idle" });
-  const [buffer, setBuffer] = useState("");
   const [manualUid, setManualUid] = useState("");
   const [checkins, setCheckins] = useState(initialCheckins);
   const [attendance, setAttendance] = useState(initialAttendance);
+  const [lastResult, setLastResult] = useState<LastTapResult | null>(null);
   const [online, setOnline] = useState(true);
   const [pending, setPending] = useState(0);
   const [syncing, setSyncing] = useState(false);
@@ -71,6 +72,11 @@ export function useScanTerminal({
           last_name: student.last_name,
           student_id: student.student_id,
           profile_picture_url: student.profile_picture_url,
+          year_level: student.year_level ?? null,
+          course_code: student.course_code ?? null,
+          course_name: student.course_name ?? null,
+          major_code: student.major_code ?? null,
+          major_name: student.major_name ?? null,
         },
       };
       setCheckins((prev) => mergeCheckins(prev, [entry]));
@@ -101,28 +107,72 @@ export function useScanTerminal({
 
         // A no-op enqueue means this device cannot store taps at all.
         if (queued === 0) {
-          setScan({
-            kind: "error",
-            message: "Offline, and this device cannot store taps. Reconnect to record.",
-          });
+          const message = "Offline, and this device cannot store taps. Reconnect to record.";
+          setScan({ kind: "error", message });
+          setLastResult({ student: cached, identifier: uid, message, tone: "error", at: clientTimestamp });
           return;
         }
 
-        setScan({
-          kind: "queued",
-          message: cached
-            ? `${cached.first_name} ${cached.last_name} — saved on this device.`
-            : `Card ${uid} — saved on this device.`,
-          direction,
-        });
+        const message = cached
+          ? `${cached.first_name} ${cached.last_name} — saved on this device.`
+          : `Card ${uid} — saved on this device.`;
+        setScan({ kind: "queued", message, direction });
+        setLastResult({ student: cached, identifier: uid, message, tone: "queued", at: clientTimestamp });
       } catch {
-        setScan({
-          kind: "error",
-          message: "Offline, and this device cannot store taps. Reconnect to record.",
-        });
+        const message = "Offline, and this device cannot store taps. Reconnect to record.";
+        setScan({ kind: "error", message });
+        setLastResult({ student: null, identifier: uid, message, tone: "error", at: clientTimestamp });
       }
     },
     [eventId, direction],
+  );
+
+  /**
+   * Write one tap and fold it into the visible state. Every outcome — success,
+   * duplicate, unknown card — lands on the ID card via `lastResult`.
+   */
+  const commitTap = useCallback(
+    async (identifier: string, clientId: string, clientTimestamp: string) => {
+      try {
+        const result = await logDeskCheckinAction(eventId, identifier, direction, {
+          clientId,
+          clientTimestamp,
+        });
+        if (result.success && result.record && result.student) {
+          // Instant local update — no page refetch.
+          applyTapResult(result.record, result.student, direction);
+          setScan({ kind: "success", message: result.message, direction });
+          setLastResult({
+            student: result.student,
+            identifier,
+            message: result.message,
+            tone: "success",
+            at: (direction === "in" ? result.record.check_in : result.record.check_out) ?? result.record.created_at,
+          });
+        } else if (result.alreadyInside || result.noActiveVisit) {
+          setScan({ kind: "warning", message: result.message });
+          setLastResult({
+            student: result.student ?? null,
+            identifier,
+            message: result.message,
+            tone: "warning",
+            at: new Date().toISOString(),
+          });
+        } else {
+          setScan({ kind: "error", message: result.message });
+          setLastResult({
+            student: result.student ?? null,
+            identifier,
+            message: result.message,
+            tone: "error",
+            at: new Date().toISOString(),
+          });
+        }
+      } catch {
+        await queueOfflineTap(identifier, clientId, clientTimestamp);
+      }
+    },
+    [eventId, direction, applyTapResult, queueOfflineTap],
   );
 
   const processScan = useCallback(
@@ -138,27 +188,47 @@ export function useScanTerminal({
       const clientTimestamp = new Date().toISOString();
 
       try {
-        const result = await logDeskCheckinAction(eventId, uid, direction, {
-          clientId,
-          clientTimestamp,
-        });
-        if (result.success && result.record && result.student) {
-          // Instant local update — no page refetch.
-          applyTapResult(result.record, result.student, direction);
-          setScan({ kind: "success", message: result.message, direction });
-        } else if (result.alreadyInside || result.noActiveVisit) {
-          setScan({ kind: "warning", message: result.message });
-        } else {
-          setScan({ kind: "error", message: result.message });
-        }
-      } catch {
-        await queueOfflineTap(uid, clientId, clientTimestamp);
+        await commitTap(uid, clientId, clientTimestamp);
       } finally {
         processingRef.current = false;
       }
     },
-    [eventId, direction, applyTapResult, queueOfflineTap],
+    [commitTap],
   );
+
+  /**
+   * Remove one attendance record (admin only). The row and counters update
+   * instantly on success; realtime sync converges every station afterwards.
+   */
+  const removeCheckin = useCallback(async (recordId: string): Promise<boolean> => {
+    const target = checkins.find((row) => row.id === recordId);
+    if (!target) return false;
+    try {
+      const result = await deleteAttendanceRecordAction(recordId);
+      if (!result.success) {
+        setScan({ kind: "error", message: result.message });
+        return false;
+      }
+    } catch {
+      setScan({ kind: "error", message: "Could not delete that record. Try again." });
+      return false;
+    }
+    setCheckins((prev) => prev.filter((row) => row.id !== recordId));
+    setAttendance((prev) => ({
+      ...prev,
+      present: target.check_out ? prev.present : Math.max(0, prev.present - 1),
+      departed: target.check_out ? Math.max(0, prev.departed - 1) : prev.departed,
+      total: Math.max(0, prev.total - 1),
+    }));
+    return true;
+  }, [checkins]);
+
+  /** Back to a clean gate: no receipt, ready for the next tap. */
+  const resetTerminal = useCallback(() => {
+    setLastResult(null);
+    setManualUid("");
+    setScan({ kind: "idle" });
+  }, []);
 
   /**
    * Replay queued taps oldest-first. `listPendingTaps` sorts by client
@@ -260,17 +330,14 @@ export function useScanTerminal({
       if (e.key === "Enter") {
         const uid = bufferRef.current.trim();
         bufferRef.current = "";
-        setBuffer("");
         if (uid.length >= 3) void processScan(uid);
         return;
       }
       if (e.key.length === 1) {
         bufferRef.current += e.key;
-        setBuffer(bufferRef.current);
         window.clearTimeout(resetTimer);
         resetTimer = window.setTimeout(() => {
           bufferRef.current = "";
-          setBuffer("");
         }, 200);
       }
     };
@@ -348,7 +415,6 @@ export function useScanTerminal({
 
   return {
     scan,
-    buffer,
     manualUid,
     setManualUid,
     checkins,
@@ -356,5 +422,8 @@ export function useScanTerminal({
     syncStatus,
     processScan,
     handleManualSubmit,
+    lastResult,
+    resetTerminal,
+    removeCheckin,
   };
 }

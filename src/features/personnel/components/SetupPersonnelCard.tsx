@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRightIcon, ArrowLeftIcon } from "@hugeicons/core-free-icons";
@@ -154,9 +154,13 @@ export default function SetupPersonnelCard({
     setCurrentStepIndex((prev) => Math.max(prev - 1, 0));
   }, []);
 
-  const handleSubmit = useCallback(async () => {
-    await onSubmit();
-  }, [onSubmit]);
+  const handleSubmit = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      await onSubmit();
+    },
+    [onSubmit],
+  );
 
   const stepsWithStatus = STEPS.map((step, index) => ({
     id: step.id,

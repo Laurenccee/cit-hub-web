@@ -52,13 +52,14 @@ export async function updateSession(request: NextRequest) {
     ROUTES.PERSONNEL,
     ROUTES.PIONEERS,
     ROUTES.EVENTS,
-    ROUTES.DESK,
   ];
   const PUBLIC_ROUTE_PREFIXES = [
     "/personnel/", // Matches /personnel/[id]
     "/bulletin/", // Matches /bulletin/[slug]
     "/events/", // Matches /events/[slug]
   ];
+  // Matches /events/[idOrSlug]/login and /events/[idOrSlug]/logout (RFID gate terminals).
+  const EVENT_GATE_PATTERN = /^\/events\/[^/]+\/(login|logout)$/;
 
   if (!user) {
     if (path === ROUTES.RESET_PASSWORD) {
@@ -156,6 +157,13 @@ export async function updateSession(request: NextRequest) {
       role !== ROLES.PIONEER
     ) {
       return NextResponse.redirect(new URL(ROUTES.HOME, request.url));
+    }
+
+    // Students may not open the RFID gate terminals (event check-in/out desks)
+    // to scan or input their RFID UID — send them to the event details instead.
+    if (EVENT_GATE_PATTERN.test(path) && role === ROLES.STUDENT) {
+      const eventPath = path.replace(/\/(login|logout)$/, "");
+      return NextResponse.redirect(new URL(eventPath, request.url));
     }
   }
 

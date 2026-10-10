@@ -69,3 +69,32 @@ export function createDebouncer(delay = 300) {
 
   return { schedule, cancel };
 }
+
+/**
+ * College short code + label derived from a course name, for the roster's
+ * department pills. Mirrors the student directory's program mapping so the
+ * gate roster reads the same way.
+ */
+export function collegeIdentityFromCourse(course?: string | null): {
+  code: string;
+  label: string;
+} {
+  const text = (course ?? "").toLowerCase();
+  if (
+    /computer science|information systems|information technology|software|data science/.test(
+      text,
+    )
+  ) {
+    return { code: "CCS", label: "College of Computer Studies (CCS)" };
+  }
+  if (/engineering/.test(text)) {
+    return { code: "COE", label: "College of Engineering (COE)" };
+  }
+  if (/accountancy|business|marketing|management|administration/.test(text)) {
+    return { code: "CBA", label: "College of Business & Accountancy (CBA)" };
+  }
+  if (/communication|arts|media|multimedia/.test(text)) {
+    return { code: "CAS", label: "College of Arts & Sciences (CAS)" };
+  }
+  return { code: "OTHER", label: "CIT" };
+}

@@ -5,11 +5,11 @@ export const NAV_LINKS = [
   { label: "Bulletin", href: "/bulletin" },
   { label: "Schedule", href: "/schedule" },
   { label: "Events", href: "/events" },
-  { label: "Personnel", href: "/personnel" },
+  { label: "Personnels", href: "/personnel" },
   { label: "Pioneers", href: "/pioneers" },
   {
     label: "Students",
-    href: "/students",
+    href: "/student",
     roles: [ROLES.ADMIN, ROLES.PIONEER] as number[],
   },
 ];

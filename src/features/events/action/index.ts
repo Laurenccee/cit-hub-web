@@ -114,6 +114,29 @@ export async function createEventAction(
 export type DeskDirection = 'in' | 'out';
 
 /**
+ * Everything the gate badge and roster need to identify a student, flattened
+ * from the courses/majors joins. `rfid_uid` is intentionally stripped by
+ * `toDeskStudent` before anything leaves the server.
+ */
+const ATTENDEE_SELECT =
+  'id, first_name, last_name, student_id, profile_picture_url, year_level, rfid_uid, courses ( code, name ), majors ( code, name )';
+
+function toDeskStudent(row: any): DeskStudent {
+  return {
+    id: row.id as string,
+    first_name: row.first_name as string,
+    last_name: row.last_name as string,
+    student_id: (row.student_id ?? null) as string | null,
+    profile_picture_url: (row.profile_picture_url ?? null) as string | null,
+    year_level: (row.year_level ?? null) as string | null,
+    course_code: (row.courses?.code ?? null) as string | null,
+    course_name: (row.courses?.name ?? null) as string | null,
+    major_code: (row.majors?.code ?? null) as string | null,
+    major_name: (row.majors?.name ?? null) as string | null,
+  };
+}
+
+/**
  * Resolve a tapped card to a student. Uses the service-role client because
  * the desk runs on public kiosk sessions that cannot read the students
  * table under RLS. Only minimal identity fields are returned.
@@ -126,7 +149,7 @@ export async function lookupStudentByCardAction(
 
   const { data, error } = await admin
     .from('students')
-    .select('id, first_name, last_name, student_id, profile_picture_url, rfid_uid')
+    .select(ATTENDEE_SELECT)
     .in('rfid_uid', uidVariants(cardUid))
     .limit(1)
     .maybeSingle();
@@ -137,8 +160,62 @@ export async function lookupStudentByCardAction(
   }
   if (!data) return { success: true, student: null };
 
-  const { rfid_uid: _rfidUid, ...student } = data;
-  return { success: true, student: student as DeskStudent };
+  return { success: true, student: toDeskStudent(data) };
+}
+
+export type AttendeeVia = 'card' | 'student_id';
+
+/**
+ * Resolve whatever the operator provides — a tapped card UID or a typed
+ * student ID like CIT-2023-8812 — to a student. Card lookup runs first so a
+ * tap never misresolves; the student-ID match is case-insensitive exact.
+ * Read-only: nothing is written, so the gate can preview the badge before
+ * the operator confirms the tap.
+ */
+export async function resolveAttendeeAction(identifier: string): Promise<{
+  success: boolean;
+  student: DeskStudent | null;
+  via: AttendeeVia | null;
+}> {
+  const trimmed = identifier.trim();
+  if (!trimmed) return { success: true, student: null, via: null };
+
+  const cardLookup = await lookupStudentByCardAction(trimmed);
+  if (!cardLookup.success) return { success: false, student: null, via: null };
+  if (cardLookup.student) return { success: true, student: cardLookup.student, via: 'card' };
+
+  const { createAdminClient } = await import('@/lib/supabase/admin');
+  const admin = createAdminClient();
+
+  // Demo and replay flows identify the student by row id.
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)) {
+    const { data: byId, error: byIdError } = await admin
+      .from('students')
+      .select(ATTENDEE_SELECT)
+      .eq('id', trimmed)
+      .maybeSingle();
+
+    if (byIdError) {
+      console.error('Student lookup error:', byIdError.message);
+      return { success: false, student: null, via: null };
+    }
+    if (byId) return { success: true, student: toDeskStudent(byId), via: 'student_id' };
+  }
+
+  const { data, error } = await admin
+    .from('students')
+    .select(ATTENDEE_SELECT)
+    .ilike('student_id', trimmed)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Student ID lookup error:', error.message);
+    return { success: false, student: null, via: null };
+  }
+  if (!data) return { success: true, student: null, via: null };
+
+  return { success: true, student: toDeskStudent(data), via: 'student_id' };
 }
 
 /**
@@ -172,68 +249,18 @@ async function findAppliedTap(
 }
 
 /**
- * Log one RFID tap at the check-in desk. IN opens a visit row (or warns when
- * the student is already inside); OUT stamps `check_out` on their open visit.
- * Unregistered cards are rejected at the gate, never recorded.
- *
- * The created/updated row is returned so the UI can update instantly without
- * refetching the page. Event validation and card lookup run in parallel.
- *
- * `context` carries the device-side identity of the tap. When the desk was
- * offline the tap is replayed later, and the same `clientId` may already have
- * been committed by an attempt whose response never arrived — that case
- * resolves to success rather than a duplicate check-in.
+ * Write one resolved tap: IN opens a visit row (or warns when the student is
+ * already inside); OUT stamps `check_out` on their open visit. Shared by the
+ * card-tap action and the typed-identifier action so both commit identically.
  */
-export async function logDeskCheckinAction(
+async function commitDeskVisit(
+  supabase: SupabaseClient,
   eventId: string,
-  cardUid: string,
+  student: DeskStudent,
   direction: DeskDirection,
-  context?: DeskTapContext,
+  clientId: string | null,
+  clientTimestamp: string | null,
 ): Promise<DeskCheckinResult> {
-  const trimmedUid = cardUid.trim();
-  if (!trimmedUid) {
-    return { success: false, message: 'Empty card UID.' };
-  }
-
-  const clientId = context?.clientId?.trim() || null;
-  const clientTimestamp = context?.clientTimestamp ?? null;
-
-  const supabase = await createClient();
-
-  const [eventRes, lookupSettled] = await Promise.all([
-    supabase
-      .from('events')
-      .select('id, title, is_published, is_archived')
-      .eq('id', eventId)
-      .maybeSingle(),
-    lookupStudentByCardAction(trimmedUid).then(
-      (result) => ({ status: 'ok' as const, result }),
-      (error: unknown) => ({ status: 'failed' as const, error }),
-    ),
-  ]);
-
-  if (eventRes.error || !eventRes.data || !eventRes.data.is_published || eventRes.data.is_archived) {
-    return { success: false, message: 'This event is not accepting check-ins.' };
-  }
-
-  if (lookupSettled.status === 'failed') {
-    console.error('RFID lookup threw:', lookupSettled.error instanceof Error ? lookupSettled.error.message : lookupSettled.error);
-    return { success: false, message: 'Card lookup is unavailable. Check the server configuration.' };
-  }
-  const lookup = lookupSettled.result;
-  if (!lookup.success) {
-    return { success: false, message: 'Lookup failed. Try again.' };
-  }
-  const student = lookup.student;
-
-  // Unregistered cards are rejected at the gate, never recorded.
-  if (!student) {
-    return {
-      success: false,
-      message: `Card ${trimmedUid} is not registered. Register it in the student directory first.`,
-    };
-  }
-
   const now = new Date().toISOString();
 
   // A replayed tap may already be committed — the original attempt could have
@@ -396,6 +423,105 @@ export async function logDeskCheckinAction(
     student,
     record: closedVisit,
   };
+}
+
+/**
+ * Log one RFID tap at the check-in desk. IN opens a visit row (or warns when
+ * the student is already inside); OUT stamps `check_out` on their open visit.
+ * Unregistered cards are rejected at the gate, never recorded.
+ *
+ * The created/updated row is returned so the UI can update instantly without
+ * refetching the page. Event validation and card lookup run in parallel.
+ *
+ * `context` carries the device-side identity of the tap. When the desk was
+ * offline the tap is replayed later, and the same `clientId` may already have
+ * been committed by an attempt whose response never arrived — that case
+ * resolves to success rather than a duplicate check-in.
+ */
+export async function logDeskCheckinAction(
+  eventId: string,
+  identifier: string,
+  direction: DeskDirection,
+  context?: DeskTapContext,
+): Promise<DeskCheckinResult> {
+  const trimmed = identifier.trim();
+  if (!trimmed) {
+    return { success: false, message: 'Empty card UID.' };
+  }
+
+  const clientId = context?.clientId?.trim() || null;
+  const clientTimestamp = context?.clientTimestamp ?? null;
+
+  const supabase = await createClient();
+
+  const [eventRes, lookupSettled] = await Promise.all([
+    supabase
+      .from('events')
+      .select('id, title, is_published, is_archived')
+      .eq('id', eventId)
+      .maybeSingle(),
+    resolveAttendeeAction(trimmed).then(
+      (result) => ({ status: 'ok' as const, result }),
+      (error: unknown) => ({ status: 'failed' as const, error }),
+    ),
+  ]);
+
+  if (eventRes.error || !eventRes.data || !eventRes.data.is_published || eventRes.data.is_archived) {
+    return { success: false, message: 'This event is not accepting check-ins.' };
+  }
+
+  if (lookupSettled.status === 'failed') {
+    console.error('Attendee lookup threw:', lookupSettled.error instanceof Error ? lookupSettled.error.message : lookupSettled.error);
+    return { success: false, message: 'Card lookup is unavailable. Check the server configuration.' };
+  }
+  const lookup = lookupSettled.result;
+  if (!lookup.success) {
+    return { success: false, message: 'Lookup failed. Try again.' };
+  }
+  const student = lookup.student;
+
+  // Unknown cards and IDs are rejected at the gate, never recorded.
+  if (!student) {
+    return {
+      success: false,
+      message: `No student found for "${trimmed}". Register the card in the student directory, or check the ID and try again.`,
+    };
+  }
+
+  return commitDeskVisit(supabase, eventId, student, direction, clientId, clientTimestamp);
+}
+
+/**
+ * Remove one attendance record from the roster. Admin only — the gate pages
+ * run on public kiosk sessions, so the write goes through the service-role
+ * client after the role check instead of trusting RLS on the anon session.
+ */
+export async function deleteAttendanceRecordAction(
+  recordId: string,
+): Promise<{ success: boolean; message: string }> {
+  const authorized = await getAuthorizedAdmin();
+  if (!authorized) {
+    return { success: false, message: 'Only admins can remove attendance records. Sign in as admin first.' };
+  }
+
+  const { createAdminClient } = await import('@/lib/supabase/admin');
+  const admin = createAdminClient();
+
+  const { data, error } = await admin
+    .from('event_attendance')
+    .delete()
+    .eq('id', recordId)
+    .select('id')
+    .maybeSingle();
+
+  if (error) {
+    console.error('Delete attendance error:', error.message);
+    return { success: false, message: `Could not delete that record (${error.code ?? 'db-error'}).` };
+  }
+  if (!data) {
+    return { success: false, message: 'That record is already gone.' };
+  }
+  return { success: true, message: 'Record removed.' };
 }
 
 /**

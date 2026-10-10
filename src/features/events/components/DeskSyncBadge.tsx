@@ -2,6 +2,7 @@
 
 import { CloudOff, RefreshCw, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { DeskSyncStatus } from "../types";
 
 /**
@@ -32,14 +33,15 @@ export default function DeskSyncBadge({
   const Icon = !online ? CloudOff : syncing ? RefreshCw : Wifi;
 
   return (
-    <span
+    <Badge
+      variant="outline"
       title={
         rosterSyncedAt
           ? `Roster cached ${new Date(rosterSyncedAt).toLocaleString()}`
           : "Roster not cached on this device yet"
       }
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+        "h-auto gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
         !online
           ? "border-amber-200 bg-amber-50 text-amber-800"
           : pending > 0
@@ -50,6 +52,6 @@ export default function DeskSyncBadge({
     >
       <Icon className={cn("h-3.5 w-3.5", syncing && online && "animate-spin")} />
       {label}
-    </span>
+    </Badge>
   );
 }

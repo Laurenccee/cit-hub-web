@@ -8,34 +8,35 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import AddNewsButton from "@/features/bulletin/components/AddNewsButton";
 
 export default async function NewsAndAnnouncementsPage() {
   const { contentTypes, featuredNews, news } = await getBulletinPageData();
 
   return (
-<section className="flex flex-col py-8">
-          <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
-            {/* Featured Article Section */}
-            <div className="rounded-2xl border bg-card overflow-hidden">
-              {featuredNews && featuredNews.length > 0 ? (
-                <NewsHero news={featuredNews[0]} />
-              ) : (
-                <Card className="flex items-center justify-center min-h-48 bg-muted/30 border-dashed">
-                  <CardContent className="flex flex-col items-center gap-2 text-center py-8">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      No news published yet
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Published news will appear here as the featured article.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+    <section className="flex flex-col py-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
+        {/* Featured Article Section */}
+        <div className="rounded-2xl border bg-card overflow-hidden">
+          {featuredNews && featuredNews.length > 0 ? (
+            <NewsHero news={featuredNews[0]} />
+          ) : (
+            <Card className="flex items-center justify-center min-h-48 bg-muted/30 border-dashed">
+              <CardContent className="flex flex-col items-center gap-2 text-center py-8">
+                <p className="text-sm font-medium text-muted-foreground">
+                  No news published yet
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Published news will appear here as the featured article.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
-            {/* School Bulletin Section */}
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b pb-3">
+        {/* School Bulletin Section */}
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b pb-3">
             <div className="flex flex-col gap-1">
               <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
                 School Bulletin
@@ -46,12 +47,15 @@ export default async function NewsAndAnnouncementsPage() {
                 student circulars and academic advisories.
               </p>
             </div>
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search announcements, news..."
-                className="pl-9"
-              />
+            <div className="flex gap-4 w-full sm:w-72">
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search announcements, news..."
+                  className="pl-9"
+                />
+              </div>
+              <AddNewsButton contentTypes={contentTypes} />
             </div>
           </div>
 
@@ -98,8 +102,8 @@ export default async function NewsAndAnnouncementsPage() {
             </div>
           </div>
 
-{/* News Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* News Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {news.slice(0, 6).map((item) => (
               <Suspense key={item.id} fallback={<NewsCardSkeleton />}>
                 <NewsCard
