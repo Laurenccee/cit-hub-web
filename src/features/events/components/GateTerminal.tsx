@@ -38,33 +38,33 @@ function statusPill(scan: ScanState): { text: string; className: string } {
     case "processing":
       return {
         text: "READING RFID CHIP…",
-        className: "border-[#8B1A1A]/30 bg-[#8B1A1A]/5 text-[#8B1A1A]",
+        className: "border-primary/30 bg-primary/5 text-primary",
       };
     case "success":
       return {
         text: "TAP RECORDED • READY FOR NEXT",
-        className: "border-green-200 bg-green-50 text-green-700",
+        className: "border-success/30 bg-success/10 text-success",
       };
     case "warning":
       return {
         text: "ATTENTION • NEEDS REVIEW",
-        className: "border-amber-200 bg-amber-50 text-amber-700",
+        className: "border-warning/30 bg-warning/10 text-warning",
       };
     case "queued":
       return {
         text: "OFFLINE • TAP SAVED ON DEVICE",
-        className: "border-sky-200 bg-sky-50 text-sky-700",
+        className: "border-primary/30 bg-primary/10 text-primary",
       };
     case "error":
       return {
         text: "SCAN FAILED • TRY AGAIN",
-        className: "border-red-200 bg-red-50 text-red-700",
+        className: "border-destructive/30 bg-destructive/10 text-destructive",
       };
     case "idle":
     default:
       return {
         text: "READY TO SCAN • AWAITING TAP",
-        className: "border-slate-200 bg-slate-50 text-slate-500",
+        className: "border-border bg-muted text-muted-foreground",
       };
   }
 }
@@ -100,26 +100,26 @@ export default function GateTerminal({
   return (
     <div className="flex flex-col gap-5">
       {/* Event header card */}
-      <Card className="flex flex-row items-start justify-between gap-4 rounded-2xl bg-white p-5 sm:p-6">
+      <Card className="flex flex-row items-start justify-between gap-4 rounded-2xl bg-card p-5 sm:p-6">
         <div className="min-w-0">
           <Link
             href="/events"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-slate-700"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground"
           >
             <ChevronLeft className="h-3.5 w-3.5" />
             Back to Events
           </Link>
-          <h1 className="mt-2 font-serif text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+          <h1 className="mt-2 font-serif text-3xl font-black tracking-tight text-foreground sm:text-4xl">
             {event.title}
           </h1>
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-[#8B1A1A]" />
-              <span className="font-semibold text-slate-600">
+              <MapPin className="h-3.5 w-3.5 text-primary" />
+              <span className="font-semibold text-muted-foreground">
                 {event.location ?? "CIT Campus"}
               </span>
             </span>
-            <span className="text-slate-300">•</span>
+            <span className="text-muted-foreground/60">•</span>
             <span>{isLogin ? "Gate A Inbound" : "Gate A Outbound"}</span>
           </p>
           <p className="mt-3 flex flex-wrap items-center gap-2">
@@ -130,22 +130,22 @@ export default function GateTerminal({
                   ? `/events/${event.slug}/logout`
                   : `/events/${event.slug}/login`
               }
-              className="text-xs font-bold text-[#8B1A1A] hover:text-[#6B1515]"
+              className="text-xs font-bold text-primary hover:underline"
             >
               {isLogin ? "Go to Log Out →" : "Go to Log In →"}
             </Link>
           </p>
         </div>
-        <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/70 px-5 py-3.5">
+        <div className="flex items-center gap-2.5 rounded-xl border border-border bg-muted/50 px-5 py-3.5">
           <span className="relative flex h-2.5 w-2.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-60" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success" />
           </span>
           <span>
-            <span className="block text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+            <span className="block text-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
               Total Checked In
             </span>
-            <span className="block font-serif text-3xl font-black leading-none text-slate-900">
+            <span className="block font-serif text-3xl font-black leading-none text-foreground">
               {attendance.total.toLocaleString()}
             </span>
           </span>
@@ -154,19 +154,19 @@ export default function GateTerminal({
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,500px)_minmax(0,1fr)]">
         {/* Scanner column */}
-        <Card className="flex flex-col gap-4 bg-white p-5 shadow-sm">
+        <Card className="flex flex-col gap-4 bg-card p-5 shadow-sm">
           <div className="flex items-center justify-between gap-2">
             <Badge
               variant="outline"
               aria-live="polite"
               className={cn(
-                "h-7 px-3 text-[11px] font-black tracking-wide",
+                "h-7 px-3 text-micro font-black tracking-wide",
                 pill.className,
               )}
             >
               {pill.text}
             </Badge>
-            <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-slate-400">
+            <span className="shrink-0 font-mono text-micro uppercase tracking-wider text-muted-foreground">
               Gate A • Reader #02
             </span>
           </div>
@@ -177,7 +177,7 @@ export default function GateTerminal({
             variant="outline"
             size="xl"
             onClick={resetTerminal}
-            className="gap-2 text-sm font-semibold text-slate-600"
+            className="gap-2 text-sm font-semibold text-muted-foreground"
           >
             <HugeiconsIcon icon={RotateCcw} />
             Clear / Reset
@@ -195,7 +195,7 @@ export default function GateTerminal({
                 <InputGroupButton
                   type="submit"
                   disabled={!manualUid.trim()}
-                  className="bg-[#8B1A1A] font-semibold text-white hover:bg-[#6B1515]"
+                  className="bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
                 >
                   Enter
                 </InputGroupButton>
@@ -204,7 +204,7 @@ export default function GateTerminal({
           </form>
 
           {scan.kind === "idle" && !lastResult && (
-            <p className="flex items-center justify-center gap-2 text-[11px] text-slate-400">
+            <p className="flex items-center justify-center gap-2 text-micro text-muted-foreground">
               <ScanLine className="h-3.5 w-3.5" />
               Waiting for RFID reader…
             </p>

@@ -1,35 +1,45 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import {
-  Clock,
-  FileText,
-  LogIn,
-  LogOut,
-  MapPin,
-  Pencil,
-  User,
-  Users,
-  ChevronLeft,
-  Share2,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Clock, MapPin, User, Users, ChevronLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { GetEventBySlug } from "@/features/events/action/queries";
-import { GetEventAttendance } from "@/features/events/action/queries";
-import { GetEvents } from "@/features/events/action/queries";
+import {
+  GetEventBySlug,
+  GetEventAttendance,
+  GetEvents,
+} from "@/features/events/action/queries";
 import EventImage from "@/features/events/components/EventImage";
 import LiveActivityFeed from "@/features/events/components/LiveActivityFeed";
-import {
-  formatDateShort,
-  formatFullDate,
-  formatRange,
-} from "@/utils/formatters";
-import { createClient } from "@/lib/supabase/server";
+import { EventAttendanceStats } from "@/features/events/components/EventAttendanceStats";
+import { EventCheckInButtons } from "@/features/events/components/EventCheckInButtons";
+import { formatDateShort, formatFullDate, formatRange } from "@/utils/formatters";
+import { getViewerRoleId } from "@/actions";
 import { ROLES } from "@/utils/constants/roles";
+import { PageContainer, PageSection } from "@/components/layouts/PageLayout";
 
 interface EventDetailPageProps {
   params: Promise<{ slug: string }>;
+}
+
+/** Category chips carry an author-defined hex from the DB, so the tint is applied inline. */
+function CategoryBadge({ color, label }: { color?: string | null; label: string }) {
+  return (
+    <Badge
+      variant="outline"
+      className="max-w-fit rounded-full px-2.5 py-1 text-micro font-semibold"
+      style={
+        color
+          ? {
+              color,
+              borderColor: "transparent",
+              backgroundColor: `color-mix(in oklab, ${color} 12%, transparent)`,
+            }
+          : undefined
+      }
+    >
+      {label}
+    </Badge>
+  );
 }
 
 export default async function EventDetailPage({
@@ -37,38 +47,20 @@ export default async function EventDetailPage({
 }: EventDetailPageProps) {
   const { slug } = await params;
 
-  const [eventResult, attendance, eventsResult, viewerRoleId] = await Promise.all([
-    GetEventBySlug(slug),
-    (async () => {
-      const eventRes = await GetEventBySlug(slug);
-      if (eventRes.success && eventRes.data) {
-        return GetEventAttendance(eventRes.data.id);
-      }
-      return { present: 0, departed: 0, total: 0, recent: [] };
-    })(),
-    GetEvents(),
-    (async () => {
-      const supabase = await createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return null;
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role_id")
-        .eq("id", user.id)
-        .single();
-      return profile?.role_id ?? null;
-    })(),
-  ]);
-
-  const isStudent = viewerRoleId === ROLES.STUDENT;
-
+  const eventResult = await GetEventBySlug(slug);
   if (!eventResult.success || !eventResult.data) {
     notFound();
   }
 
   const event = eventResult.data;
+
+  const [attendance, eventsResult, viewerRoleId] = await Promise.all([
+    GetEventAttendance(event.id),
+    GetEvents(),
+    getViewerRoleId(),
+  ]);
+
+  const isStudent = viewerRoleId === ROLES.STUDENT;
   const relatedEvents = eventsResult.success
     ? eventsResult.data
         .filter((e) => e.id !== event.id && e.category_id === event.category_id)
@@ -79,19 +71,19 @@ export default async function EventDetailPage({
   const total = present + attendance.departed;
 
   return (
-    <div className="flex flex-col py-8">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 sm:px-6 lg:px-8">
+    <PageSection>
+      <PageContainer className="gap-8">
         {/* Back link */}
         <Link
           href="/events"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground"
         >
           <ChevronLeft className="h-4 w-4" />
           Back to Events
         </Link>
 
         {/* Event Hero */}
-        <div className="relative rounded-xl overflow-hidden">
+        <div className="relative overflow-hidden rounded-xl">
           <EventImage
             event={event}
             className="aspect-[21/9] w-full"
@@ -99,20 +91,20 @@ export default async function EventDetailPage({
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 text-white">
+          <div className="absolute bottom-0 left-0 right-0 p-6 text-white sm:p-8">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium uppercase tracking-[0.1em]">
-              <span className="rounded bg-red-500 px-2.5 py-1 text-[11px]">
+              <span className="rounded bg-primary px-2.5 py-1 text-micro">
                 {event.organizer ?? "College of Computer Studies"}
               </span>
-              <span className="text-slate-300">•</span>
-              <span className="text-slate-400">
+              <span className="text-white/50">•</span>
+              <span className="text-white/70">
                 {event.category?.label ?? "Campus Event"}
               </span>
             </div>
-            <h1 className="mt-2 font-serif text-4xl sm:text-5xl font-bold leading-tight">
+            <h1 className="mt-2 font-serif text-3xl font-bold leading-tight sm:text-5xl">
               {event.title}
             </h1>
-            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-200">
+            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/80">
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="h-4 w-4" />
                 {event.location ?? "CIT Campus"}
@@ -138,13 +130,13 @@ export default async function EventDetailPage({
                 <CardTitle className="text-xl">About this Event</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="prose prose-slate max-w-none text-slate-600">
+                <div className="max-w-none text-sm leading-relaxed text-muted-foreground [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_h2]:mt-6 [&_h2]:font-serif [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-foreground [&_h3]:mt-4 [&_h3]:font-serif [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-foreground [&_li]:mt-1 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3 [&_strong]:font-semibold [&_strong]:text-foreground [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-5">
                   {event.content ? (
                     <div dangerouslySetInnerHTML={{ __html: event.content }} />
                   ) : event.description ? (
                     <p className="whitespace-pre-wrap">{event.description}</p>
                   ) : (
-                    <p className="text-slate-400">No description available.</p>
+                    <p className="text-muted-foreground/70">No description available.</p>
                   )}
                 </div>
               </CardContent>
@@ -158,52 +150,46 @@ export default async function EventDetailPage({
               <CardContent className="pt-0">
                 <dl className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <dt className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-400">
+                    <dt className="text-micro font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                       Organizer
                     </dt>
-                    <dd className="mt-1 text-slate-900">
+                    <dd className="mt-1 text-foreground">
                       {event.organizer ?? "CIT"}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-400">
+                    <dt className="text-micro font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                       Category
                     </dt>
                     <dd className="mt-1">
-                      <Badge
-                        variant="outline"
-                        className={`max-w-fit rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                          event.category?.color
-                            ? `border-transparent bg-[${event.category.color}]/10 text-[${event.category.color}]`
-                            : "border-slate-200 bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {event.category?.label ?? "Campus Event"}
-                      </Badge>
+                      <CategoryBadge
+                        color={event.category?.color}
+                        label={event.category?.label ?? "Campus Event"}
+                      />
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-400">
-                      Date & Time
+                    <dt className="text-micro font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                      Date &amp; Time
                     </dt>
-                    <dd className="mt-1 text-slate-900">
+                    <dd className="mt-1 text-foreground">
                       {formatFullDate(event.start_date, event.end_date)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-400">
+                    <dt className="text-micro font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                       Location
                     </dt>
-                    <dd className="mt-1 text-slate-900">
+                    <dd className="mt-1 text-foreground">
                       {event.location ?? "CIT Campus"}
                     </dd>
                   </div>
                   {event.capacity_total && (
                     <div className="sm:col-span-2">
-                      <dt className="text-xs font-semibold uppercase tracking-[0.1em] text-slate-400">
+                      <dt className="text-micro font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                         Capacity
                       </dt>
-                      <dd className="mt-1 text-slate-900">
+                      <dd className="mt-1 text-foreground">
                         {event.capacity_filled ?? 0} / {event.capacity_total}{" "}
                         {event.capacity_unit ?? "spots"}
                         {event.capacity_label && ` (${event.capacity_label})`}
@@ -217,7 +203,7 @@ export default async function EventDetailPage({
             {/* Related Events */}
             {relatedEvents.length > 0 && (
               <section>
-                <h2 className="font-serif text-2xl font-semibold text-slate-900">
+                <h2 className="font-serif text-2xl font-semibold text-foreground">
                   Related Events
                 </h2>
                 <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -225,30 +211,23 @@ export default async function EventDetailPage({
                     <Link
                       key={relatedEvent.id}
                       href={`/events/${relatedEvent.slug}`}
-                      className="group flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm transition-shadow hover:shadow-md"
+                      className="group flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-shadow hover:shadow-md"
                     >
-                      <EventImage
-                        event={relatedEvent}
-                        className="aspect-[16/9]"
-                      />
+                      <EventImage event={relatedEvent} className="aspect-[16/9]" />
                       <div className="flex flex-1 flex-col p-5">
-                        <Badge
-                          variant="outline"
-                          className={`max-w-fit mb-2 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                            relatedEvent.category?.color
-                              ? `border-transparent bg-[${relatedEvent.category.color}]/10 text-[${relatedEvent.category.color}]`
-                              : "border-slate-200 bg-slate-100 text-slate-600"
-                          }`}
-                        >
-                          {relatedEvent.category?.label ?? "Event"}
-                        </Badge>
-                        <h3 className="font-bold text-slate-900 group-hover:text-[#8B1A1A] transition-colors">
+                        <div className="mb-2">
+                          <CategoryBadge
+                            color={relatedEvent.category?.color}
+                            label={relatedEvent.category?.label ?? "Event"}
+                          />
+                        </div>
+                        <h3 className="font-bold text-foreground transition-colors group-hover:text-primary">
                           {relatedEvent.title}
                         </h3>
-                        <p className="mt-1.5 flex-1 text-sm text-slate-500 line-clamp-2">
+                        <p className="mt-1.5 flex-1 text-sm text-muted-foreground line-clamp-2">
                           {relatedEvent.description ?? "View event details"}
                         </p>
-                        <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
+                        <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
                           <span className="inline-flex items-center gap-1.5">
                             <Clock className="h-3.5 w-3.5" />
                             {formatDateShort(relatedEvent.start_date)}
@@ -272,105 +251,55 @@ export default async function EventDetailPage({
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-50">
-                      <Users className="h-5 w-5 text-[#8B1A1A]" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <Users className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900">
-                        Live Attendance
-                      </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="font-semibold text-foreground">Live Attendance</p>
+                      <p className="text-xs text-muted-foreground">
                         Real-time RFID check-in
                       </p>
                     </div>
                   </div>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-green-700">
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                  <span className="inline-flex items-center gap-1 rounded-full border border-success/30 bg-success/10 px-1.5 py-0.5 text-micro font-bold uppercase tracking-wide text-success">
+                    <span className="h-1.5 w-1.5 rounded-full bg-success" />
                     Online
                   </span>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0 space-y-4">
+              <CardContent className="space-y-4 pt-0">
                 {/* Current count */}
-                <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4">
+                <div className="flex items-center justify-between rounded-lg border bg-card p-4">
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                    <p className="text-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
                       Current live presence
                     </p>
-                    <p className="truncate text-sm font-medium text-slate-700">
+                    <p className="truncate text-sm font-medium text-foreground">
                       {event.location ?? "CIT Main Auditorium"}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-serif text-3xl font-bold text-slate-900">
+                    <p className="font-serif text-3xl font-bold text-foreground">
                       {present}
                     </p>
-                    <p className="text-[9px] font-bold uppercase tracking-wide text-green-600">
+                    <p className="text-micro font-bold uppercase tracking-wide text-success">
                       Active inside
                     </p>
                   </div>
                 </div>
 
                 {/* Check-in buttons — hidden for students, who cannot operate the gate terminals */}
-                {!isStudent && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="h-9 gap-1.5 bg-[#8B1A1A] text-xs font-semibold hover:bg-[#6B1515]"
-                      asChild
-                    >
-                      <Link href={`/events/${event.id}/login`}>
-                        <LogIn className="h-3.5 w-3.5" />
-                        Check In
-                      </Link>
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="h-9 gap-1.5 bg-white text-xs font-semibold"
-                      asChild
-                    >
-                      <Link href={`/events/${event.id}/logout`}>
-                        <LogOut className="h-3.5 w-3.5" />
-                        Check Out
-                      </Link>
-                    </Button>
-                  </div>
-                )}
+                {!isStudent && <EventCheckInButtons eventId={event.id} />}
 
                 {/* Stats */}
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { label: "Present", value: String(present), accent: false },
-                    {
-                      label: "Departed",
-                      value: String(attendance.departed),
-                      accent: false,
-                    },
-                    { label: "Total Pass", value: String(total), accent: true },
-                  ].map((stat) => (
-                    <div
-                      key={stat.label}
-                      className="rounded-md border border-slate-200 bg-white px-2 py-2 text-center"
-                    >
-                      <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">
-                        {stat.label}
-                      </p>
-                      <p
-                        className={`mt-0.5 text-sm font-bold ${
-                          stat.accent ? "text-[#8B1A1A]" : "text-slate-800"
-                        }`}
-                      >
-                        {stat.value}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                <EventAttendanceStats
+                  present={present}
+                  departed={attendance.departed}
+                  total={total}
+                />
 
                 {/* Live Activity Feed */}
-                <div className="border-t border-slate-100 pt-3">
+                <div className="border-t pt-3">
                   <LiveActivityFeed
                     eventId={event.id}
                     initialRecent={attendance.recent}
@@ -378,40 +307,9 @@ export default async function EventDetailPage({
                 </div>
               </CardContent>
             </Card>
-
-            {/* Action buttons */}
-            <div className="flex gap-3 sticky top-24 self-start">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 gap-1.5 flex-1 bg-white text-xs font-semibold"
-                asChild
-              >
-                <Link href={`/events/${event.slug}`}>
-                  <Pencil className="h-3.5 w-3.5" />
-                  Edit Event
-                </Link>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 gap-1.5 flex-1 bg-white text-xs font-semibold"
-              >
-                <FileText className="h-3.5 w-3.5" />
-                View Roster ({present})
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-9 gap-1.5 bg-white text-xs font-semibold"
-              >
-                <Share2 className="h-3.5 w-3.5" />
-                Share
-              </Button>
-            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </PageContainer>
+    </PageSection>
   );
 }

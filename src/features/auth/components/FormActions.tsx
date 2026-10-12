@@ -1,4 +1,3 @@
-import { Checkbox } from '@/components/ui/checkbox';
 import { ROUTES } from '@/utils/constants/routes';
 import Link from 'next/link';
 

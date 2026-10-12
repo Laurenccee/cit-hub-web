@@ -3,25 +3,12 @@
 import { useState, useCallback, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { ArrowRightIcon, ArrowLeftIcon } from "@hugeicons/core-free-icons";
-import { cn } from "@/lib/utils";
-import {
-  Briefcase,
-  Camera,
-  Fingerprint,
-  GraduationCap,
-  Link,
-} from "lucide-react";
+import { ArrowRightIcon } from "@hugeicons/core-free-icons";
+import { Briefcase, Camera, Fingerprint, GraduationCap, Link } from "lucide-react";
 import { SetupPersonnelCardProps } from "../types";
-import {
-  ProfilePictureStep,
-  IdentityStep,
-  WorkAssignmentsStep,
-  EducationStep,
-  SocialStep,
-} from "./setup-steps";
+import { PersonnelStepContent } from "./setup-steps/PersonnelStepContent";
 import { usePersonnelForm } from "../hooks/usePersonnelForm";
-import { personnelSetupAction } from "../action";
+import { updatePersonnelAction } from "../action";
 import { uploadAvatarAction } from "@/actions/image";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
@@ -88,17 +75,12 @@ export default function ProfileEditCard({
   const {
     control,
     isPending,
-    fields,
-    append,
-    remove,
-    educationValues,
-    formValues,
     pendingBlobRef,
     onSubmit,
   } = usePersonnelForm({
     personnel: initialPreview ?? undefined,
     mode: "edit",
-    submitAction: personnelSetupAction,
+    submitAction: updatePersonnelAction,
     uploadAvatarAction,
     onPendingChange: () => {},
     onSuccess: () => {},
@@ -113,103 +95,71 @@ export default function ProfileEditCard({
   );
 
   return (
-    <div className="flex min-h-full flex-col">
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6">
-        <div className="flex flex-col gap-4 border-b pb-6">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Edit Personnel Profile
-          </h1>
-          <p className="max-w-2xl text-muted-foreground">
-            Update your professional dossier. Changes are saved immediately.
-          </p>
-        </div>
+    <div className="flex flex-col">
+      <div className="rounded-2xl border bg-card p-4 sm:p-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab as (value: string) => void} className="w-full">
+          <TabsList className="grid w-full grid-cols-5">
+            {TABS.map((tab) => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-        <div className="rounded-2xl border bg-card p-4 sm:p-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab as (value: string) => void} className="w-full">
-<TabsList className="grid w-full grid-cols-5">
-        {TABS.map((tab) => (
-          <TabsTrigger
-            key={tab.id}
-            value={tab.id}
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground py-3"
-          >
-            {tab.label}
-          </TabsTrigger>
-        ))}
-      </TabsList>
+          {TABS.map((tab) => {
+            const EyebrowIcon = tab.icon;
+            return (
+              <TabsContent key={tab.id} value={tab.id} className="mt-6 focus-visible:border-none focus-visible:ring-0">
+                <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-4 text-center">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                    <EyebrowIcon className="size-3.5" />
+                    {tab.eyebrow}
+                  </span>
+                  <h2 className="text-3xl font-bold tracking-tight text-foreground">
+                    {tab.title}
+                  </h2>
+                  <p className="text-muted-foreground">{tab.description}</p>
+                </div>
 
-      {TABS.map((tab) => {
-        const EyebrowIcon = tab.icon;
-        return (
-          <TabsContent key={tab.id} value={tab.id} className="focus-visible:ring-0 focus-visible:border-none mt-6">
-            <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-4 text-center">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                <EyebrowIcon className="size-3.5" />
-                {tab.eyebrow}
-              </span>
-              <h2 className="text-3xl font-bold tracking-tight text-foreground">
-                {tab.title}
-              </h2>
-              <p className="text-muted-foreground">{tab.description}</p>
-            </div>
-
-            <form
-              id="personnel-edit-form"
-              onSubmit={handleSubmit}
-              className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8"
-            >
-              <div className="flex-1">
-                {(() => {
-                  switch (tab.id) {
-                    case "profile":
-                      return (
-                        <ProfilePictureStep
-                          control={control}
-                          isPending={isPending}
-                          profilePreviewUrl={profilePreviewUrl}
-                          onProfilePreviewChange={setProfilePreviewUrl}
-                          pendingBlobRef={pendingBlobRef}
-                        />
-                      );
-                    case "identity":
-                      return <IdentityStep control={control} isPending={isPending} />;
-                    case "work":
-                      return (
-                        <WorkAssignmentsStep
-                          control={control}
-                          isPending={isPending}
-                          ranks={ranks}
-                          designations={designations}
-                        />
-                      );
-                    case "education":
-                      return <EducationStep control={control} isPending={isPending} />;
-                    case "social":
-                      return <SocialStep control={control} isPending={isPending} />;
-                    default:
-                      return null;
-                  }
-                })()}
-              </div>
-
-              <div className="flex items-center justify-end gap-4 border-t pt-6">
-                <Button
-                  type="submit"
-                  form="personnel-edit-form"
-                  disabled={isPending}
-                  size="lg"
-                  className="gap-1.5 rounded-full"
+                <form
+                  id="personnel-edit-form"
+                  onSubmit={handleSubmit}
+                  className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8"
                 >
-                  {isPending ? "Saving..." : "Save Changes"}
-                  <HugeiconsIcon icon={ArrowRightIcon} className="size-4" />
-                </Button>
-              </div>
-            </form>
-          </TabsContent>
-        );
-      })}
-          </Tabs>
-        </div>
+                  <div className="flex-1">
+                    <PersonnelStepContent
+                      stepId={tab.id}
+                      control={control}
+                      isPending={isPending}
+                      ranks={ranks}
+                      designations={designations}
+                      profilePreviewUrl={profilePreviewUrl}
+                      onProfilePreviewChange={setProfilePreviewUrl}
+                      pendingBlobRef={pendingBlobRef}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-4 border-t pt-6">
+                    <Button
+                      type="submit"
+                      form="personnel-edit-form"
+                      disabled={isPending}
+                      size="lg"
+                      className="gap-1.5 rounded-full"
+                    >
+                      {isPending ? "Saving..." : "Save Changes"}
+                      <HugeiconsIcon icon={ArrowRightIcon} className="size-4" />
+                    </Button>
+                  </div>
+                </form>
+              </TabsContent>
+            );
+          })}
+        </Tabs>
       </div>
     </div>
   );

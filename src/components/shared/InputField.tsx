@@ -6,6 +6,7 @@ import { Field, FieldDescription, FieldError, FieldLabel } from '../ui/field';
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '../ui/input-group';
 import Link from 'next/link';
 import { InputFieldProps } from '@/types';
+import { ROUTES } from '@/utils/constants/routes';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { EyeClosedIcon, EyeIcon } from '@hugeicons/core-free-icons';
 
@@ -36,7 +37,7 @@ export default function InputField<TFieldValues extends FieldValues>({
 
                 return (
                     <Field data-invalid={fieldState.invalid}>
-                        <div className="text-accent-foreground flex justify-between">
+                        <div className="flex justify-between text-foreground">
                             {label && (
                                 <FieldLabel className="text-sm sm:text-sm" htmlFor={field.name}>
                                     {label}
@@ -44,8 +45,8 @@ export default function InputField<TFieldValues extends FieldValues>({
                             )}
                             {isPassword && forgetPasswordLink && (
                                 <Link
-                                    href={'/forgot-password'}
-                                    className="hover:text-foreground text-sm hover:underline"
+                                    href={ROUTES.FORGET_PASSWORD}
+                                    className="text-sm hover:text-foreground hover:underline"
                                 >
                                     Forgot password?
                                 </Link>
@@ -96,7 +97,7 @@ export default function InputField<TFieldValues extends FieldValues>({
                             </FieldDescription>
                         )}
                         {fieldErrorMessage && (
-                            <FieldError className="text-xs font-semibold tracking-[0.2em] text-red-500">
+                            <FieldError className="text-xs font-semibold tracking-[0.2em] text-destructive">
                                 {fieldErrorMessage}
                             </FieldError>
                         )}

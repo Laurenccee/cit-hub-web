@@ -1,6 +1,6 @@
 import { ROLES } from "./roles";
 
-export const NAV_LINKS = [
+const NAV_LINKS = [
   { label: "Home", href: "/home" },
   { label: "Bulletin", href: "/bulletin" },
   { label: "Schedule", href: "/schedule" },

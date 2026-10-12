@@ -67,7 +67,7 @@ export default function RegisterStudentButton() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="h-10 gap-1.5 bg-[#8B1A1A] px-4 text-xs font-semibold hover:bg-[#6B1515]">
+        <Button className="h-10 gap-1.5 bg-primary px-4 text-xs font-semibold hover:bg-primary/90">
           <UserPlus className="h-4 w-4" />
           Add New Student
         </Button>

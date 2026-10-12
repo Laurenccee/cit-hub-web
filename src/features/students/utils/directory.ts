@@ -1,7 +1,7 @@
 import { DirectoryStudent, Student } from "../types";
 
 /** Map a course name to the college label shown under each row. */
-export function collegeFromProgram(course?: string | null): string {
+function collegeFromProgram(course?: string | null): string {
   const text = (course ?? "").toLowerCase();
   if (
     /computer science|information systems|information technology|software|data science/.test(
@@ -22,7 +22,7 @@ export function collegeFromProgram(course?: string | null): string {
   return "CIT";
 }
 
-export function formatYearLevel(yearLevel?: string | null) {
+function formatYearLevel(yearLevel?: string | null) {
   const raw = (yearLevel ?? "").trim();
   if (!raw) return "—";
   if (/year/i.test(raw)) return raw;

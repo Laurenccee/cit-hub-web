@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
+import type { QueryResult } from '@/types/action';
 import { DeskCheckin, EventAttendance, EventAttendanceRecord, EventCategory, EventItem } from '../types';
 
-export { isEventLive } from '../utils';
 
 const RECENT_CHECKIN_LIMIT = 5;
 
@@ -20,7 +20,7 @@ function publishedEventsQuery(supabase: Awaited<ReturnType<typeof createClient>>
  */
 async function fetchPublishedEvents(
     supabase: Awaited<ReturnType<typeof createClient>>,
-): Promise<{ success: boolean; data: EventItem[] }> {
+): Promise<QueryResult<EventItem[]>> {
     const now = new Date().toISOString();
 
     const [upcomingRes, pastRes] = await Promise.all([
@@ -41,7 +41,7 @@ async function fetchPublishedEvents(
     return { success: !upcomingRes.error || !pastRes.error, data: [...upcoming, ...past] };
 }
 
-export async function GetEventCategories(): Promise<{ success: boolean; data: EventCategory[] }> {
+export async function GetEventCategories(): Promise<QueryResult<EventCategory[]>> {
     const supabase = await createClient();
 
     const { data, error } = await supabase.from('event_categories').select('*').order('label', { ascending: true });
@@ -54,7 +54,7 @@ export async function GetEventCategories(): Promise<{ success: boolean; data: Ev
     return { success: true, data: (data ?? []) as EventCategory[] };
 }
 
-export async function GetEvents(): Promise<{ success: boolean; data: EventItem[] }> {
+export async function GetEvents(): Promise<QueryResult<EventItem[]>> {
     const supabase = await createClient();
 
     return fetchPublishedEvents(supabase);
@@ -65,7 +65,7 @@ export async function GetEvents(): Promise<{ success: boolean; data: EventItem[]
  * (started, not yet ended), otherwise the next upcoming featured event,
  * otherwise the next upcoming event.
  */
-export async function GetFeaturedEvent(): Promise<{ success: boolean; data: EventItem | null }> {
+async function GetFeaturedEvent(): Promise<QueryResult<EventItem | null>> {
     const supabase = await createClient();
     const now = new Date().toISOString();
 
@@ -84,7 +84,7 @@ export async function GetFeaturedEvent(): Promise<{ success: boolean; data: Even
     return { success: true, data: (data ?? null) as EventItem | null };
 }
 
-export async function GetEventBySlug(slug: string): Promise<{ success: boolean; data: EventItem | null }> {
+export async function GetEventBySlug(slug: string): Promise<QueryResult<EventItem | null>> {
     const supabase = await createClient();
 
     const { data, error } = await publishedEventsQuery(supabase).eq('slug', slug).maybeSingle();
@@ -99,7 +99,7 @@ export async function GetEventBySlug(slug: string): Promise<{ success: boolean; 
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export async function GetEventByIdOrSlug(value: string): Promise<{ success: boolean; data: EventItem | null }> {
+export async function GetEventByIdOrSlug(value: string): Promise<QueryResult<EventItem | null>> {
     const supabase = await createClient();
 
     if (UUID_RE.test(value)) {
@@ -166,7 +166,7 @@ export async function GetEventAttendance(eventId: string): Promise<EventAttendan
     };
 }
 
-export async function GetDeskCheckins(eventId: string, limit = 50): Promise<{ success: boolean; data: DeskCheckin[] }> {
+export async function GetDeskCheckins(eventId: string, limit = 50): Promise<QueryResult<DeskCheckin[]>> {
     const supabase = await createClient();
 
     const { data, error } = await supabase

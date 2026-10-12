@@ -166,7 +166,7 @@ export default function ImageDropzone({ variant = 'avatar', onFile, initialUrl, 
                             <button
                                 type="button"
                                 onClick={handleClear}
-                                className="absolute top-2 right-2 z-10 rounded-full bg-black/60 p-1 text-white hover:bg-black/80 transition-colors"
+                                className="absolute top-2 right-2 z-10 rounded-full bg-black/60 p-1 text-primary-foreground hover:bg-black/80 transition-colors"
                                 aria-label="Remove image"
                             >
                                 <X size={14} />
@@ -196,7 +196,7 @@ export default function ImageDropzone({ variant = 'avatar', onFile, initialUrl, 
                                 <p
                                     className={cn(
                                         'text-muted-foreground text-center px-2',
-                                        variant === 'avatar' ? 'text-[10px]' : 'text-xs',
+                                        variant === 'avatar' ? 'text-micro' : 'text-xs',
                                     )}
                                 >
                                     {isDragging ? 'Drop to upload' : 'Click or drag to upload'}

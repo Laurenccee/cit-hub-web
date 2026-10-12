@@ -5,16 +5,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Email, Loading02Icon, User03Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { useTransition } from 'react';
-import { ForgetPasswordData, ForgetPasswordSchema } from '../schemas/authSchema';
+import { ForgetPasswordData, ForgetPasswordSchema } from '../schema/auth';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { forgetPasswordAction } from '../actions/index';
+import { forgetPasswordAction } from '../action';
 import { useRouter } from 'next/navigation';
 import { ROUTES } from '@/utils/constants/routes';
 
 export default function ForgetPasswordForm() {
-    const [isPending, startTransistion] = useTransition();
+    const [isPending, startTransition] = useTransition();
     const router = useRouter();
 
     const { control, handleSubmit } = useForm<ForgetPasswordData>({
@@ -25,7 +25,7 @@ export default function ForgetPasswordForm() {
     });
 
     const handleForgetPassword: SubmitHandler<ForgetPasswordData> = async (data) => {
-        startTransistion(async () => {
+        startTransition(async () => {
             try {
                 const result = await forgetPasswordAction(data);
 
@@ -37,7 +37,7 @@ export default function ForgetPasswordForm() {
                     `Check your inbox! If an account exists for ${data.email}, you'll find a reset link there.`,
                 );
                 router.push(ROUTES.SIGN_IN);
-            } catch (error) {
+            } catch {
                 toast.error('An error occurred during password reset.');
             }
         });
@@ -56,7 +56,7 @@ export default function ForgetPasswordForm() {
                 />
             </div>
             <Button form="forget-password-form" size="xl" className="w-full" disabled={isPending}>
-                {isPending ? 'Resetting Password...' : 'Reset Password'}
+                {isPending ? 'Sending reset link...' : 'Send reset link'}
                 {isPending ? (
                     <HugeiconsIcon icon={Loading02Icon} className="animate-spin" />
                 ) : (

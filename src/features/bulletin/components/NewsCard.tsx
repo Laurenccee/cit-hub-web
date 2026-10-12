@@ -14,10 +14,10 @@ export default function NewsCard({ news, variant = 'grid', priority = false, con
 
     const getCategoryBadgeColor = () => {
         const label = (news as any).content_type?.label?.toLowerCase() || '';
-        if (label.includes('event')) return 'bg-[#8B1A1A]';
+        if (label.includes('event')) return 'bg-primary';
         if (label.includes('advisory') || label.includes('campus')) return 'bg-orange-500';
-        if (label.includes('guidance') || label.includes('health')) return 'bg-[#8B1A1A]';
-        return 'bg-[#8B1A1A]';
+        if (label.includes('guidance') || label.includes('health')) return 'bg-primary';
+        return 'bg-primary';
     };
 
     return (
@@ -34,7 +34,7 @@ export default function NewsCard({ news, variant = 'grid', priority = false, con
                     />
                 )}
                 <div className="absolute top-3 left-3 z-10">
-                    <Badge className={`${getCategoryBadgeColor()} text-white text-xs px-2 py-0.5`}>
+                    <Badge className={`${getCategoryBadgeColor()} text-primary-foreground text-xs px-2 py-0.5`}>
                         {(news as any).content_type?.label || 'News'}
                     </Badge>
                 </div>
@@ -57,7 +57,7 @@ export default function NewsCard({ news, variant = 'grid', priority = false, con
                     4 min read
                 </span>
                 <Link href={`/bulletin/${news.slug}`}>
-                    <Button variant="ghost" size="sm" className="gap-1.5 text-[#8B1A1A] text-sm">
+                    <Button variant="ghost" size="sm" className="gap-1.5 text-primary text-sm">
                         View Full Article
                         <ArrowRight className="w-3.5 h-3.5" />
                     </Button>

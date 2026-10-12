@@ -12,7 +12,7 @@ const instrumentSerif = Instrument_Serif({
     weight: '400',
     variable: '--font-instrument',
 });
-const oswald = Oswald({ subsets: ['latin'], variable: '--font-noto' });
+const oswald = Oswald({ subsets: ['latin'], variable: '--font-oswald' });
 
 export const metadata: Metadata = {
     title: 'CIT Hub',

@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
+import type { QueryResult } from '@/types/action';
 import { Designation, Personnel, Rank } from '../types';
 
-export async function getRanks(): Promise<{ success: boolean; data: Rank[] }> {
+async function getRanks(): Promise<QueryResult<Rank[]>> {
     const supabase = await createClient();
 
     const { data, error } = await supabase.from('ranks').select('id, name').order('name', { ascending: true });
@@ -14,7 +15,7 @@ export async function getRanks(): Promise<{ success: boolean; data: Rank[] }> {
     return { success: true, data: (data ?? []) as Rank[] };
 }
 
-export async function getDesignations(): Promise<{ success: boolean; data: Designation[] }> {
+async function getDesignations(): Promise<QueryResult<Designation[]>> {
     const supabase = await createClient();
 
     const { data, error } = await supabase.from('designations').select('id, name').order('name', { ascending: true });
@@ -36,7 +37,7 @@ export async function getPersonnelPageData() {
     };
 }
 
-export async function getCurrentUserPersonnel() {
+export async function getCurrentUserPersonnel(): Promise<QueryResult<Personnel | null>> {
     const supabase = await createClient();
 
     const {
@@ -67,7 +68,7 @@ export async function getCurrentUserPersonnel() {
     return { success: true, data: data as Personnel | null };
 }
 
-export async function getPersonnel(): Promise<{ success: boolean; data: Personnel[] }> {
+export async function getPersonnel(): Promise<QueryResult<Personnel[]>> {
     const supabase = await createClient();
 
     // Fetches the personnel rows while joining the associated rank and designation records
@@ -90,7 +91,7 @@ export async function getPersonnel(): Promise<{ success: boolean; data: Personne
     return { success: true, data: (data ?? []) as Personnel[] };
 }
 
-export async function getPersonnelById(id: string): Promise<{ success: boolean; data: Personnel | null }> {
+export async function getPersonnelById(id: string): Promise<QueryResult<Personnel | null>> {
     const supabase = await createClient();
 
     const { data, error } = await supabase

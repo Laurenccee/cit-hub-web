@@ -164,13 +164,13 @@ export default function LiveEntryRoster({
   };
 
   return (
-    <Card className="min-w-0 gap-4 bg-white p-5 shadow-sm">
+    <Card className="min-w-0 gap-4 bg-card p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-serif text-2xl font-bold text-slate-900">
+          <h2 className="font-serif text-2xl font-bold text-foreground">
             Live Entry Roster
           </h2>
-          <p className="mt-0.5 text-xs text-slate-400">
+          <p className="mt-0.5 text-xs text-muted-foreground">
             Real-time stream of checked-in delegates
           </p>
         </div>
@@ -180,7 +180,7 @@ export default function LiveEntryRoster({
           size="sm"
           onClick={exportCsv}
           disabled={filtered.length === 0}
-          className="h-9 gap-1.5 px-3 text-xs font-bold text-slate-600"
+          className="h-9 gap-1.5 px-3 text-xs font-bold text-muted-foreground"
         >
           <Download className="h-3.5 w-3.5" />
           Export CSV
@@ -189,7 +189,7 @@ export default function LiveEntryRoster({
 
       <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
         <InputGroup className="h-10 flex-1 rounded-full">
-          <InputGroupAddon className="text-slate-400">
+          <InputGroupAddon className="text-muted-foreground">
             <Search className="size-4" />
           </InputGroupAddon>
           <InputGroupInput
@@ -200,7 +200,7 @@ export default function LiveEntryRoster({
             }}
             placeholder="Search name or ID..."
             aria-label="Search roster"
-            className="text-xs text-slate-700"
+            className="text-xs text-foreground"
           />
         </InputGroup>
         <div
@@ -222,8 +222,8 @@ export default function LiveEntryRoster({
                 className={cn(
                   "h-8 rounded-full px-3.5 text-xs font-bold transition-colors",
                   active
-                    ? "bg-[#8B1A1A] text-white shadow-sm"
-                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-800",
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
                 {code}
@@ -236,14 +236,14 @@ export default function LiveEntryRoster({
       <div className="overflow-x-auto">
         <table className="w-full min-w-120 text-sm">
           <thead>
-            <tr className="text-left text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
+            <tr className="text-left text-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
               <th className="px-2 py-2.5">Student Delegate</th>
               <th className="px-2 py-2.5">Department • Yr</th>
               <th className="px-2 py-2.5">Check-in Time</th>
               <th className="px-2 py-2.5 text-right">Current State</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border">
             {rows.map((row) => {
               const name = rowName(row);
               const inside = !row.check_out;
@@ -253,7 +253,7 @@ export default function LiveEntryRoster({
               return (
                 <tr
                   key={row.id}
-                  className="transition-colors hover:bg-slate-50/60"
+                  className="transition-colors hover:bg-muted/50"
                 >
                   <td className="px-2 py-2.5">
                     <span className="flex items-center gap-2.5">
@@ -265,24 +265,24 @@ export default function LiveEntryRoster({
                         size={36}
                       />
                       <span className="min-w-0">
-                        <span className="block truncate text-[13px] font-bold text-slate-800">
+                        <span className="block truncate text-sm font-bold text-foreground">
                           {name}
                         </span>
-                        <span className="block whitespace-nowrap font-mono text-[11px] text-slate-400">
+                        <span className="block whitespace-nowrap font-mono text-micro text-muted-foreground">
                           {row.student?.student_id ?? "Unregistered"}
                         </span>
                       </span>
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-2 py-2.5">
-                    <span className="block text-[13px] font-bold text-slate-700">
+                    <span className="block text-sm font-bold text-foreground">
                       {rowDept(row)}
                     </span>
-                    <span className="block max-w-32 truncate text-[11px] text-slate-400">
+                    <span className="block max-w-32 truncate text-micro text-muted-foreground">
                       {rowProgram(row)}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-2 py-2.5 font-mono text-xs text-slate-500">
+                  <td className="whitespace-nowrap px-2 py-2.5 font-mono text-xs text-muted-foreground">
                     {formatTapTime(row.check_in)}
                   </td>
                   <td className="whitespace-nowrap px-2 py-2.5">
@@ -290,13 +290,13 @@ export default function LiveEntryRoster({
                       <span
                         className={cn(
                           "inline-flex items-center gap-1.5 text-xs font-bold",
-                          inside ? "text-green-600" : "text-amber-600",
+                          inside ? "text-success" : "text-warning",
                         )}
                       >
                         <span
                           className={cn(
                             "h-1.5 w-1.5 rounded-full",
-                            inside ? "bg-green-500" : "bg-amber-500",
+                            inside ? "bg-success" : "bg-warning",
                           )}
                         />
                         {inside ? "Inside" : "Out"}
@@ -317,7 +317,7 @@ export default function LiveEntryRoster({
                         }
                         onClick={() => void handleDelete(row.id)}
                         disabled={deletingId === row.id}
-                        className="h-7 gap-1 px-2 text-[11px] font-bold text-slate-400 hover:text-red-600"
+                        className="h-7 gap-1 px-2 text-micro font-bold text-muted-foreground hover:text-destructive"
                       >
                         {deletingId === row.id ? (
                           <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -335,16 +335,16 @@ export default function LiveEntryRoster({
           </tbody>
         </table>
         {filtered.length === 0 && (
-          <p className="px-4 py-8 text-center text-sm text-slate-400">
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
             No attendees match this filter yet. Scan a card to begin.
           </p>
         )}
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-muted-foreground">
           Showing{" "}
-          <span className="font-bold text-slate-700">
+          <span className="font-bold text-foreground">
             {rows.length} of {totalRecords.toLocaleString()}
           </span>{" "}
           attendee event records
@@ -363,7 +363,7 @@ export default function LiveEntryRoster({
           </Button>
           {pageNumbers(safePage, pageCount).map((n, i) =>
             n === "…" ? (
-              <span key={`gap-${i}`} className="px-1 text-xs text-slate-300">
+              <span key={`gap-${i}`} className="px-1 text-xs text-muted-foreground/60">
                 …
               </span>
             ) : (
@@ -375,8 +375,8 @@ export default function LiveEntryRoster({
                 className={cn(
                   "h-8 min-w-8 rounded-full px-2 text-xs font-bold transition-colors",
                   n === safePage
-                    ? "bg-[#8B1A1A] text-white"
-                    : "text-slate-500 hover:bg-slate-100",
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted",
                 )}
               >
                 {n}

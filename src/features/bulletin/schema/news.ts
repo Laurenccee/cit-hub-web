@@ -19,6 +19,6 @@ const NewsBaseSchema = z.object({
 });
 
 export const NewsSchema = NewsBaseSchema;
-export const UpdateNewsSchema = NewsBaseSchema.extend({ id: z.string() });
+const UpdateNewsSchema = NewsBaseSchema.extend({ id: z.string() });
 
 export type NewsFormData = z.infer<typeof NewsSchema>;

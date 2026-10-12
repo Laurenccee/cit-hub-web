@@ -1,4 +1,6 @@
 import type React from 'react';
+import type { ActionResult, UploadActionResult } from '@/types/action';
+import type { PersonnelFormData } from '../schema/personnel';
 
 export interface Rank {
     id: string;
@@ -104,11 +106,18 @@ export interface PersonnelFormProps {
     onSuccess?: () => void;
 }
 
+/**
+ * Payload `usePersonnelForm` hands to `submitAction`. It serves both flows:
+ * setup (no `id`) and edit (with `id`). The server action re-validates with
+ * zod, which is what enforces `id` for updates.
+ */
+export type PersonnelSubmitPayload = PersonnelFormData & { id?: string };
+
 export interface UsePersonnelFormProps {
     personnel?: Personnel;
     mode: 'setup' | 'edit';
     onPendingChange?: (isPending: boolean) => void;
     onSuccess?: () => void;
-    submitAction: (data: any) => Promise<any>;
-    uploadAvatarAction: (formData: FormData, oldUrl?: string | null) => Promise<any>;
+    submitAction: (data: PersonnelSubmitPayload) => Promise<ActionResult>;
+    uploadAvatarAction: (formData: FormData, oldUrl?: string | null) => Promise<UploadActionResult>;
 }

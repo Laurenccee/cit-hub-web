@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import type { QueryResult } from '@/types/action';
 import { ContentType, NewsItem } from '../types';
 
 function publishedNewsQuery(supabase: Awaited<ReturnType<typeof createClient>>) {
@@ -9,7 +10,7 @@ function publishedNewsQuery(supabase: Awaited<ReturnType<typeof createClient>>) 
         .eq('is_published', true);
 }
 
-export async function GetContentTypes(): Promise<{ success: boolean; data: ContentType[] }> {
+async function GetContentTypes(): Promise<QueryResult<ContentType[]>> {
     const supabase = await createClient();
 
     const { data, error } = await supabase.from('content_types').select('*').order('label', { ascending: true });
@@ -22,7 +23,7 @@ export async function GetContentTypes(): Promise<{ success: boolean; data: Conte
     return { success: true, data: (data ?? []) as ContentType[] };
 }
 
-export async function GetFeaturedNews(): Promise<{ success: boolean; data: NewsItem[] }> {
+async function GetFeaturedNews(): Promise<QueryResult<NewsItem[]>> {
     const supabase = await createClient();
 
     const { data, error } = await publishedNewsQuery(supabase)
@@ -40,7 +41,7 @@ export async function GetFeaturedNews(): Promise<{ success: boolean; data: NewsI
     return { success: true, data: results as NewsItem[] };
 }
 
-export async function GetNews(): Promise<{ success: boolean; data: NewsItem[] }> {
+async function GetNews(): Promise<QueryResult<NewsItem[]>> {
     const supabase = await createClient();
 
     const { data, error } = await publishedNewsQuery(supabase).order('created_at', { ascending: false });

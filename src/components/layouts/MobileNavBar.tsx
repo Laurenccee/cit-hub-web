@@ -32,7 +32,10 @@ export function MobileNav({
   const visibleNavLinks = getVisibleNavLinks(role);
 
   useEffect(() => {
-    setOpen(false);
+    if (open) {
+      setOpen(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   return (

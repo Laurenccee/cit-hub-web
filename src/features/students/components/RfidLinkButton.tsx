@@ -61,7 +61,7 @@ export default function RfidLinkButton({
           variant="ghost"
           size="icon"
           aria-label={`RFID credential for ${studentName}`}
-          className="h-8 w-8 text-slate-400 hover:text-slate-700"
+          className="h-8 w-8 text-muted-foreground hover:text-foreground"
         >
           <Nfc className="h-4 w-4" />
         </Button>

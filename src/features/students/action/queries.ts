@@ -1,10 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import type { QueryResult } from "@/types/action";
 import { Course, Major, Student } from "../types";
 
-export async function getStudents(): Promise<{
-  success: boolean;
-  data: Student[];
-}> {
+export async function getStudents(): Promise<QueryResult<Student[]>> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -22,10 +20,7 @@ export async function getStudents(): Promise<{
   return { success: true, data: (data ?? []) as Student[] };
 }
 
-export async function getCourses(): Promise<{
-  success: boolean;
-  data: Course[];
-}> {
+async function getCourses(): Promise<QueryResult<Course[]>> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -41,10 +36,7 @@ export async function getCourses(): Promise<{
   return { success: true, data: (data ?? []) as Course[] };
 }
 
-export async function getMajors(): Promise<{
-  success: boolean;
-  data: Major[];
-}> {
+async function getMajors(): Promise<QueryResult<Major[]>> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -72,10 +64,7 @@ export async function getStudentsPageData() {
   };
 }
 
-export async function getCurrentUserStudent(): Promise<{
-  success: boolean;
-  data: Student | null;
-}> {
+async function getCurrentUserStudent(): Promise<QueryResult<Student | null>> {
   const supabase = await createClient();
 
   const {

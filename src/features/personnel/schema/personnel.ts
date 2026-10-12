@@ -38,4 +38,3 @@ export const UpdatePersonnelSchema = PersonnelSchema.extend({
 
 export type RegisterPersonnelData = z.infer<typeof RegisterPersonnelSchema>;
 export type PersonnelFormData = z.infer<typeof PersonnelSchema>;
-export type UpdatePersonnelFormData = z.infer<typeof UpdatePersonnelSchema>;

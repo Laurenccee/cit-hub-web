@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import InputField from '@/components/shared/InputField';
 import { Label } from '@/components/ui/label';
 import { Controller, useFieldArray, useWatch } from 'react-hook-form';
@@ -74,19 +75,13 @@ export function EducationStep({ control, isPending }: EducationStepProps) {
                   leadingIcon={<HugeiconsIcon icon={Mortarboard01Icon} />}
                 />
 
-                <Controller
+                <InputField
                   name={`education.${index}.yearGraduated`}
+                  label="Year Graduated"
+                  placeholder="2024"
                   control={control}
-                  render={({ field }) => (
-                    <InputField
-                      name={`education.${index}.yearGraduated`}
-                      label="Year Graduated"
-                      placeholder="2024"
-                      control={control}
-                      isPending={isPending}
-                      leadingIcon={<HugeiconsIcon icon={CalendarIcon} />}
-                    />
-                  )}
+                  isPending={isPending}
+                  leadingIcon={<HugeiconsIcon icon={CalendarIcon} />}
                 />
 
                 <Controller
@@ -95,21 +90,13 @@ export function EducationStep({ control, isPending }: EducationStepProps) {
                   render={({ field }) => (
                     <div className="flex flex-col gap-2">
                       <Label className="text-sm font-medium">Status</Label>
-                      <div className="flex items-center gap-3 h-10">
-                        <button
-                          type="button"
-                          onClick={() => field.onChange(!field.value)}
+                      <div className="flex h-10 items-center gap-3">
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
                           disabled={isPending}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                            field.value ? 'bg-primary' : 'bg-input border border-border'
-                          }`}
-                        >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              field.value ? 'translate-x-6' : 'translate-x-1'
-                            }`}
-                          />
-                        </button>
+                          aria-label="Currently pursuing"
+                        />
                         <span className="text-xs text-muted-foreground">
                           {field.value ? 'Currently pursuing' : 'Completed'}
                         </span>

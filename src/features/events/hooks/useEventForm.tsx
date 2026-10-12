@@ -63,9 +63,10 @@ export function useEventForm({ onSuccess, onClose }: UseEventFormProps) {
         try {
           let imageUrl: string | undefined;
 
-          if (imageBlobRef.current) {
+          const blob = imageBlobRef.current;
+          if (blob) {
             const fd = new FormData();
-            fd.append("file", imageBlobRef.current, "event.jpg");
+            fd.append("file", blob, "event.jpg");
 
             const uploadResult = await uploadEventImageAction(fd);
             if (!uploadResult.success) {
@@ -86,15 +87,17 @@ export function useEventForm({ onSuccess, onClose }: UseEventFormProps) {
             // Map server-side field errors back to RHF so they render inline.
             if (result.fieldErrors) {
               Object.entries(result.fieldErrors).forEach(([field, messages]) => {
-                messages.forEach((message) => {
-                  form.setError(field as keyof EventFormData, {
-                    type: "server",
-                    message,
+                if (Array.isArray(messages)) {
+                  messages.forEach((message) => {
+                    form.setError(field as keyof EventFormData, {
+                      type: "server",
+                      message: String(message),
+                    });
                   });
-                });
+                }
               });
             }
-            toast.error(result.error ?? "Failed to create event");
+            toast.error(result.message ?? "Failed to create event");
             return;
           }
 

@@ -1,29 +1,17 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { PostgrestError } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 import { NewsSchema, type NewsFormData } from '../schema/news';
 import { getAuthorizedUser } from '@/actions';
-import { deleteStorageFileAction, uploadNewsImageAction } from '@/actions/image';
+import { runMutation } from '@/actions/mutation';
+import { deleteStorageFileAction } from '@/actions/image';
+import { ROUTES } from '@/utils/constants/routes';
+import { getErrorMessage } from '@/utils/errors';
 
-async function executeNewsMutation(
-    values: NewsFormData,
-    successMessage: string,
-    dbOperation: (supabase: any, payload: any, userId: string) => Promise<{ error: PostgrestError | null }>,
-) {
-    const authorized = await getAuthorizedUser();
-    if (!authorized) return { success: false as const, message: 'Unauthorized.' };
-
-    const validatedFields = NewsSchema.safeParse(values);
-    if (!validatedFields.success) {
-        return { success: false as const, message: 'Invalid form data.' };
-    }
-
-    const { data } = validatedFields;
-    const supabase = await createClient();
-
-    const payload = {
+/** Maps the camelCase form fields onto their snake_case `news` columns. */
+function toNewsPayload(data: NewsFormData) {
+    return {
         title: data.title,
         description: data.description ?? '',
         content: data.content ?? null,
@@ -34,51 +22,54 @@ async function executeNewsMutation(
         is_published: data.isPublished,
         is_featured: data.isFeatured,
     };
-
-    try {
-        const { error: dbError } = await dbOperation(supabase, payload, authorized.user.id);
-        if (dbError) throw dbError;
-
-        revalidatePath('/bulletin');
-        return { success: true as const, message: successMessage };
-    } catch (error: any) {
-        return {
-            success: false as const,
-            message: error?.message || 'An unexpected database error occurred.',
-        };
-    }
 }
 
-export async function addNewsAction(values: NewsFormData, _targetId: string) {
-    return executeNewsMutation(values, 'News successfully created!', (supabase, payload, userId) =>
-        supabase.from('news').insert({ author_id: userId, ...payload }),
-    );
+export async function addNewsAction(values: NewsFormData) {
+    return runMutation({
+        values,
+        schema: NewsSchema,
+        authorize: getAuthorizedUser,
+        revalidate: [ROUTES.BULLETIN],
+        successMessage: 'News successfully created!',
+        execute: (data, { supabase, userId }) => supabase.from('news').insert({ author_id: userId, ...toNewsPayload(data) }),
+    });
 }
 
+// fallow-ignore-next-line unused-server-action
 export async function updateNewsAction(values: NewsFormData, targetId: string) {
-    return executeNewsMutation(values, 'News successfully updated!', (supabase, payload) =>
-        supabase.from('news').update(payload).eq('id', targetId),
-    );
+    return runMutation({
+        values,
+        schema: NewsSchema,
+        authorize: getAuthorizedUser,
+        revalidate: [ROUTES.BULLETIN],
+        successMessage: 'News successfully updated!',
+        execute: (data, { supabase }) => supabase.from('news').update(toNewsPayload(data)).eq('id', targetId),
+    });
 }
 
+// fallow-ignore-next-line unused-server-action
 export async function deleteNewsAction(id: string) {
     const authorized = await getAuthorizedUser();
     if (!authorized) return { success: false as const, message: 'Unauthorized.' };
 
     const supabase = await createClient();
 
-    const { data: newsRow } = await supabase.from('news').select('image_url').eq('id', id).single();
-    if (newsRow?.image_url) {
-        const storageResult = await deleteStorageFileAction(newsRow.image_url, 'news-images');
+    try {
+        const { data: newsRow } = await supabase.from('news').select('image_url').eq('id', id).single();
+        if (newsRow?.image_url) {
+            const storageResult = await deleteStorageFileAction(newsRow.image_url, 'news-images');
 
-        if (!storageResult.success) {
-            console.error('Storage deletion failed:', storageResult.message);
+            if (!storageResult.success) {
+                console.error('Storage deletion failed:', storageResult.message);
+            }
         }
+
+        const { error } = await supabase.from('news').delete().eq('id', id);
+        if (error) throw error;
+
+        revalidatePath(ROUTES.BULLETIN);
+        return { success: true as const, message: 'News successfully deleted.' };
+    } catch (error) {
+        return { success: false as const, message: getErrorMessage(error, 'An unexpected error occurred.') };
     }
-
-    const { error } = await supabase.from('news').delete().eq('id', id);
-    if (error) return { success: false as const, message: error.message };
-
-    revalidatePath('/bulletin');
-    return { success: true as const, message: 'News successfully deleted.' };
 }

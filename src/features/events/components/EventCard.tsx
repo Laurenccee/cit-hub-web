@@ -26,13 +26,14 @@ const ACADEMIC_KEYWORDS = [
 
 function badgeClasses(label: string) {
   const lower = label.toLowerCase();
-  if (lower.includes("career")) {
-    return "border-slate-200 bg-slate-100 text-slate-600";
+  if (
+    lower.includes("career") ||
+    lower.includes("cultural") ||
+    lower.includes("arts")
+  ) {
+    return "border-border bg-muted text-muted-foreground";
   }
-  if (lower.includes("cultural") || lower.includes("arts")) {
-    return "border-slate-200 bg-slate-100 text-slate-600";
-  }
-  return "border-red-100 bg-red-50 text-[#8B1A1A]";
+  return "border-primary/20 bg-primary/10 text-primary";
 }
 
 function formatTime(value: string) {
@@ -60,61 +61,61 @@ export default function EventCard({ event }: EventCardProps) {
     event.capacity_unit === "teams" ? `${filled} Teams` : `${filled} Attendees`;
 
   return (
-    <Card className="flex h-full flex-col overflow-hidden rounded-xl bg-white shadow-sm transition-shadow hover:shadow-md">
+    <Card className="flex h-full flex-col overflow-hidden rounded-xl bg-card shadow-sm transition-shadow hover:shadow-md">
       <EventImage event={event} className="aspect-video" />
 
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-start justify-between gap-3">
           <Badge
             variant="outline"
-            className={`max-w-[65%] truncate rounded-full px-2.5 py-1 text-[11px] font-semibold ${badgeClasses(event.category?.label ?? "")}`}
+            className={`max-w-[65%] truncate rounded-full px-2.5 py-1 text-micro font-semibold ${badgeClasses(event.category?.label ?? "")}`}
           >
             {event.category?.label ?? "Campus Event"}
           </Badge>
           <div className="shrink-0 text-right leading-tight">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-900">
+            <p className="text-xs font-bold uppercase tracking-wide text-foreground">
               {monthDay}
             </p>
-            <p className="mt-0.5 text-[11px] text-slate-400">{weekday}</p>
+            <p className="mt-0.5 text-micro text-muted-foreground">{weekday}</p>
           </div>
         </div>
 
-        <h3 className="mt-3 line-clamp-2 text-[15px] font-bold leading-snug text-slate-900">
+        <h3 className="mt-3 line-clamp-2 text-base font-bold leading-snug text-foreground">
           {event.title}
         </h3>
-        <p className="mt-1.5 line-clamp-2 min-h-10 text-[13px] leading-relaxed text-slate-500">
+        <p className="mt-1.5 line-clamp-2 min-h-10 text-sm leading-relaxed text-muted-foreground">
           {event.description ||
             event.content ||
             "Details will be announced soon."}
         </p>
 
-        <div className="mt-3 flex flex-col gap-1.5 text-xs text-slate-500">
+        <div className="mt-3 flex flex-col gap-1.5 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+            <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
             <span className="truncate">{event.location ?? "CIT Campus"}</span>
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+            <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
             {formatTime(event.start_date)}
             {event.end_date ? ` – ${formatTime(event.end_date)}` : ""}
           </span>
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-2 rounded-md bg-slate-50 px-3 py-2">
-          <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-500">
-            <Users className="h-3.5 w-3.5 text-slate-400" />
+        <div className="mt-4 flex items-center justify-between gap-2 rounded-md bg-muted px-3 py-2">
+          <span className="inline-flex items-center gap-1.5 text-micro text-muted-foreground">
+            <Users className="h-3.5 w-3.5 text-muted-foreground/70" />
             Registered
           </span>
-          <span className="text-xs font-bold text-slate-800">{headcount}</span>
+          <span className="text-xs font-bold text-foreground">{headcount}</span>
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/50 px-5 py-3">
+      <div className="flex items-center justify-between gap-2 border-t border-border bg-muted/40 px-5 py-3">
         <Button
           type="button"
           size="sm"
           variant="secondary"
-          className="h-8 bg-slate-100 px-3 text-xs font-semibold text-slate-600 hover:bg-slate-200"
+          className="h-8 px-3 text-xs font-semibold"
           asChild
         >
           <Link href={`/events/${event.slug}`}>View Details</Link>
@@ -125,7 +126,7 @@ export default function EventCard({ event }: EventCardProps) {
             variant="ghost"
             size="icon"
             aria-label={`Edit ${event.title}`}
-            className="h-8 w-8 text-slate-400 hover:text-slate-700"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
             asChild
           >
             <Link href={`/events/${event.slug}`}>
@@ -137,7 +138,7 @@ export default function EventCard({ event }: EventCardProps) {
             variant="ghost"
             size="icon"
             aria-label={`Show QR code for ${event.title}`}
-            className="h-8 w-8 text-slate-400 hover:text-slate-700"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
           >
             <QrCode className="h-4 w-4" />
           </Button>

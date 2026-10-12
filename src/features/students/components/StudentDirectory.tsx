@@ -42,12 +42,12 @@ const majorFilters: { label: string; value: MajorFilter }[] = [
 ];
 
 const avatarPalette = [
-  "bg-red-100 text-[#8B1A1A]",
-  "bg-blue-100 text-blue-700",
-  "bg-green-100 text-green-700",
-  "bg-amber-100 text-amber-700",
-  "bg-purple-100 text-purple-700",
-  "bg-cyan-100 text-cyan-700",
+  "bg-primary/10 text-primary",
+  "bg-secondary text-secondary-foreground",
+  "bg-accent text-accent-foreground",
+  "bg-muted text-muted-foreground",
+  "bg-primary/5 text-primary",
+  "bg-muted/70 text-muted-foreground",
 ];
 
 function avatarColor(name: string) {
@@ -62,9 +62,9 @@ function initials(first: string, last: string) {
 }
 
 function presenceDot(presence: DirectoryStudent["presence"]) {
-  if (presence === "inside") return "bg-green-500";
-  if (presence === "issue") return "bg-amber-500";
-  return "bg-slate-300";
+  if (presence === "inside") return "bg-success";
+  if (presence === "issue") return "bg-warning";
+  return "bg-muted-foreground/40";
 }
 
 export default function StudentDirectory({
@@ -138,10 +138,10 @@ export default function StudentDirectory({
   return (
     <div className="flex flex-col gap-5">
       {/* Filter card */}
-      <div className="rounded-xl border bg-white p-4 shadow-sm">
+      <div className="rounded-xl border bg-card p-4 shadow-sm">
         <div className="flex flex-col gap-3 xl:flex-row">
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => {
@@ -150,7 +150,7 @@ export default function StudentDirectory({
               }}
               placeholder="Search by student name, ID (CIT-202X), RFID UID, or program..."
               aria-label="Search students"
-              className="h-10 bg-white pl-9 pr-9 text-xs"
+              className="h-10 bg-card pl-9 pr-9 text-xs"
             />
             {search && (
               <button
@@ -160,7 +160,7 @@ export default function StudentDirectory({
                   setSearch("");
                   resetPage();
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-slate-400 hover:text-slate-700"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-muted-foreground hover:text-foreground"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -174,7 +174,7 @@ export default function StudentDirectory({
                 resetPage();
               }}
               aria-label="Filter by year level"
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#8B1A1A]/30"
+              className="h-10 rounded-lg border border-border bg-card px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
             >
               <option value="all">All Year Levels</option>
               <option value="1st">1st Year</option>
@@ -189,7 +189,7 @@ export default function StudentDirectory({
                 resetPage();
               }}
               aria-label="Filter by RFID status"
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#8B1A1A]/30"
+              className="h-10 rounded-lg border border-border bg-card px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
             >
               <option value="all">RFID Status: All</option>
               <option value="linked">Linked</option>
@@ -200,7 +200,7 @@ export default function StudentDirectory({
         </div>
 
         <div
-          className="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3"
+          className="mt-3 flex flex-wrap gap-2 border-t border-border pt-3"
           role="group"
           aria-label="Filter by major"
         >
@@ -220,17 +220,17 @@ export default function StudentDirectory({
                 className={cn(
                   "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition-colors",
                   active
-                    ? "border-[#8B1A1A] bg-[#8B1A1A] text-white"
-                    : "border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-800",
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-muted-foreground hover:border-border hover:text-foreground",
                 )}
               >
                 {label}
                 <span
                   className={cn(
-                    "rounded-full px-1.5 py-px text-[10px] font-bold leading-4",
+                    "rounded-full px-1.5 py-px text-micro font-bold leading-4",
                     active
-                      ? "bg-white/20 text-white"
-                      : "bg-slate-100 text-slate-500",
+                      ? "bg-card/20 text-primary-foreground"
+                      : "bg-muted text-muted-foreground",
                   )}
                 >
                   {count.toLocaleString()}
@@ -242,28 +242,20 @@ export default function StudentDirectory({
       </div>
 
       {/* Table card */}
-      <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
-          <p className="text-sm text-slate-500">
-            Showing{" "}
-            <span className="font-bold text-slate-800">{showingFrom}</span> to{" "}
-            <span className="font-bold text-slate-800">{showingTo}</span> of{" "}
-            <span className="font-bold text-slate-800">
-              {filtered.length.toLocaleString()}
-            </span>{" "}
-            students
-          </p>
-          <Pagination
-            page={safePage}
-            pageCount={pageCount}
-            onChange={setPage}
-          />
-        </div>
+      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+        <DirectoryFooter
+          showingFrom={showingFrom}
+          showingTo={showingTo}
+          total={filtered.length}
+          page={safePage}
+          pageCount={pageCount}
+          onPageChange={setPage}
+        />
 
-        <div className="overflow-x-auto border-y border-slate-100">
+        <div className="overflow-x-auto border-y border-border">
           <table className="w-full min-w-[880px] text-sm">
             <thead>
-              <tr className="text-left text-[11px] font-bold uppercase tracking-[0.08em] text-slate-400">
+              <tr className="text-left text-micro font-bold uppercase tracking-[0.08em] text-muted-foreground">
                 <th className="px-4 py-3 sm:px-5">Student (Photo & Name)</th>
                 <th className="px-4 py-3">Student ID</th>
                 <th className="px-4 py-3">Course & Major</th>
@@ -271,11 +263,11 @@ export default function StudentDirectory({
                 <th className="px-4 py-3 text-right sm:px-5">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-border">
               {visible.map((s) => (
                 <tr
                   key={s.id}
-                  className="transition-colors hover:bg-slate-50/60"
+                  className="transition-colors hover:bg-muted/50"
                 >
                   <td className="px-4 py-3 sm:px-5">
                     <div className="flex items-center gap-3">
@@ -301,67 +293,67 @@ export default function StudentDirectory({
                         </span>
                         <span
                           className={cn(
-                            "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white",
+                            "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card",
                             presenceDot(s.presence),
                           )}
                         />
                       </span>
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-bold text-slate-900">
+                        <span className="block truncate text-sm font-bold text-foreground">
                           {s.firstName} {s.lastName}
                         </span>
-                        <span className="mt-0.5 block text-xs text-slate-500">
+                        <span className="mt-0.5 block text-xs text-muted-foreground">
                           {s.yearLevel}
                         </span>
                       </span>
                     </div>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3">
-                    <span className="inline-flex rounded-md border border-slate-200 bg-white px-2 py-1 font-mono text-[11px] font-bold text-[#8B1A1A] shadow-sm">
+                    <span className="inline-flex rounded-md border border-border bg-card px-2 py-1 font-mono text-micro font-bold text-primary shadow-sm">
                       {s.studentId}
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="text-[13px] font-semibold text-slate-800">
+                    <p className="text-sm font-semibold text-foreground">
                       {s.course}
                     </p>
                     {s.major && (
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-muted-foreground">
                         Major in {s.major}
                       </p>
                     )}
-                    <p className="text-[11px] text-slate-400">{s.college}</p>
+                    <p className="text-micro text-muted-foreground">{s.college}</p>
                   </td>
                   <td className="px-4 py-3">
                     {s.rfidStatus === "linked" ? (
-                      <span className="inline-flex max-w-[190px] items-center gap-1.5 truncate rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-[11px] font-semibold text-green-700">
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-green-500" />
+                      <span className="inline-flex max-w-[190px] items-center gap-1.5 truncate rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-micro font-semibold text-success">
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
                         <span className="truncate">{s.nfcTag ?? "Linked"}</span>
                       </span>
                     ) : s.rfidStatus === "pending" ? (
-                      <span className="inline-flex max-w-[190px] items-center gap-1.5 truncate rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                      <span className="inline-flex max-w-[190px] items-center gap-1.5 truncate rounded-full border border-warning/30 bg-warning/10 px-2.5 py-1 text-micro font-semibold text-warning">
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
                         <span className="truncate">
                           {s.nfcTag ?? "Pending"}
                         </span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center rounded-full border border-slate-200 px-2.5 py-1 text-[11px] font-medium text-slate-400">
+                      <span className="inline-flex items-center rounded-full border border-border px-2.5 py-1 text-micro font-medium text-muted-foreground">
                         Not linked
                       </span>
                     )}
                     {s.rfidUid && (
-                      <p className="mt-1 text-[10px] tracking-wide text-slate-400">
+                      <p className="mt-1 text-micro tracking-wide text-muted-foreground">
                         UID: {s.rfidUid}
                       </p>
                     )}
                     {s.rfidNote && (
                       <p
                         className={cn(
-                          "mt-1 text-[11px] font-medium",
+                          "mt-1 text-micro font-medium",
                           s.rfidStatus === "pending"
-                            ? "text-amber-600"
-                            : "text-slate-400",
+                            ? "text-warning"
+                            : "text-muted-foreground",
                         )}
                       >
                         {s.rfidNote}
@@ -385,7 +377,7 @@ export default function StudentDirectory({
                           variant="ghost"
                           size="icon"
                           aria-label={`Edit ${s.firstName} ${s.lastName}`}
-                          className="h-8 w-8 text-slate-400 hover:text-slate-700"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -404,11 +396,11 @@ export default function StudentDirectory({
 
         {visible.length === 0 && (
           <div className="flex flex-col items-center gap-2 px-4 py-12 text-center">
-            <SearchX className="h-10 w-10 text-slate-300" />
-            <p className="text-sm font-semibold text-slate-600">
+            <SearchX className="h-10 w-10 text-muted-foreground/60" />
+            <p className="text-sm font-semibold text-muted-foreground">
               No students found
             </p>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-muted-foreground">
               Try another name, ID, department, or clear the filters.
             </p>
             <Button
@@ -423,23 +415,45 @@ export default function StudentDirectory({
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
-          <p className="text-sm text-slate-500">
-            Showing{" "}
-            <span className="font-bold text-slate-800">{showingFrom}</span> to{" "}
-            <span className="font-bold text-slate-800">{showingTo}</span> of{" "}
-            <span className="font-bold text-slate-800">
-              {filtered.length.toLocaleString()}
-            </span>{" "}
-            students
-          </p>
-          <Pagination
-            page={safePage}
-            pageCount={pageCount}
-            onChange={setPage}
-          />
-        </div>
+        <DirectoryFooter
+          showingFrom={showingFrom}
+          showingTo={showingTo}
+          total={filtered.length}
+          page={safePage}
+          pageCount={pageCount}
+          onPageChange={setPage}
+        />
       </div>
+    </div>
+  );
+}
+
+function DirectoryFooter({
+  showingFrom,
+  showingTo,
+  total,
+  page,
+  pageCount,
+  onPageChange,
+}: {
+  showingFrom: number;
+  showingTo: number;
+  total: number;
+  page: number;
+  pageCount: number;
+  onPageChange: (page: number) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
+      <p className="text-sm text-muted-foreground">
+        Showing <span className="font-bold text-foreground">{showingFrom}</span>{" "}
+        to <span className="font-bold text-foreground">{showingTo}</span> of{" "}
+        <span className="font-bold text-foreground">
+          {total.toLocaleString()}
+        </span>{" "}
+        students
+      </p>
+      <Pagination page={page} pageCount={pageCount} onChange={onPageChange} />
     </div>
   );
 }
@@ -484,14 +498,14 @@ function Pagination({
         size="sm"
         disabled={page === 1}
         onClick={() => onChange(Math.max(1, page - 1))}
-        className="h-8 gap-1 bg-white px-2.5 text-xs"
+        className="h-8 gap-1 bg-card px-2.5 text-xs"
       >
         <ChevronLeft className="h-3.5 w-3.5" />
         Prev
       </Button>
       {items.map((item, i) =>
         item === "gap" ? (
-          <span key={`gap-${i}`} className="px-0.5 text-xs text-slate-400">
+          <span key={`gap-${i}`} className="px-0.5 text-xs text-muted-foreground">
             …
           </span>
         ) : (
@@ -505,7 +519,7 @@ function Pagination({
             onClick={() => onChange(item)}
             className={cn(
               "h-8 min-w-8 px-2 text-xs",
-              item === page ? "bg-[#8B1A1A] hover:bg-[#6B1515]" : "bg-white",
+              item === page ? "bg-primary hover:bg-primary/90" : "bg-card",
             )}
           >
             {item}
@@ -518,7 +532,7 @@ function Pagination({
         size="sm"
         disabled={page === pageCount}
         onClick={() => onChange(Math.min(pageCount, page + 1))}
-        className="h-8 gap-1 bg-white px-2.5 text-xs"
+        className="h-8 gap-1 bg-card px-2.5 text-xs"
       >
         Next
         <ChevronRight className="h-3.5 w-3.5" />

@@ -1,7 +1,9 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { getAuthorizedAdmin, getAuthorizedUser } from '.';
+import type { UploadActionResult } from '@/types/action';
+import { getErrorMessage } from '@/utils/errors';
+import { getAuthenticatedUser, getAuthorizedAdmin, getAuthorizedUser } from '.';
 
 interface UploadConfig {
     bucket: string;
@@ -80,20 +82,12 @@ async function uploadStorageFile({ bucket, folderId, prefix, file, oldFilePath }
  * Avatars are a self-service upload (any signed-in user manages their own), unlike news
  * images which are editorial content restricted to Admin/Faculty via `getAuthorizedUser`.
  */
-async function getAuthenticatedUser() {
-    const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
-    return user ? { user } : null;
-}
-
 async function handleImageUpload(
     formData: FormData,
     oldFilePath: string | null | undefined,
     options: Pick<UploadConfig, 'bucket' | 'folderId' | 'prefix'>,
     authorize: () => Promise<unknown | null>,
-) {
+): Promise<UploadActionResult> {
     try {
         const file = formData.get('file') as File | null;
         if (!file || file.size === 0) return { success: false, message: 'No file provided.' };
@@ -103,8 +97,8 @@ async function handleImageUpload(
 
         const publicUrl = await uploadStorageFile({ ...options, file, oldFilePath });
         return { success: true, url: publicUrl };
-    } catch (err: any) {
-        return { success: false, message: err?.message || 'An unexpected error occurred.' };
+    } catch (err) {
+        return { success: false, message: getErrorMessage(err, 'An unexpected error occurred.') };
     }
 }
 

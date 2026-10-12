@@ -5,7 +5,7 @@ import { CalendarX2, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { EventCategory, EventItem } from "../types";
+import { EventItem } from "../types";
 import EventCard, { isAcademicEvent } from "./EventCard";
 import { CardEmptyState } from "@/components/shared/CardEmptyState";
 
@@ -14,7 +14,6 @@ type SortOrder = "soonest" | "latest" | "alphabetical";
 
 interface EventsListingProps {
   events: EventItem[];
-  categories: EventCategory[];
 }
 
 const pageSize = 6;
@@ -40,7 +39,7 @@ export default function EventsListing({ events }: EventsListingProps) {
   };
 
   const now = new Date();
-  
+
   // Week interval (Monday to Sunday)
   const currentDay = now.getDay();
   const diffToMonday = (currentDay + 6) % 7;
@@ -137,8 +136,8 @@ export default function EventsListing({ events }: EventsListingProps) {
                 onClick={() => selectTab(value)}
                 className={`h-8 shrink-0 rounded-md border px-3 text-xs font-medium transition-colors ${
                   isSelected
-                    ? "border-[#8B1A1A] bg-[#8B1A1A] text-white"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:text-slate-900"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
                 }`}
               >
                 {label}
@@ -149,7 +148,7 @@ export default function EventsListing({ events }: EventsListingProps) {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative w-full sm:w-72">
             <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
               aria-hidden="true"
             />
             <Input
@@ -157,20 +156,20 @@ export default function EventsListing({ events }: EventsListingProps) {
               onChange={(event) => updateSearch(event.target.value)}
               placeholder="Search events, workshops, venues..."
               aria-label="Search events"
-              className="h-9 bg-white pl-9 pr-9 text-xs"
+              className="h-9 bg-card pl-9 pr-9 text-xs"
             />
             {searchTerm && (
               <button
                 type="button"
                 aria-label="Clear search"
                 onClick={() => updateSearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-slate-400 hover:text-slate-700"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-muted-foreground hover:text-foreground"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
-          <label className="flex shrink-0 items-center gap-2 text-xs text-slate-500">
+          <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
             Sort by:
             <select
               value={sortOrder}
@@ -178,7 +177,7 @@ export default function EventsListing({ events }: EventsListingProps) {
                 setSortOrder(event.target.value as SortOrder);
                 setCurrentPage(1);
               }}
-              className="h-9 rounded-md border border-slate-200 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#8B1A1A]/30"
+              className="h-9 rounded-md border border-input bg-card px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="soonest">Date: Soonest First</option>
               <option value="latest">Date: Latest First</option>
@@ -196,13 +195,13 @@ export default function EventsListing({ events }: EventsListingProps) {
           ))}
         </div>
       ) : (
-        <Card className="border-dashed bg-white/80 py-6">
+        <Card className="border-dashed bg-card/80 py-6">
           <CardEmptyState
-            icon={<CalendarX2 className="h-8 w-8 text-slate-400" />}
+            icon={<CalendarX2 className="h-8 w-8 text-muted-foreground" />}
             title="No events match these filters"
             description="Try another tab, category, or search term."
           />
-          <div className="flex justify-center mt-2">
+          <div className="mt-2 flex justify-center">
             <Button
               type="button"
               variant="outline"
@@ -227,7 +226,7 @@ export default function EventsListing({ events }: EventsListingProps) {
             aria-label="Previous page"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-            className="h-9 w-9 rounded-full bg-white"
+            className="h-9 w-9 rounded-full"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -240,17 +239,13 @@ export default function EventsListing({ events }: EventsListingProps) {
               aria-label={`Page ${page}`}
               aria-current={page === currentPage ? "page" : undefined}
               onClick={() => setCurrentPage(page)}
-              className={`h-9 w-9 rounded-full text-xs ${
-                page === currentPage
-                  ? "bg-[#8B1A1A] hover:bg-[#6B1515]"
-                  : "bg-white"
-              }`}
+              className="h-9 w-9 rounded-full text-xs"
             >
               {page}
             </Button>
           ))}
           {pageCount > 4 && (
-            <span className="px-1 text-xs text-slate-400">…</span>
+            <span className="px-1 text-xs text-muted-foreground">…</span>
           )}
           <Button
             type="button"
@@ -261,7 +256,7 @@ export default function EventsListing({ events }: EventsListingProps) {
             onClick={() =>
               setCurrentPage((page) => Math.min(pageCount, page + 1))
             }
-            className="h-9 w-9 rounded-full bg-white"
+            className="h-9 w-9 rounded-full"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>

@@ -1,3 +1,5 @@
+import type { ActionResult } from '@/types/action';
+
 export interface EventCategory {
   id: string;
   label: string;
@@ -65,13 +67,6 @@ export interface EventAttendance {
   recent: EventAttendanceRecord[];
 }
 
-export interface EventCardProps {
-  event: EventItem;
-  variant?: 'featured' | 'grid' | 'list';
-  priority?: boolean;
-  categories: EventCategory[];
-}
-
 // ---------------------------------------------------------------------------
 // Attendance / check-in types
 // ---------------------------------------------------------------------------
@@ -130,20 +125,11 @@ export interface LastTapResult {
 // Form / hook prop types
 // ---------------------------------------------------------------------------
 
-export interface CreateEventResult {
-  success: boolean;
-  eventId?: string;
-  error?: string;
-  fieldErrors?: Record<string, string[]>;
-}
+export type CreateEventResult = ActionResult<{ eventId?: string }>;
 
 export interface UseEventFormProps {
   onSuccess?: () => void;
   onClose?: () => void;
-}
-
-export interface EventFormProps {
-  onSuccess?: () => void;
 }
 
 export interface DeskStudent {

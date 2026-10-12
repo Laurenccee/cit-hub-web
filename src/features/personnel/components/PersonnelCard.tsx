@@ -35,16 +35,16 @@ export default function PersonnelCard({
   const hasName = firstName || lastName;
 
   const getRoleBadgeColor = () => {
-    if (designationName?.toLowerCase().includes("head")) return "bg-[#8B1A1A]";
-    if (designationName?.toLowerCase().includes("staff")) return "bg-gray-600";
-    return "bg-[#8B1A1A]";
+    if (designationName?.toLowerCase().includes("head")) return "bg-primary";
+    if (designationName?.toLowerCase().includes("staff")) return "bg-muted-foreground";
+    return "bg-primary";
   };
 
   return (
     <div className="relative w-full flex flex-col bg-card text-card-foreground rounded-xl overflow-hidden border hover:shadow-lg transition-shadow">
       {/* Role Badge */}
       <div className="absolute top-3 left-3 z-10">
-        <Badge className={`${getRoleBadgeColor()} text-white text-xs`}>
+        <Badge className={`${getRoleBadgeColor()} text-primary-foreground text-xs`}>
           {designationName || "Faculty"}
         </Badge>
       </div>
@@ -97,9 +97,9 @@ export default function PersonnelCard({
         <div className="flex flex-col gap-0.5">
           {featuredEdu?.degree ? (
             <>
-              <p className="text-[11px] text-foreground leading-snug flex items-start gap-1">
+              <p className="text-micro text-foreground leading-snug flex items-start gap-1">
                 <GraduationCap
-                  className="size-3 mt-0.5 shrink-0 text-[#8B1A1A]"
+                  className="size-3 mt-0.5 shrink-0 text-primary"
                   strokeWidth={1.5}
                 />
                 <span>
@@ -113,7 +113,7 @@ export default function PersonnelCard({
                 </span>
               </p>
               {featuredEdu.institution && (
-                <p className="text-[10px] text-muted-foreground ml-4 leading-snug">
+                <p className="text-micro text-muted-foreground ml-4 leading-snug">
                   {featuredEdu.institution}
                   {!featuredEdu.onGoing && featuredEdu.yearGraduated
                     ? `, ${featuredEdu.yearGraduated}`
@@ -132,7 +132,7 @@ export default function PersonnelCard({
         {/* Department & Contact */}
         <div className="flex items-center justify-between gap-1 pt-1.5 border-t">
           {data.office?.trim() ? (
-            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1 text-micro text-muted-foreground">
               <Building2 className="size-2.5 shrink-0" strokeWidth={1.5} />
               {data.office.trim()}
             </span>
@@ -141,7 +141,7 @@ export default function PersonnelCard({
           )}
 
           {data.contact_number?.trim() ? (
-            <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1 text-micro text-muted-foreground">
               <Phone className="size-2.5 shrink-0" strokeWidth={1.5} />
               {data.contact_number.trim()}
             </span>
@@ -156,7 +156,7 @@ export default function PersonnelCard({
             <Button
               variant="outline"
               size="sm"
-              className="w-full gap-1 text-[#8B1A1A] border-[#8B1A1A] hover:bg-[#8B1A1A] hover:text-white text-xs py-1"
+              className="w-full gap-1 text-primary border-primary hover:bg-primary hover:text-primary-foreground text-xs py-1"
             >
               View Profile & Consultation
               <ArrowRight className="w-3 h-3" />

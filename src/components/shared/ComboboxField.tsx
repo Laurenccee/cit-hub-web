@@ -40,7 +40,7 @@ export default function ComboboxField<TData, TFieldValues extends FieldValues>({
                 return (
                     <Field data-invalid={fieldState.invalid} className="w-full">
                         {label && (
-                            <FieldLabel className="text-sm text-accent-foreground mb-1.5 block">{label}</FieldLabel>
+                            <FieldLabel className="text-sm text-foreground mb-1.5 block">{label}</FieldLabel>
                         )}
 
                         <Popover open={open} onOpenChange={setOpen}>
@@ -53,7 +53,7 @@ export default function ComboboxField<TData, TFieldValues extends FieldValues>({
                                     className={cn(
                                         'w-full h-10 justify-between md:text-sm font-normal border-input border-2',
                                         !field.value && 'text-muted-foreground',
-                                        fieldState.invalid && 'border-red-500 focus-visible:ring-red-500',
+                                        fieldState.invalid && 'border-destructive focus-visible:ring-destructive',
                                     )}
                                 >
                                     {selectedOption ? String(selectedOption[labelKey]) : placeholder}
@@ -107,7 +107,7 @@ export default function ComboboxField<TData, TFieldValues extends FieldValues>({
                         )}
 
                         {fieldErrorMessage && (
-                            <FieldError className="text-xs font-semibold text-red-500 mt-1 block">
+                            <FieldError className="text-xs font-semibold text-destructive mt-1 block">
                                 {fieldErrorMessage}
                             </FieldError>
                         )}

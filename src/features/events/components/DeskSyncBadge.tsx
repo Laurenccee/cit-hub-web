@@ -41,12 +41,12 @@ export default function DeskSyncBadge({
           : "Roster not cached on this device yet"
       }
       className={cn(
-        "h-auto gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
+        "h-auto gap-1.5 rounded-full px-2.5 py-1 text-micro font-semibold",
         !online
-          ? "border-amber-200 bg-amber-50 text-amber-800"
+          ? "border-warning/40 bg-warning/10 text-warning"
           : pending > 0
-            ? "border-sky-200 bg-sky-50 text-sky-800"
-            : "border-slate-200 bg-white text-slate-500",
+            ? "border-primary/30 bg-primary/10 text-primary"
+            : "border-border bg-card text-muted-foreground",
         className,
       )}
     >

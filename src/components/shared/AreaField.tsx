@@ -24,7 +24,7 @@ export default function AreaField<TFieldValues extends FieldValues>({
             control={control}
             render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                    <div className="text-accent-foreground flex justify-between">
+                    <div className="text-foreground flex justify-between">
                         {label && (
                             <FieldLabel className="text-sm sm:text-sm" htmlFor={field.name}>
                                 {label}
@@ -56,7 +56,7 @@ export default function AreaField<TFieldValues extends FieldValues>({
                         </FieldDescription>
                     )}
                     {error && (
-                        <FieldError className="font-mono text-xs font-semibold tracking-[0.2em] text-red-500">
+                        <FieldError className="font-mono text-xs font-semibold tracking-[0.2em] text-destructive">
                             {error}
                         </FieldError>
                     )}

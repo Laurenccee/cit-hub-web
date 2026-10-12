@@ -1,4 +1,5 @@
 import type { StudentFormData } from "../schema/student";
+import type { ActionResult, UploadActionResult } from "@/types/action";
 
 export interface Course {
   id: string;
@@ -56,25 +57,6 @@ export interface DirectoryStudent {
   source?: Student | null;
 }
 
-export interface StudentFormProps {
-  id?: string;
-  mode: "setup" | "edit";
-  student?: Student;
-  onPendingChange?: (isPending: boolean) => void;
-  onSuccess?: () => void;
-}
-
-export interface StudentActionResult {
-  success: boolean;
-  message?: string;
-}
-
-export interface UploadActionResult {
-  success: boolean;
-  message?: string;
-  url?: string;
-}
-
 /**
  * Payload `useStudentForm` hands to `submitAction`. It serves both flows: setup
  * (no `id`) and edit (with `id`). The server action re-validates with zod, which
@@ -87,7 +69,7 @@ export interface UseStudentFormProps {
   mode: "setup" | "edit";
   onPendingChange?: (isPending: boolean) => void;
   onSuccess?: () => void;
-  submitAction: (data: StudentSubmitPayload) => Promise<StudentActionResult>;
+  submitAction: (data: StudentSubmitPayload) => Promise<ActionResult>;
   uploadAvatarAction: (
     formData: FormData,
     oldUrl?: string | null,

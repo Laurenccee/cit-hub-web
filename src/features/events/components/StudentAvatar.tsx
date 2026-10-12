@@ -24,7 +24,7 @@ export default function StudentAvatar({
   return (
     <span
       className={cn(
-        "relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-[11px] font-bold text-slate-500",
+        "relative flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-micro font-bold text-muted-foreground",
         className,
       )}
     >

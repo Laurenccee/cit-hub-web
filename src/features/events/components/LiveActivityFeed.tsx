@@ -107,13 +107,13 @@ export default function LiveActivityFeed({
   return (
     <div>
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+        <p className="text-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
           Recent live activity
         </p>
-        <p className="flex items-center gap-1.5 text-[10px] text-slate-400">
+        <p className="flex items-center gap-1.5 text-micro text-muted-foreground">
           <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-60" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-500" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" />
           </span>
           Auto-syncing • Gate A
         </p>
@@ -122,22 +122,22 @@ export default function LiveActivityFeed({
         {rows.map((row) => (
           <li
             key={row.key}
-            className="flex items-center gap-2 rounded-md border border-slate-100 bg-white px-2.5 py-1.5"
+            className="flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5"
           >
             <span
               className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-                row.direction === 'in' ? 'bg-green-500' : 'bg-amber-500'
+                row.direction === 'in' ? 'bg-success' : 'bg-warning'
               }`}
             />
-            <span className="truncate text-[11px] font-bold text-slate-800">
+            <span className="truncate text-micro font-bold text-foreground">
               {row.title}
             </span>
-            <span className="truncate text-[11px] text-slate-400">{row.subtitle}</span>
+            <span className="truncate text-micro text-muted-foreground">{row.subtitle}</span>
             <span
-              className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+              className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-micro font-semibold ${
                 row.direction === 'in'
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-amber-50 text-amber-700'
+                  ? 'bg-success/10 text-success'
+                  : 'bg-warning/10 text-warning'
               }`}
             >
               {row.direction === 'in' ? 'In' : 'Out'} • {formatAgo(row.elapsed)}
@@ -145,7 +145,7 @@ export default function LiveActivityFeed({
           </li>
         ))}
         {rows.length === 0 && (
-          <li className="text-center text-xs text-slate-400 py-2">
+          <li className="py-2 text-center text-xs text-muted-foreground">
             No recent activity
           </li>
         )}

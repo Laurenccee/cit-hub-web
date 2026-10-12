@@ -11,6 +11,7 @@ import {
 import RegisterStudentButton from "@/features/students/components/RegisterStudentButton";
 import StudentDirectory from "@/features/students/components/StudentDirectory";
 import { mapStudentToDirectory } from "@/features/students/utils/directory";
+import { PageContainer, PageHeader, PageSection } from "@/components/layouts/PageLayout";
 
 export default async function StudentsPage() {
   const supabase = await createClient();
@@ -35,63 +36,41 @@ export default async function StudentsPage() {
   const directory = students.map(mapStudentToDirectory);
 
   return (
-    <section
-      className="flex flex-col py-8"
-      style={{
-        backgroundColor: "#fafafa",
-        backgroundImage: "radial-gradient(#e0e0e0 1px, transparent 1px)",
-        backgroundSize: "22px 22px",
-      }}
-    >
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 sm:px-6 lg:px-8">
-        {/* Admin header */}
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em]">
-              <span className="text-[#8B1A1A]">Administrative Console</span>
-              <span className="mx-2 text-slate-300">/</span>
-              <span className="text-slate-500">
-                Registrar & Student Affairs
-              </span>
+    <PageSection>
+      <PageContainer className="gap-6">
+        <PageHeader
+          eyebrow={
+            <p className="text-micro font-bold uppercase tracking-[0.14em]">
+              <span className="text-primary">Administrative Console</span>
+              <span className="mx-2 text-muted-foreground/50">/</span>
+              <span className="text-muted-foreground">Registrar &amp; Student Affairs</span>
             </p>
-            <h1 className="mt-1.5 font-serif text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-              Student Directory & Records Management
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
-              Manage academic enrollments, assign and synchronize contactless
-              RFID/NFC credentials, and monitor live campus session attendance
-              across collegiate departments.
-            </p>
-          </div>
-          <div className="flex shrink-0 flex-col gap-2">
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 gap-2 bg-white text-xs font-semibold"
-              >
-                <ArrowDownUp className="h-4 w-4 text-slate-500" />
-                Import / SIS Sync
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 gap-2 bg-white text-xs font-semibold"
-              >
-                <Download className="h-4 w-4 text-slate-500" />
-                Export Roster
-              </Button>
+          }
+          title="Student Directory & Records Management"
+          description="Manage academic enrollments, assign and synchronize contactless RFID/NFC credentials, and monitor live campus session attendance across collegiate departments."
+          actions={
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="outline" size="xl" className="gap-2">
+                  <ArrowDownUp className="h-4 w-4 text-muted-foreground" />
+                  Import / SIS Sync
+                </Button>
+                <Button type="button" variant="outline" size="xl" className="gap-2">
+                  <Download className="h-4 w-4 text-muted-foreground" />
+                  Export Roster
+                </Button>
+              </div>
+              <RegisterStudentButton />
             </div>
-            <RegisterStudentButton />
-          </div>
-        </div>
+          }
+        />
 
         <StudentDirectory
           students={directory}
           courses={courses}
           majors={majors}
         />
-      </div>
-    </section>
+      </PageContainer>
+    </PageSection>
   );
 }

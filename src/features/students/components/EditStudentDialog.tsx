@@ -15,7 +15,6 @@ import { Edit01Icon } from "@hugeicons/core-free-icons";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import InputField from "@/components/shared/InputField";
-import ComboboxField from "@/components/shared/ComboboxField";
 import ImageDropzone from "@/components/shared/ImageDropzone";
 import { DeleteConfirmDialog } from "@/components/shared/DeleteConfirmDialog";
 import { useStudentForm } from "../hooks/useStudentForm";
@@ -23,7 +22,7 @@ import { updateStudentAction, deleteStudentAction } from "../action";
 import { uploadAvatarAction } from "@/actions/image";
 import { toast } from "sonner";
 import { Course, Major, Student } from "../types";
-import { SECTIONS, YEAR_LEVELS } from "../schema/student";
+import { AcademicFields } from "./setup-steps/AcademicFields";
 
 interface EditStudentDialogProps {
   student: Student;
@@ -119,55 +118,11 @@ export default function EditStudentDialog({
               isPending={isPending}
             />
           </div>
-          <ComboboxField
-            name="courseId"
-            label="Course"
-            placeholder="Select course"
-            searchPlaceholder="Search courses..."
-            options={courses}
-            valueKey="id"
-            labelKey="name"
+          <AcademicFields
             control={control}
             isPending={isPending}
-          />
-          <ComboboxField
-            name="majorId"
-            label="Major"
-            placeholder="Select major"
-            searchPlaceholder="Search majors..."
-            options={majors}
-            valueKey="id"
-            labelKey="name"
-            control={control}
-            isPending={isPending}
-          />
-          <div className="grid grid-cols-2 gap-3">
-            <ComboboxField
-              name="yearLevel"
-              label="Year Level"
-              placeholder="Select year level"
-              options={[...YEAR_LEVELS]}
-              valueKey="value"
-              labelKey="label"
-              control={control}
-              isPending={isPending}
-            />
-            <ComboboxField
-              name="section"
-              label="Section"
-              placeholder="Select section"
-              options={[...SECTIONS]}
-              valueKey="value"
-              labelKey="label"
-              control={control}
-              isPending={isPending}
-            />
-          </div>
-          <InputField
-            name="contactNumber"
-            label="Contact Number"
-            control={control}
-            isPending={isPending}
+            courses={courses}
+            majors={majors}
           />
           <InputField
             name="rfidUid"

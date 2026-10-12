@@ -40,7 +40,6 @@ export const EventSchema = z.object({
   isFeatured: z.boolean(),
 });
 
-export const UpdateEventSchema = EventSchema.extend({ id: z.string() });
+const UpdateEventSchema = EventSchema.extend({ id: z.string() });
 
 export type EventFormData = z.infer<typeof EventSchema>;
-export type UpdateEventFormData = z.infer<typeof UpdateEventSchema>;

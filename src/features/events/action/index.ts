@@ -1,65 +1,33 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
-import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { getAuthorizedAdmin } from '@/actions';
+import { runMutation } from '@/actions/mutation';
 import { ROUTES } from '@/utils/constants/routes';
 import { EventSchema, type EventFormData } from '../schema/event';
 import { GetEventCategories, GetDeskCheckins, GetEventAttendance } from './queries';
 import { uidVariants } from '../utils';
+import type { QueryResult } from '@/types/action';
 import type {
+  CreateEventResult,
   DeskCheckinRecord,
   DeskCheckinResult,
   DeskStudent,
   DeskTapContext,
+  EventCategory,
   OpenVisitMessages,
-  CreateEventResult,
 } from '../types';
 
-export async function getEventCategoriesAction() {
+export async function getEventCategoriesAction(): Promise<QueryResult<EventCategory[]>> {
   const { success, data } = await GetEventCategories();
-  if (!success) return { success: false as const, categories: [] };
-  return { success: true as const, categories: data };
+  if (!success) return { success: false, data: [] };
+  return { success: true, data };
 }
 
-/**
- * Shared pipeline for event mutations: authorize, re-validate, map camelCase
- * form keys to snake_case columns, run the DB operation, revalidate and
- * translate failures into the `CreateEventResult` contract the form expects.
- */
-async function executeEventMutation(
-  values: EventFormData,
-  imageUrl: string | null | undefined,
-  failureMessage: string,
-  dbOperation: (
-    supabase: SupabaseClient,
-    payload: Record<string, unknown>,
-    userId: string,
-  ) => PromiseLike<{ data: { id: string } | null; error: PostgrestError | null }>,
-): Promise<CreateEventResult> {
-  const authorized = await getAuthorizedAdmin();
-  if (!authorized) {
-    return { success: false, error: 'Forbidden: Admin only' };
-  }
-
-  // Re-validate on the server (defence-in-depth; the client resolver already
-  // validated, but server actions must never trust client data).
-  const validation = EventSchema.safeParse(values);
-  if (!validation.success) {
-    const fieldErrors: Record<string, string[]> = {};
-    validation.error.issues.forEach((issue) => {
-      const path = issue.path.join('.');
-      if (!fieldErrors[path]) fieldErrors[path] = [];
-      fieldErrors[path].push(issue.message);
-    });
-    return { success: false, error: 'Validation failed', fieldErrors };
-  }
-
-  const data = validation.data;
-  const supabase = await createClient();
-
-  const payload = {
+/** Maps the camelCase form fields onto their snake_case `events` columns. */
+function toEventPayload(data: EventFormData, imageUrl: string | null | undefined) {
+  return {
     title: data.title,
     slug: data.slug,
     description: data.description || null,
@@ -73,23 +41,6 @@ async function executeEventMutation(
     is_featured: data.isFeatured,
     is_archived: false,
   };
-
-  try {
-    const { data: event, error: dbError } = await dbOperation(supabase, payload, authorized.user.id);
-    if (dbError) throw dbError;
-
-    revalidatePath(ROUTES.EVENTS);
-    revalidatePath(`${ROUTES.EVENTS}/[slug]`, 'page');
-
-    return { success: true, eventId: event?.id };
-  } catch (error) {
-    console.error('Event mutation error:', error);
-    // Handle unique constraint violations
-    if ((error as { code?: string } | null)?.code === '23505') {
-      return { success: false, error: 'An event with this slug already exists' };
-    }
-    return { success: false, error: failureMessage };
-  }
 }
 
 /**
@@ -102,13 +53,24 @@ export async function createEventAction(
   values: EventFormData,
   imageUrl?: string | null,
 ): Promise<CreateEventResult> {
-  return executeEventMutation(values, imageUrl, 'Failed to create event', (supabase, payload, userId) =>
-    supabase
-      .from('events')
-      .insert({ ...payload, created_by: userId, updated_by: userId })
-      .select('id')
-      .single(),
-  );
+  return runMutation({
+    values,
+    schema: EventSchema,
+    authorize: getAuthorizedAdmin,
+    revalidate: [ROUTES.EVENTS, { path: `${ROUTES.EVENTS}/[slug]`, type: 'page' }],
+    unauthorizedMessage: 'Forbidden: Admin only',
+    invalidMessage: 'Validation failed',
+    failureMessage: 'Failed to create event',
+    conflictMessage: 'An event with this slug already exists',
+    execute: async (data, { supabase, userId }) => {
+      const { data: event, error } = await supabase
+        .from('events')
+        .insert({ ...toEventPayload(data, imageUrl), created_by: userId, updated_by: userId })
+        .select('id')
+        .single();
+      return { error, extra: { eventId: event?.id } };
+    },
+  });
 }
 
 export type DeskDirection = 'in' | 'out';
@@ -118,29 +80,41 @@ export type DeskDirection = 'in' | 'out';
  * from the courses/majors joins. `rfid_uid` is intentionally stripped by
  * `toDeskStudent` before anything leaves the server.
  */
-const ATTENDEE_SELECT =
-  'id, first_name, last_name, student_id, profile_picture_url, year_level, rfid_uid, courses ( code, name ), majors ( code, name )';
-
-function toDeskStudent(row: any): DeskStudent {
+function toDeskStudent(row: {
+  id: string;
+  first_name: string;
+  last_name: string;
+  student_id?: string | null;
+  profile_picture_url?: string | null;
+  year_level?: string | null;
+  rfid_uid?: string | null;
+  courses?: { code?: string | null; name?: string | null } | null | Array<{ code?: string | null; name?: string | null } | null>;
+  majors?: { code?: string | null; name?: string | null } | null | Array<{ code?: string | null; name?: string | null } | null>;
+}): DeskStudent {
   return {
-    id: row.id as string,
-    first_name: row.first_name as string,
-    last_name: row.last_name as string,
-    student_id: (row.student_id ?? null) as string | null,
-    profile_picture_url: (row.profile_picture_url ?? null) as string | null,
-    year_level: (row.year_level ?? null) as string | null,
-    course_code: (row.courses?.code ?? null) as string | null,
-    course_name: (row.courses?.name ?? null) as string | null,
-    major_code: (row.majors?.code ?? null) as string | null,
-    major_name: (row.majors?.name ?? null) as string | null,
+    id: row.id,
+    first_name: row.first_name,
+    last_name: row.last_name,
+    student_id: row.student_id ?? null,
+    profile_picture_url: row.profile_picture_url ?? null,
+    year_level: row.year_level ?? null,
+    course_code: Array.isArray(row.courses) ? (row.courses[0]?.code ?? null) : (row.courses?.code ?? null),
+    course_name: Array.isArray(row.courses) ? (row.courses[0]?.name ?? null) : (row.courses?.name ?? null),
+    major_code: Array.isArray(row.majors) ? (row.majors[0]?.code ?? null) : (row.majors?.code ?? null),
+    major_name: Array.isArray(row.majors) ? (row.majors[0]?.name ?? null) : (row.majors?.name ?? null),
   };
 }
+
+
+const ATTENDEE_SELECT =
+  'id, first_name, last_name, student_id, profile_picture_url, year_level, rfid_uid, courses ( code, name ), majors ( code, name )';
 
 /**
  * Resolve a tapped card to a student. Uses the service-role client because
  * the desk runs on public kiosk sessions that cannot read the students
  * table under RLS. Only minimal identity fields are returned.
  */
+// fallow-ignore-next-line unused-server-action
 export async function lookupStudentByCardAction(
   cardUid: string,
 ): Promise<{ success: boolean; student: DeskStudent | null }> {
@@ -163,7 +137,6 @@ export async function lookupStudentByCardAction(
   return { success: true, student: toDeskStudent(data) };
 }
 
-export type AttendeeVia = 'card' | 'student_id';
 
 /**
  * Resolve whatever the operator provides — a tapped card UID or a typed
@@ -172,6 +145,10 @@ export type AttendeeVia = 'card' | 'student_id';
  * Read-only: nothing is written, so the gate can preview the badge before
  * the operator confirms the tap.
  */
+// fallow-ignore-next-line unused-type
+export type AttendeeVia = 'card' | 'student_id';
+
+// fallow-ignore-next-line unused-server-action
 export async function resolveAttendeeAction(identifier: string): Promise<{
   success: boolean;
   student: DeskStudent | null;
@@ -274,26 +251,10 @@ async function commitDeskVisit(
   if (direction === 'in') {
     // Read the student's open visit alongside the event and card lookup so
     // duplicates are caught before the insert without adding a round trip.
-    const { data: openVisit } = await supabase
-      .from('event_attendance')
-      .select('event_id')
-      .eq('student_id', student.id)
-      .not('check_in', 'is', null)
-      .is('check_out', null)
-      .limit(1)
-      .maybeSingle();
+    const openVisit = await findOpenVisit(supabase, student.id);
 
     if (openVisit) {
-      return {
-        success: false,
-        message: await describeOpenVisit(supabase, student, eventId, {
-          sameEvent: `${student.first_name} ${student.last_name} is already checked in.`,
-          otherEvent: (title) => `${student.first_name} ${student.last_name} is already checked in at "${title}".`,
-          none: `${student.first_name} ${student.last_name} is already checked in.`,
-        }),
-        student,
-        alreadyInside: true,
-      };
+      return alreadyCheckedInResult(supabase, student, eventId);
     }
 
     const { data: created, error: insertError } = await supabase
@@ -316,16 +277,7 @@ async function commitDeskVisit(
         if (replayed) {
           return { success: true, message: 'Tap already recorded.', student, record: replayed };
         }
-        return {
-          success: false,
-          message: await describeOpenVisit(supabase, student, eventId, {
-            sameEvent: `${student.first_name} ${student.last_name} is already checked in.`,
-            otherEvent: (title) => `${student.first_name} ${student.last_name} is already checked in at "${title}".`,
-            none: `${student.first_name} ${student.last_name} is already checked in.`,
-          }),
-          student,
-          alreadyInside: true,
-        };
+        return alreadyCheckedInResult(supabase, student, eventId);
       }
       console.error('Check-in insert error:', insertError.message);
       return { success: false, message: `Could not record check-in (${insertError.code ?? 'db-error'}: ${insertError.message}).` };
@@ -560,6 +512,42 @@ export async function getRecentCheckinsAction(eventId: string): Promise<{
 }
 
 /**
+ * The student's currently open visit, if any. A tap can be blocked by an open
+ * visit at this event or another one, so every check shares this lookup.
+ */
+async function findOpenVisit(supabase: SupabaseClient, studentId: string) {
+  const { data } = await supabase
+    .from('event_attendance')
+    .select('event_id')
+    .eq('student_id', studentId)
+    .not('check_in', 'is', null)
+    .is('check_out', null)
+    .limit(1)
+    .maybeSingle();
+
+  return data;
+}
+
+/** The blocked "already checked in" result, wherever the open visit lives. */
+async function alreadyCheckedInResult(
+  supabase: SupabaseClient,
+  student: DeskStudent,
+  eventId: string,
+): Promise<DeskCheckinResult> {
+  const name = `${student.first_name} ${student.last_name}`;
+  return {
+    success: false,
+    message: await describeOpenVisit(supabase, student, eventId, {
+      sameEvent: `${name} is already checked in.`,
+      otherEvent: (title) => `${name} is already checked in at "${title}".`,
+      none: `${name} is already checked in.`,
+    }),
+    student,
+    alreadyInside: true,
+  };
+}
+
+/**
  * Turn a blocked visit into an actionable message: at this event, somewhere
  * else, or never checked in.
  */
@@ -569,14 +557,7 @@ async function describeOpenVisit(
   currentEventId: string,
   messages: OpenVisitMessages,
 ): Promise<string> {
-  const { data: openVisit } = await supabase
-    .from('event_attendance')
-    .select('event_id')
-    .eq('student_id', student.id)
-    .not('check_in', 'is', null)
-    .is('check_out', null)
-    .limit(1)
-    .maybeSingle();
+  const openVisit = await findOpenVisit(supabase, student.id);
 
   if (!openVisit) return messages.none;
   if (openVisit.event_id === currentEventId) return messages.sameEvent;

@@ -13,13 +13,11 @@ import {
 } from "../schema/student";
 import { UseStudentFormProps } from "../types";
 import { deleteStorageFileAction } from "@/actions/image";
+import { uploadPendingAvatar } from "@/lib/avatar";
+import { getErrorMessage } from "@/utils/errors";
 
 type StudentFormValues = StudentFormData &
   Partial<Pick<UpdateStudentFormData, "id" | "rfidUid">>;
-
-function getErrorMessage(error: unknown, fallback: string) {
-  return error instanceof Error ? error.message : fallback;
-}
 
 export function useStudentForm({
   student,
@@ -76,16 +74,11 @@ export function useStudentForm({
     startTransition(async () => {
       let profilePictureUrl = student?.profile_picture_url || undefined;
       try {
-        if (pendingBlobRef.current) {
-          const fd = new FormData();
-          fd.append("file", pendingBlobRef.current, "profile.jpg");
-
-          const uploadResult = await uploadAvatarAction(fd, profilePictureUrl);
-          if (!uploadResult.success) {
-            throw new Error(uploadResult.message ?? "Failed to upload photo.");
-          }
-          profilePictureUrl = uploadResult.url;
-        }
+        profilePictureUrl = await uploadPendingAvatar(
+          pendingBlobRef.current,
+          uploadAvatarAction,
+          profilePictureUrl,
+        );
 
         const result = await submitAction({
           ...data,

@@ -12,9 +12,9 @@ export default function ForgetPasswordPage() {
         <section className="flex w-full flex-1 flex-col items-center justify-center gap-8 px-4">
             <div className="flex w-full flex-col gap-8 sm:max-w-xs">
                 <div className="flex flex-col gap-2">
-                    <h1 className="text-foreground font-serif text-2xl underline">Forget Password</h1>
-                    <p className="text-accent-foreground text-sm">
-                        Don't worry! Enter your email and we'll send you a link to reset your password.
+                    <h1 className="font-serif text-3xl text-foreground underline">Forget Password</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Don&apos;t worry! Enter your email and we&apos;ll send you a link to reset your password.
                     </p>
                 </div>
                 <ForgetPasswordForm />
@@ -22,14 +22,14 @@ export default function ForgetPasswordPage() {
                     <Card>
                         <CardContent className="flex items-center gap-4">
                             <HugeiconsIcon icon={InformationSquareIcon} color="currentColor" size={32} />
-                            <p className="text-foreground text-sm">
-                                Can't access your email? Please contact our support collective for manual account
+                            <p className="text-sm text-foreground">
+                                Can&apos;t access your email? Please contact our support collective for manual account
                                 verification.
                             </p>
                         </CardContent>
                     </Card>
                     <Separator />
-                    <Link href={ROUTES.SIGN_IN} className="text-foreground flex items-center gap-2 text-xs">
+                    <Link href={ROUTES.SIGN_IN} className="flex items-center gap-2 text-xs text-foreground">
                         <HugeiconsIcon icon={ArrowLeft02Icon} color="currentColor" size={16} />
                         <span className="hover:underline">Back to Sign in</span>
                     </Link>

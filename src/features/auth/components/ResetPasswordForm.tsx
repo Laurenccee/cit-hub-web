@@ -8,10 +8,10 @@ import { toast } from 'sonner';
 import { ArrowRight, Loader2, RectangleEllipsis } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { ResetPasswordData, ResetPasswordSchema } from '../schemas/authSchema';
+import { ResetPasswordData, ResetPasswordSchema } from '../schema/auth';
 import InputField from '@/components/shared/InputField';
 import PasswordRulesCard from '@/components/shared/PasswordRuleCard';
-import { resetPasswordAction } from '../actions/index';
+import { resetPasswordAction } from '../action';
 
 export default function ResetPasswordForm() {
     const [isPending, startTransition] = useTransition();
@@ -45,7 +45,7 @@ export default function ResetPasswordForm() {
     };
 
     return (
-        <form onSubmit={handleSubmit(handlePasswordReset)} id="verification-form" className="flex flex-col gap-6">
+        <form onSubmit={handleSubmit(handlePasswordReset)} id="reset-password-form" className="flex flex-col gap-6">
             <InputField
                 name="password"
                 label="Password"
@@ -59,7 +59,7 @@ export default function ResetPasswordForm() {
 
             <Button
                 type="submit"
-                form="verification-form"
+                form="reset-password-form"
                 disabled={isPending}
                 size="xl"
                 className="w-full text-xs tracking-[0.25em] uppercase transition-all active:scale-[0.98]"

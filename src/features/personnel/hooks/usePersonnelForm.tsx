@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { PersonnelSchema, UpdatePersonnelSchema } from "../schema/personnel";
 import { Personnel, UsePersonnelFormProps } from "../types";
 import { deleteStorageFileAction } from "@/actions/image";
+import { uploadPendingAvatar } from "@/lib/avatar";
 
 function getFirstErrorMessage(error: unknown): string | null {
   if (!error || typeof error !== "object") return null;
@@ -109,16 +110,11 @@ export function usePersonnelForm({
     startTransition(async () => {
       let profilePictureUrl = personnel?.profile_picture_url || undefined;
       try {
-        if (pendingBlobRef.current) {
-          const fd = new FormData();
-          fd.append("file", pendingBlobRef.current, "profile.jpg");
-
-          const uploadResult = await uploadAvatarAction(fd, profilePictureUrl);
-          if (!uploadResult.success) {
-            throw new Error(uploadResult.message ?? "Failed to upload photo.");
-          }
-          profilePictureUrl = uploadResult.url;
-        }
+        profilePictureUrl = await uploadPendingAvatar(
+          pendingBlobRef.current,
+          uploadAvatarAction,
+          profilePictureUrl,
+        );
 
         const result = await submitAction({ ...data, profilePictureUrl });
         if (!result.success) {

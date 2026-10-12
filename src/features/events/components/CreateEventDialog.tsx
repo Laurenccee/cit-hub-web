@@ -65,7 +65,7 @@ export default function CreateEventDialog({
     (async () => {
       try {
         const result = await getEventCategoriesAction();
-        if (!cancelled && result.success) setCategories(result.categories);
+        if (!cancelled && result.success) setCategories(result.data);
       } catch {
         // Error surfaced on submit if categories are still empty
       }
@@ -92,25 +92,30 @@ export default function CreateEventDialog({
       <DialogContent className="sm:max-w-180 max-h-[90vh] overflow-y-auto p-6">
         <DialogHeader className="pb-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#8B1A1A]/10 text-[#8B1A1A]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Calendar className="h-5 w-5" />
             </div>
             <div>
               <DialogTitle className="text-xl font-semibold">
                 Create New Event
               </DialogTitle>
-              <DialogDescription className="text-sm text-slate-500 mt-0.5">
+              <DialogDescription className="text-sm text-muted-foreground mt-0.5">
                 Fill in the details below. Required fields are marked with *
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        <form onSubmit={onSubmit(imageBlobRef)} className="space-y-6">
+        <form
+          onSubmit={(e) => {
+            onSubmit(imageBlobRef)(e);
+          }}
+          className="space-y-6"
+        >
           {/* Section: Event Image */}
           <fieldset className="space-y-4">
-            <legend className="flex items-center gap-2 text-sm font-semibold text-slate-900 uppercase tracking-wide">
-              <span className="h-6 w-6 flex items-center justify-center rounded bg-slate-100 text-slate-600">
+            <legend className="flex items-center gap-2 text-sm font-semibold text-foreground uppercase tracking-wide">
+              <span className="h-6 w-6 flex items-center justify-center rounded bg-muted text-muted-foreground">
                 1
               </span>
               Event Image
@@ -118,7 +123,7 @@ export default function CreateEventDialog({
 
             <div className="space-y-1.5">
               <Label className="text-sm font-medium flex items-center gap-1.5">
-                <Image className="h-3.5 w-3.5 text-slate-400" />
+                <Image className="h-3.5 w-3.5 text-muted-foreground" />
                 Cover Image
               </Label>
               <ImageDropzone
@@ -127,7 +132,7 @@ export default function CreateEventDialog({
                 initialUrl={undefined}
                 onFile={(blob) => { imageBlobRef.current = blob; }}
               />
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Recommended 16:9 aspect ratio. Will be cropped to 16:9.
               </p>
             </div>
@@ -155,8 +160,8 @@ export default function CreateEventDialog({
 
           {/* Section: Basic Information */}
           <fieldset className="space-y-4">
-            <legend className="flex items-center gap-2 text-sm font-semibold text-slate-900 uppercase tracking-wide">
-              <span className="h-6 w-6 flex items-center justify-center rounded bg-slate-100 text-slate-600">
+            <legend className="flex items-center gap-2 text-sm font-semibold text-foreground uppercase tracking-wide">
+              <span className="h-6 w-6 flex items-center justify-center rounded bg-muted text-muted-foreground">
                 2
               </span>
               Basic Information
@@ -177,13 +182,13 @@ export default function CreateEventDialog({
                     placeholder="e.g., CIT Annual Tech Symposium & Hackathon"
                     className={
                       errors.title
-                        ? "border-red-500 focus-visible:ring-red-500"
+                        ? "border-destructive focus-visible:ring-destructive"
                         : ""
                     }
                     aria-invalid={!!errors.title}
                   />
                   {errors.title && (
-                    <p className="text-xs text-red-500">
+                    <p className="text-xs text-destructive">
                       {errors.title.message}
                     </p>
                   )}
@@ -201,7 +206,7 @@ export default function CreateEventDialog({
                       Slug
                     </Label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
                         /events/
                       </span>
                       <Input
@@ -213,7 +218,7 @@ export default function CreateEventDialog({
                         disabled
                       />
                     </div>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Auto-generated from title
                     </p>
                   </div>
@@ -248,7 +253,7 @@ export default function CreateEventDialog({
                     rows={6}
                     placeholder="Full event description with HTML formatting..."
                   />
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     Supports basic HTML: p, h3, ul, ol, a, strong, em
                   </p>
                 </div>
@@ -260,8 +265,8 @@ export default function CreateEventDialog({
 
           {/* Section: Date & Location */}
           <fieldset className="space-y-4">
-            <legend className="flex items-center gap-2 text-sm font-semibold text-slate-900 uppercase tracking-wide">
-              <span className="h-6 w-6 flex items-center justify-center rounded bg-slate-100 text-slate-600">
+            <legend className="flex items-center gap-2 text-sm font-semibold text-foreground uppercase tracking-wide">
+              <span className="h-6 w-6 flex items-center justify-center rounded bg-muted text-muted-foreground">
                 3
               </span>
               Date & Location
@@ -277,7 +282,7 @@ export default function CreateEventDialog({
                       htmlFor="startDate"
                       className="text-sm font-medium flex items-center gap-1.5"
                     >
-                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                      <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                       Start Date & Time *
                     </Label>
                     <Input
@@ -287,13 +292,13 @@ export default function CreateEventDialog({
                       onChange={(e) => field.onChange(e.target.value)}
                       className={
                         errors.startDate
-                          ? "border-red-500 focus-visible:ring-red-500"
+                          ? "border-destructive focus-visible:ring-destructive"
                           : ""
                       }
                       aria-invalid={!!errors.startDate}
                     />
                     {errors.startDate && (
-                      <p className="text-xs text-red-500">
+                      <p className="text-xs text-destructive">
                         {errors.startDate.message}
                       </p>
                     )}
@@ -310,7 +315,7 @@ export default function CreateEventDialog({
                       htmlFor="endDate"
                       className="text-sm font-medium flex items-center gap-1.5"
                     >
-                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                      <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                       End Date & Time
                     </Label>
                     <Input
@@ -319,7 +324,7 @@ export default function CreateEventDialog({
                       {...field}
                       onChange={(e) => field.onChange(e.target.value)}
                     />
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Optional — leave blank for single-day events
                     </p>
                   </div>
@@ -336,7 +341,7 @@ export default function CreateEventDialog({
                     htmlFor="location"
                     className="text-sm font-medium flex items-center gap-1.5"
                   >
-                    <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                    <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                     Location *
                   </Label>
                   <Input
@@ -346,13 +351,13 @@ export default function CreateEventDialog({
                     placeholder="e.g., Main Auditorium, CIT Campus"
                     className={
                       errors.location
-                        ? "border-red-500 focus-visible:ring-red-500"
+                        ? "border-destructive focus-visible:ring-destructive"
                         : ""
                     }
                     aria-invalid={!!errors.location}
                   />
                   {errors.location && (
-                    <p className="text-xs text-red-500">
+                    <p className="text-xs text-destructive">
                       {errors.location.message}
                     </p>
                   )}
@@ -365,30 +370,30 @@ export default function CreateEventDialog({
 
           {/* Section: Visibility Settings */}
           <fieldset className="space-y-4">
-            <legend className="flex items-center gap-2 text-sm font-semibold text-slate-900 uppercase tracking-wide">
-              <span className="h-6 w-6 flex items-center justify-center rounded bg-slate-100 text-slate-600">
+            <legend className="flex items-center gap-2 text-sm font-semibold text-foreground uppercase tracking-wide">
+              <span className="h-6 w-6 flex items-center justify-center rounded bg-muted text-muted-foreground">
                 4
               </span>
               Visibility Settings
             </legend>
 
-            <div className="rounded-lg bg-slate-50/50 p-4 space-y-3 border border-slate-100">
+            <div className="rounded-lg bg-muted/40 p-4 space-y-3 border border-border">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Controller
                   name="isPublished"
                   control={control}
                   render={({ field }) => (
-                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg bg-white border border-slate-200 hover:border-[#8B1A1A]/50 transition-colors">
+                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
                       <Switch
                         id="isPublished"
                         checked={field.value}
                         onCheckedChange={(checked) => field.onChange(checked)}
                       />
                       <div>
-                        <p className="text-sm font-medium text-slate-900">
+                        <p className="text-sm font-medium text-foreground">
                           Publish immediately
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-muted-foreground">
                           Event appears on public listings
                         </p>
                       </div>
@@ -400,17 +405,17 @@ export default function CreateEventDialog({
                   name="isFeatured"
                   control={control}
                   render={({ field }) => (
-                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg bg-white border border-slate-200 hover:border-[#8B1A1A]/50 transition-colors">
+                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors">
                       <Switch
                         id="isFeatured"
                         checked={field.value}
                         onCheckedChange={(checked) => field.onChange(checked)}
                       />
                       <div>
-                        <p className="text-sm font-medium text-slate-900">
+                        <p className="text-sm font-medium text-foreground">
                           Feature on hero
                         </p>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-muted-foreground">
                           Show in hero spotlight section
                         </p>
                       </div>
@@ -433,7 +438,7 @@ export default function CreateEventDialog({
             <Button
               type="submit"
               disabled={isPending}
-              className="w-40 bg-[#8B1A1A] hover:bg-[#6B1515]"
+              className="w-40 bg-primary hover:bg-primary/90"
             >
               {isPending ? (
                 <>

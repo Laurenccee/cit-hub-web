@@ -19,7 +19,7 @@ export function NewsHero({ news }: NewsHeroProps) {
             <div className="flex flex-col gap-6 p-6 lg:p-8 flex-1">
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-2">
-                        <Badge className="bg-[#8B1A1A] text-white text-xs px-2 py-0.5">NEWS</Badge>
+                        <Badge className="bg-primary text-primary-foreground text-xs px-2 py-0.5">NEWS</Badge>
                         <Badge variant="outline" className="text-xs px-2 py-0.5">{(news as any).content_type?.label || 'Campus Advisory'}</Badge>
                         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <Calendar className="w-3.5 h-3.5" />
@@ -48,7 +48,7 @@ export function NewsHero({ news }: NewsHeroProps) {
                     </div>
 
                     <Link href={`/bulletin/${news.slug}`}>
-                        <Button variant="outline" size="lg" className="gap-2 text-[#8B1A1A] border-[#8B1A1A] rounded-full">
+                        <Button variant="outline" size="lg" className="gap-2 text-primary border-primary rounded-full">
                             Read Full Article
                             <ArrowRight className="w-4 h-4" />
                         </Button>
@@ -73,7 +73,7 @@ export function NewsHero({ news }: NewsHeroProps) {
                     </div>
                 )}
                 <div className="absolute bottom-4 right-4">
-                    <Badge className="bg-[#8B1A1A]/90 text-white text-xs px-2.5 py-0.5">Official Campus Incident Report</Badge>
+                    <Badge className="bg-primary/90 text-primary-foreground text-xs px-2.5 py-0.5">Official Campus Incident Report</Badge>
                 </div>
             </div>
         </div>
