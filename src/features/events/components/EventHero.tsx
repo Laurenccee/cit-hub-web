@@ -43,14 +43,14 @@ export default function EventHero({ event, attendance }: EventHeroProps) {
 
         <p className="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-micro font-bold uppercase tracking-[0.1em]">
           <span className="rounded bg-primary/10 px-1.5 py-0.5 text-primary">
-            {event.organizer ?? "College of Computer Studies"}
+            {event.organizer ?? "CIT Hub"}
           </span>
           <span className="text-muted-foreground/60">•</span>
           <span className="text-muted-foreground">
-            {event.category?.label ?? "Departmental Keynote"}
+            {event.category?.label ?? "General"}
           </span>
         </p>
-        <h2 className="mt-1.5 font-serif text-3xl font-semibold leading-tight text-foreground">
+        <h2 className="mt-1.5 text-title text-foreground">
           {event.title}
         </h2>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
@@ -62,16 +62,18 @@ export default function EventHero({ event, attendance }: EventHeroProps) {
         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 text-muted-foreground/70" />
-            {event.location ?? "Main Auditorium & Hybrid Stream"}
+            {event.location ?? "CIT Campus"}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
             {formatRange(event.start_date, event.end_date)} PST
           </span>
-          <span className="inline-flex items-center gap-1.5">
-            <User className="h-3.5 w-3.5 text-muted-foreground/70" />
-            Host: {event.host ?? "Dr. Alicia Ramos & CIT Council"}
-          </span>
+          {event.host && (
+            <span className="inline-flex items-center gap-1.5">
+              <User className="h-3.5 w-3.5 text-muted-foreground/70" />
+              Host: {event.host}
+            </span>
+          )}
         </div>
       </div>
 
@@ -86,12 +88,9 @@ export default function EventHero({ event, attendance }: EventHeroProps) {
                 Online
               </span>
             </p>
-            <span className="shrink-0 rounded bg-primary px-2 py-1 text-micro font-bold uppercase tracking-wide text-primary-foreground">
-              Station #1
-            </span>
           </div>
           <p className="mt-1 text-micro text-muted-foreground">
-            Real-time RFID scanner &amp; digital entry desk • Gate A
+            Real-time RFID scanner &amp; digital entry desk
           </p>
         </div>
 
@@ -104,11 +103,11 @@ export default function EventHero({ event, attendance }: EventHeroProps) {
               Current live presence
             </span>
             <span className="block truncate text-xs font-semibold text-foreground">
-              CIT Main Auditorium
+              {event.location ?? "CIT Campus"}
             </span>
           </span>
           <span className="ml-auto shrink-0 text-right">
-            <span className="block font-serif text-3xl font-bold leading-none text-foreground">
+            <span className="block text-3xl font-bold leading-none text-foreground">
               {present}
             </span>
             <span className="mt-1 block text-micro font-bold uppercase tracking-wide text-success">

@@ -42,10 +42,7 @@ export function useEventForm({ onSuccess, onClose }: UseEventFormProps) {
     },
   });
 
-  const { control, handleSubmit, watch, setValue, reset, formState } = form;
-
-  // Derive slug from title (display-only — user cannot edit it).
-  const titleValue = watch("title");
+  const { control, handleSubmit, setValue, reset, formState } = form;
 
   function syncSlug(title: string) {
     setValue("slug", slugify(title), { shouldValidate: false });
@@ -54,7 +51,7 @@ export function useEventForm({ onSuccess, onClose }: UseEventFormProps) {
   /**
    * Submit handler. Receives a validated EventFormData object from RHF.
    * The cover image is uploaded first through `uploadEventImageAction` (the
-   * same FormData flow used by useStudentForm/usePersonnelForm/NewsForm) and
+   * same FormData flow used by useStudentForm/usePersonnelForm/useNewsForm) and
    * the resulting public URL is passed to the action.
    */
   const onSubmit = (imageBlobRef: React.RefObject<Blob | null>) =>
@@ -116,8 +113,6 @@ export function useEventForm({ onSuccess, onClose }: UseEventFormProps) {
     control,
     isPending,
     formState,
-    watch,
-    titleValue,
     syncSlug,
     onSubmit,
     reset,

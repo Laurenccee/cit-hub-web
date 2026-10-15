@@ -79,7 +79,7 @@ export default function PersonnelCard({
         {/* Name */}
         <div className="flex flex-col gap-0.5">
           {hasName ? (
-            <h3 className="font-serif text-sm font-bold leading-snug text-foreground">
+            <h3 className="text-sm font-semibold leading-snug text-foreground">
               {firstName} {lastName}
             </h3>
           ) : (

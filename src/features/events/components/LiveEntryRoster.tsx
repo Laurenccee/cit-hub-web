@@ -17,7 +17,6 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group";
 import type { DeskCheckin } from "../types";
-import { collegeIdentityFromCourse } from "../utils";
 import StudentAvatar from "./StudentAvatar";
 
 interface LiveEntryRosterProps {
@@ -30,10 +29,6 @@ interface LiveEntryRosterProps {
 }
 
 const PAGE_SIZE = 8;
-
-function rowDept(row: DeskCheckin) {
-  return collegeIdentityFromCourse(row.student?.course_name).code;
-}
 
 function rowProgram(row: DeskCheckin) {
   return (
@@ -74,13 +69,12 @@ function pageNumbers(page: number, pageCount: number): (number | "…")[] {
 function toCsv(rows: DeskCheckin[]) {
   const escape = (value: string) => `"${value.replace(/"/g, '""')}"`;
   const lines = [
-    "Name,Student ID,Department,Program,Check In,Check Out,State",
+    "Name,Student ID,Program,Check In,Check Out,State",
     ...rows.map((row) => {
       const state = row.check_out ? "Out" : "Inside";
       return [
         escape(rowName(row)),
         escape(row.student?.student_id ?? "Unregistered"),
-        escape(rowDept(row)),
         escape(rowProgram(row)),
         escape(row.check_in ?? ""),
         escape(row.check_out ?? ""),
@@ -98,20 +92,13 @@ export default function LiveEntryRoster({
   onDelete,
 }: LiveEntryRosterProps) {
   const [search, setSearch] = useState("");
-  const [dept, setDept] = useState("All");
   const [page, setPage] = useState(1);
   const [armingId, setArmingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const departments = useMemo(() => {
-    const codes = new Set(checkins.map(rowDept));
-    return ["All", ...[...codes].sort()];
-  }, [checkins]);
-
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     return checkins.filter((row) => {
-      if (dept !== "All" && rowDept(row) !== dept) return false;
       if (!query) return true;
       return [
         rowName(row),
@@ -124,7 +111,7 @@ export default function LiveEntryRoster({
         .toLowerCase()
         .includes(query);
     });
-  }, [checkins, dept, search]);
+  }, [checkins, search]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -167,7 +154,7 @@ export default function LiveEntryRoster({
     <Card className="min-w-0 gap-4 bg-card p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-serif text-2xl font-bold text-foreground">
+          <h2 className="text-section text-foreground">
             Live Entry Roster
           </h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
@@ -187,58 +174,28 @@ export default function LiveEntryRoster({
         </Button>
       </div>
 
-      <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
-        <InputGroup className="h-10 flex-1 rounded-full">
-          <InputGroupAddon className="text-muted-foreground">
-            <Search className="size-4" />
-          </InputGroupAddon>
-          <InputGroupInput
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search name or ID..."
-            aria-label="Search roster"
-            className="text-xs text-foreground"
-          />
-        </InputGroup>
-        <div
-          className="flex flex-wrap items-center gap-1.5"
-          role="group"
-          aria-label="Filter by department"
-        >
-          {departments.map((code) => {
-            const active = dept === code;
-            return (
-              <button
-                key={code}
-                type="button"
-                aria-pressed={active}
-                onClick={() => {
-                  setDept(code);
-                  setPage(1);
-                }}
-                className={cn(
-                  "h-8 rounded-full px-3.5 text-xs font-bold transition-colors",
-                  active
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                )}
-              >
-                {code}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <InputGroup className="h-10 rounded-full">
+        <InputGroupAddon className="text-muted-foreground">
+          <Search className="size-4" />
+        </InputGroupAddon>
+        <InputGroupInput
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+          placeholder="Search name or ID..."
+          aria-label="Search roster"
+          className="text-xs text-foreground"
+        />
+      </InputGroup>
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-120 text-sm">
           <thead>
             <tr className="text-left text-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
               <th className="px-2 py-2.5">Student Delegate</th>
-              <th className="px-2 py-2.5">Department • Yr</th>
+              <th className="px-2 py-2.5">Program</th>
               <th className="px-2 py-2.5">Check-in Time</th>
               <th className="px-2 py-2.5 text-right">Current State</th>
             </tr>
@@ -275,10 +232,7 @@ export default function LiveEntryRoster({
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-2 py-2.5">
-                    <span className="block text-sm font-bold text-foreground">
-                      {rowDept(row)}
-                    </span>
-                    <span className="block max-w-32 truncate text-micro text-muted-foreground">
+                    <span className="block max-w-32 truncate text-sm font-bold text-foreground">
                       {rowProgram(row)}
                     </span>
                   </td>

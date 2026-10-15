@@ -1,4 +1,6 @@
 'use client';
+import { useState } from 'react';
+import { useWatch } from 'react-hook-form';
 import {
     Dialog,
     DialogContent,
@@ -8,31 +10,49 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import PersonnelForm from './PersonnelForm';
-import PersonnelCard from './PersonnelCard';
-import { Loader2 } from 'lucide-react';
-import { useState } from 'react';
-import { EditPersonnelButtonProps, PersonnelPreviewData } from '../types';
-import DeletePersonnelButton from './DeletePersonnelButton';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Edit01Icon } from '@hugeicons/core-free-icons';
+import PersonnelCard from './PersonnelCard';
+import DeletePersonnelButton from './DeletePersonnelButton';
+import PersonnelEditTabs from './PersonnelEditTabs';
+import { type PersonnelStepId } from './setup-steps/steps';
+import { EditPersonnelButtonProps, PersonnelPreviewData } from '../types';
+import { usePersonnelForm } from '../hooks/usePersonnelForm';
+import { updatePersonnelAction } from '../action';
+import { uploadAvatarAction } from '@/actions/image';
 
 const FORM_ID = 'edit-personnel-form';
 
 export default function EditPersonnelButton({ personnel, ranks, designations }: EditPersonnelButtonProps) {
     const [open, setOpen] = useState(false);
-    const [isPending, setIsPending] = useState(false);
-    const [previewData, setPreviewData] = useState<PersonnelPreviewData>({
-        profile_picture_url: personnel.profile_picture_url || '',
-        first_name: personnel.first_name,
-        last_name: personnel.last_name,
-        office: personnel.office,
-        rank_id: personnel.rank_id ?? null,
-        designation_id: personnel.designation_id ?? null,
-        contact_number: personnel.contact_number || '',
-        education: personnel.education,
+    const [activeTab, setActiveTab] = useState<PersonnelStepId>('profile');
+    const [profilePreviewUrl, setProfilePreviewUrl] = useState(
+        personnel.profile_picture_url || '',
+    );
+
+    const { control, isPending, pendingBlobRef, onSubmit } = usePersonnelForm({
+        personnel,
+        mode: 'edit',
+        submitAction: updatePersonnelAction,
+        uploadAvatarAction,
+        onSuccess: () => setOpen(false),
     });
+
+    // Derived during render from the live form values — no effect needed to
+    // mirror the form state into the preview panel.
+    const watched = useWatch({ control });
+    const previewData: PersonnelPreviewData = {
+        profile_picture_url: profilePreviewUrl || watched?.profilePictureUrl || '',
+        first_name: watched?.firstName?.trim() || '',
+        last_name: watched?.lastName?.trim() || '',
+        office: watched?.office?.trim() || '',
+        rank_id: watched?.rankId || null,
+        designation_id: watched?.designationId ?? null,
+        contact_number: watched?.contactNumber?.trim() || '',
+        education: watched?.education?.length ? watched.education : [],
+    };
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -58,15 +78,18 @@ export default function EditPersonnelButton({ personnel, ranks, designations }: 
                         </DialogDescription>
                     </DialogHeader>
                     <div className="p-8 flex-1 pb-4 min-h-0 overflow-y-auto">
-                        <PersonnelForm
-                            id={FORM_ID}
-                            mode="edit"
-                            personnel={personnel}
-                            onPendingChange={setIsPending}
-                            onPreviewChange={setPreviewData}
-                            onSuccess={() => setOpen(false)}
+                        <PersonnelEditTabs
+                            activeTab={activeTab}
+                            onTabChange={setActiveTab}
+                            formId={FORM_ID}
+                            onSubmit={onSubmit}
+                            control={control}
+                            isPending={isPending}
                             ranks={ranks}
                             designations={designations}
+                            profilePreviewUrl={profilePreviewUrl}
+                            onProfilePreviewChange={setProfilePreviewUrl}
+                            pendingBlobRef={pendingBlobRef}
                         />
                     </div>
                     <DialogFooter className="flex gap-2 px-6 py-4 border-t shrink-0">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
+import NextImage from 'next/image';
 import Cropper from 'react-easy-crop';
 import type { Area, Point } from 'react-easy-crop';
 import { ImagePlus, X } from 'lucide-react';
@@ -167,7 +168,7 @@ export default function ImageDropzone({ variant = 'avatar', onFile, initialUrl, 
             >
                 {preview && (
                     <>
-                        <img src={preview} alt="Preview" className="absolute inset-0 w-full h-full object-cover" />
+                        <NextImage src={preview} alt="Preview" fill unoptimized className="object-cover" />
                         {config.showClear && (
                             <button
                                 type="button"

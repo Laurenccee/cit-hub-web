@@ -39,6 +39,7 @@ export default function InputField<TFieldValues extends FieldValues>({
     forgetPasswordLink,
     readOnly = false,
     disabled = false,
+    onChange,
     ...rest
 }: InputFieldProps<TFieldValues>) {
     const [showPassword, setShowPassword] = useState(false);
@@ -72,6 +73,10 @@ export default function InputField<TFieldValues extends FieldValues>({
                         <InputGroup className="transition-all">
                             <InputGroupInput
                                 {...field}
+                                onChange={(e) => {
+                                    field.onChange(e);
+                                    onChange?.(e);
+                                }}
                                 type={isPassword && showPassword ? 'text' : type}
                                 autoComplete={isPassword ? 'current-password' : undefined}
                                 placeholder={rest.placeholder}

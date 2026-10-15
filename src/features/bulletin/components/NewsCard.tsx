@@ -3,15 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
-import { ArrowRight, Calendar, Clock } from 'lucide-react';
+import { ArrowRight, Calendar } from 'lucide-react';
 import { formatDayDate } from '@/utils/formatters';
 import Link from 'next/link';
-import { useAuth } from '@/features/auth/hooks/useAuth';
 import { NewsCardProps } from '../types';
 
-export default function NewsCard({ news, variant = 'grid', priority = false, contentTypes }: NewsCardProps) {
-    const { isAdmin, isFaculty } = useAuth();
-
+export default function NewsCard({ news, priority = false }: NewsCardProps) {
     const getCategoryBadgeColor = () => {
         const label = news.content_type?.label?.toLowerCase() || '';
         if (label.includes('event')) return 'bg-primary';
@@ -45,17 +42,13 @@ export default function NewsCard({ news, variant = 'grid', priority = false, con
                     <Calendar className="w-3.5 h-3.5" />
                     <span>{formatDayDate(news.created_at)}</span>
                 </div>
-                <CardTitle className="text-base font-semibold leading-snug line-clamp-2">{news.title}</CardTitle>
+                <CardTitle className="text-subtitle leading-snug line-clamp-2">{news.title}</CardTitle>
                 <CardDescription className="line-clamp-2 text-sm text-muted-foreground leading-relaxed">
                     {news.description || news.content || 'No description available.'}
                 </CardDescription>
             </CardHeader>
 
-            <CardFooter className="flex items-center justify-between px-4 pb-4 pt-0">
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="w-3.5 h-3.5" />
-                    4 min read
-                </span>
+            <CardFooter className="flex items-center justify-end px-4 pb-4 pt-0">
                 <Link href={`/bulletin/${news.slug}`}>
                     <Button variant="ghost" size="sm" className="gap-1.5 text-primary text-sm">
                         View Full Article

@@ -1,4 +1,4 @@
-import { useRef, useTransition, useEffect, type BaseSyntheticEvent } from "react";
+import { type BaseSyntheticEvent } from "react";
 import {
   useForm,
   useFieldArray,
@@ -9,12 +9,9 @@ import {
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import { PersonnelSchema, UpdatePersonnelSchema } from "../schema/personnel";
 import type { PersonnelSubmitPayload, UsePersonnelFormProps } from "../types";
-import { deleteStorageFileAction } from "@/actions/image";
-import { uploadPendingAvatar } from "@/lib/avatar";
-import { getErrorMessage } from "@/utils/errors";
+import { useProfileSubmit } from "@/hooks/useProfileSubmit";
 
 function getFirstErrorMessage(error: unknown): string | null {
   if (!error || typeof error !== "object") return null;
@@ -32,15 +29,10 @@ function getFirstErrorMessage(error: unknown): string | null {
 export function usePersonnelForm({
   personnel,
   mode,
-  onPendingChange,
   onSuccess,
   submitAction,
   uploadAvatarAction,
 }: UsePersonnelFormProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const pendingBlobRef = useRef<Blob | null>(null);
-
   // Compute pre-filled states if we are editing an existing profile
 
   const defaultValues =
@@ -101,10 +93,6 @@ export function usePersonnelForm({
     defaultValues,
   });
 
-  useEffect(() => {
-    onPendingChange?.(isPending);
-  }, [isPending, onPendingChange]);
-
   const educationValues = useWatch({ control, name: "education" });
   const formValues = useWatch({ control });
   const { fields, append, remove } = useFieldArray({
@@ -112,37 +100,24 @@ export function usePersonnelForm({
     name: "education",
   });
 
-  const handleFormSubmit: SubmitHandler<FieldValues> = async (data) => {
-    startTransition(async () => {
-      const payload = data as PersonnelSubmitPayload;
-      let profilePictureUrl = personnel?.profile_picture_url || undefined;
-      try {
-        profilePictureUrl = await uploadPendingAvatar(
-          pendingBlobRef.current,
-          uploadAvatarAction,
-          profilePictureUrl,
-        );
-
-        const result = await submitAction({ ...payload, profilePictureUrl });
-        if (!result.success) {
-          toast.error(result.message ?? "Failed to save personnel profile.");
-          return;
-        }
-
-        toast.success(
-          mode === "edit"
-            ? "Personnel updated successfully."
-            : "Personnel profile created successfully!",
-        );
-        onSuccess?.();
-        if (mode === "setup") router.replace("/home");
-      } catch (error) {
-        if (profilePictureUrl && mode === "setup") {
-          await deleteStorageFileAction(profilePictureUrl, "avatar-images");
-        }
-        toast.error(getErrorMessage(error, "An unexpected error occurred."));
-      }
+  const { isPending, pendingBlobRef, submit } =
+    useProfileSubmit<PersonnelSubmitPayload>({
+      mode,
+      onSuccess,
+      submitAction,
+      uploadAvatarAction,
+      initialProfilePictureUrl: personnel?.profile_picture_url || undefined,
+      failureMessage: "Failed to save personnel profile.",
+      editSuccessMessage: "Personnel updated successfully.",
+      createSuccessMessage: "Personnel profile created successfully!",
+      buildPayload: (values, profilePictureUrl) => ({
+        ...(values as PersonnelSubmitPayload),
+        profilePictureUrl,
+      }),
     });
+
+  const handleFormSubmit: SubmitHandler<FieldValues> = (data) => {
+    submit(data);
   };
 
   // Deferred so `handleSubmit` runs at event time, not during render — the

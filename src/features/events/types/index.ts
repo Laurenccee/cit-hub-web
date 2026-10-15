@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { ActionResult } from '@/types/action';
 
 export interface EventCategory {
@@ -238,6 +239,6 @@ export interface StudentAvatarProps {
 }
 
 export interface CreateEventDialogProps {
+  children: ReactNode;
   categories: EventCategory[];
-  onCreated?: () => void;
 }

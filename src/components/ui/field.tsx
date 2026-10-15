@@ -227,4 +227,10 @@ export {
   FieldLabel,
   FieldDescription,
   FieldError,
+  FieldSet,
+  FieldLegend,
+  FieldGroup,
+  FieldContent,
+  FieldTitle,
+  FieldSeparator,
 }

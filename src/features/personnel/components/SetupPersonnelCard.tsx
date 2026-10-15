@@ -1,72 +1,13 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import {
-  Briefcase,
-  Camera,
-  Fingerprint,
-  GraduationCap,
-  Link,
-} from "lucide-react";
-import { SetupWizard, type WizardStep } from "@/components/shared/SetupWizard";
+import { SetupWizard } from "@/components/shared/SetupWizard";
 import { SetupPersonnelCardProps } from "../types";
 import { PersonnelStepContent } from "./setup-steps/PersonnelStepContent";
+import { PERSONNEL_WIZARD_STEPS } from "./setup-steps/steps";
 import { usePersonnelForm } from "../hooks/usePersonnelForm";
 import { personnelSetupAction } from "../action";
 import { uploadAvatarAction } from "@/actions/image";
-
-const STEPS = [
-  {
-    id: "profile",
-    label: "Photo",
-    sublabel: "Portrait",
-    eyebrow: "Corporate Badge & Directory Photo",
-    eyebrowIcon: Camera,
-    title: "Profile Picture",
-    description:
-      "Upload a clear portrait photo for your personnel card, internal corporate directory, and team collaboration spaces.",
-  },
-  {
-    id: "identity",
-    label: "Identity",
-    sublabel: "Details",
-    eyebrow: "Official Identity Record",
-    eyebrowIcon: Fingerprint,
-    title: "Identity Details",
-    description:
-      "Enter your official identification details as they appear on your employee records.",
-  },
-  {
-    id: "work",
-    label: "Work",
-    sublabel: "Department",
-    eyebrow: "Rank & Department Placement",
-    eyebrowIcon: Briefcase,
-    title: "Work Assignment",
-    description:
-      "Select your rank, designation, and provide your office and contact details.",
-  },
-  {
-    id: "education",
-    label: "Education",
-    sublabel: "Degrees",
-    eyebrow: "Academic Credentials",
-    eyebrowIcon: GraduationCap,
-    title: "Education Background",
-    description:
-      "Add your educational qualifications, including ongoing degrees and completed degrees with graduation years.",
-  },
-  {
-    id: "social",
-    label: "Social",
-    sublabel: "Links",
-    eyebrow: "Professional Presence",
-    eyebrowIcon: Link,
-    title: "Social Channels",
-    description:
-      "Add your professional social media profiles. Optional, but helps students and colleagues connect with you.",
-  },
-] as const satisfies readonly WizardStep[];
 
 export default function SetupPersonnelCard({
   ranks,
@@ -89,8 +30,6 @@ export default function SetupPersonnelCard({
     mode: "setup",
     submitAction: personnelSetupAction,
     uploadAvatarAction,
-    onPendingChange: () => {},
-    onSuccess: () => {},
   });
 
   const canGoNext = useCallback(
@@ -121,7 +60,7 @@ export default function SetupPersonnelCard({
 
   return (
     <SetupWizard
-      steps={STEPS}
+      steps={PERSONNEL_WIZARD_STEPS}
       title="Setup Personnel Profile"
       description="Complete your professional dossier in 5 quick steps. You can review and edit details anytime."
       estimate="~2 minutes"

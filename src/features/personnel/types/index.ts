@@ -95,17 +95,6 @@ export interface EditPersonnelButtonProps {
     designations: Designation[];
 }
 
-export interface PersonnelFormProps {
-    id?: string;
-    mode: 'setup' | 'edit';
-    personnel?: Personnel;
-    ranks: Rank[];
-    designations: Designation[];
-    onPreviewChange?: (preview: PersonnelPreviewData) => void;
-    onPendingChange?: (isPending: boolean) => void;
-    onSuccess?: () => void;
-}
-
 /**
  * Payload `usePersonnelForm` hands to `submitAction`. It serves both flows:
  * setup (no `id`) and edit (with `id`). The server action re-validates with
@@ -116,7 +105,6 @@ export type PersonnelSubmitPayload = PersonnelFormData & { id?: string };
 export interface UsePersonnelFormProps {
     personnel?: Personnel;
     mode: 'setup' | 'edit';
-    onPendingChange?: (isPending: boolean) => void;
     onSuccess?: () => void;
     submitAction: (data: PersonnelSubmitPayload) => Promise<ActionResult>;
     uploadAvatarAction: (formData: FormData, oldUrl?: string | null) => Promise<UploadActionResult>;

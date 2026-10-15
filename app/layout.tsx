@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Instrument_Serif, Oswald } from 'next/font/google';
+import { Instrument_Sans, Instrument_Serif } from 'next/font/google';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/sonner';
@@ -12,7 +12,10 @@ const instrumentSerif = Instrument_Serif({
     weight: '400',
     variable: '--font-instrument',
 });
-const oswald = Oswald({ subsets: ['latin'], variable: '--font-oswald' });
+const instrumentSans = Instrument_Sans({
+    subsets: ['latin'],
+    variable: '--font-instrument-sans',
+});
 
 export const metadata: Metadata = {
     title: 'CIT Hub',
@@ -29,7 +32,7 @@ export default async function RootLayout({
             lang="en"
             suppressHydrationWarning
             data-scroll-behavior="smooth"
-            className={cn('h-full', 'antialiased', oswald.variable, instrumentSerif.variable)}
+            className={cn('h-full', 'antialiased', instrumentSans.variable, instrumentSerif.variable)}
         >
             <body className="min-h-full flex flex-col">
                 <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>

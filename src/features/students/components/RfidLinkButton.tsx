@@ -59,9 +59,9 @@ export default function RfidLinkButton({
         <Button
           type="button"
           variant="ghost"
-          size="icon"
+          size="icon-lg"
           aria-label={`RFID credential for ${studentName}`}
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+          className="cursor-pointer text-muted-foreground hover:text-foreground"
         >
           <Nfc className="h-4 w-4" />
         </Button>

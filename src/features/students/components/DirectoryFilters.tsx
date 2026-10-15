@@ -2,12 +2,13 @@
 
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { DirectoryFiltersProps, MajorFilter } from "../types";
 
 export type { MajorFilter };
 export const majorFilters: { label: string; value: MajorFilter }[] = [
-  { label: "All Majors", value: "ALL" },
+  { label: "All Students", value: "ALL" },
   { label: "Automotive Technology", value: "AT" },
   { label: "Mechanical Technology", value: "MT" },
   { label: "Electrical Technology", value: "ET" },
@@ -42,7 +43,7 @@ export default function DirectoryFilters({
               onSearchChange(e.target.value);
               onResetPage();
             }}
-            placeholder="Search by student name, ID (CIT-202X), RFID UID, or program..."
+            placeholder="Search student name, ID, RFID UID, or program..."
             aria-label="Search students"
             className="h-10 bg-card pl-9 pr-9 text-xs"
           />
@@ -61,52 +62,52 @@ export default function DirectoryFilters({
           )}
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:w-auto">
-          <select
+          <Select
+            size="lg"
             value={yearFilter}
             onChange={(e) => {
               onYearFilterChange(e.target.value);
               onResetPage();
             }}
             aria-label="Filter by year level"
-            className="h-10 rounded-lg border border-border bg-card px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
           >
             <option value="all">All Year Levels</option>
             <option value="1st">1st Year</option>
             <option value="2nd">2nd Year</option>
             <option value="3rd">3rd Year</option>
             <option value="4th">4th Year</option>
-          </select>
-          <select
+          </Select>
+          <Select
+            size="lg"
             value={rfidFilter}
             onChange={(e) => {
               onRfidFilterChange(e.target.value);
               onResetPage();
             }}
             aria-label="Filter by RFID status"
-            className="h-10 rounded-lg border border-border bg-card px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring/40"
           >
             <option value="all">RFID Status: All</option>
-            <option value="linked">Linked</option>
-            <option value="pending">Pending Assignment</option>
+            <option value="linked">Active</option>
             <option value="unlinked">Not Linked</option>
-          </select>
+          </Select>
         </div>
       </div>
 
       <div
-        className="mt-3 flex flex-wrap gap-2 border-t border-border pt-3"
+        className="mt-3 flex flex-wrap gap-2"
         role="group"
         aria-label="Filter by major"
       >
         {majorFilters.map(({ label, value }) => {
           const active = major === value;
           const count = counts[value] ?? 0;
+          const pillLabel =
+            value === "ALL" ? label : `${value} • ${label}`;
           return (
             <button
               key={value}
               type="button"
               aria-pressed={active}
-              aria-label={`${label} (${count.toLocaleString()})`}
               onClick={() => {
                 onMajorChange(value);
                 onResetPage();
@@ -118,17 +119,7 @@ export default function DirectoryFilters({
                   : "border-border bg-card text-muted-foreground hover:border-border hover:text-foreground",
               )}
             >
-              {label}
-              <span
-                className={cn(
-                  "rounded-full px-1.5 py-px text-micro font-bold leading-4",
-                  active
-                    ? "bg-card/20 text-primary-foreground"
-                    : "bg-muted text-muted-foreground",
-                )}
-              >
-                {count.toLocaleString()}
-              </span>
+              {pillLabel} ({count.toLocaleString()})
             </button>
           );
         })}

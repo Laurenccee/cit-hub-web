@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { usePathname, useRouter } from "next/navigation";
 import { signOutAction } from "@/features/auth/action";
 import { ROUTES } from "@/utils/constants/routes";
-import { ArrowRight, Bell, LogOut } from "lucide-react";
+import { ArrowRight, LogOut } from "lucide-react";
 
 function HeaderShell({ children }: { children: React.ReactNode }) {
   return (
@@ -47,18 +47,6 @@ function AcademicYearBadge() {
       <span className="text-muted-foreground/60">•</span>
       <span className="text-xs font-medium text-muted-foreground">1st Sem</span>
     </div>
-  );
-}
-
-function NotificationButton() {
-  return (
-    <button
-      type="button"
-      className="p-2 text-muted-foreground transition-colors hover:text-foreground"
-    >
-      <Bell className="h-5 w-5" />
-      <span className="sr-only">Notifications</span>
-    </button>
   );
 }
 
@@ -101,7 +89,7 @@ export default function NavigationBar() {
           key={href}
           href={href}
           className={cn(
-            "text-sm font-medium transition-colors duration-200",
+            "text-sm transition-colors font-serif duration-200",
             pathname === href ? "text-primary" : "text-muted-foreground hover:text-foreground",
           )}
         >
@@ -139,7 +127,6 @@ export default function NavigationBar() {
         <div className="flex items-center gap-4">
           <AcademicYearBadge />
           <ThemeToggle />
-          <NotificationButton />
           {isAuthenticated ? signOutButton : signInButton}
         </div>
         <MobileNav
@@ -174,7 +161,6 @@ export default function NavigationBar() {
       <div className="flex items-center gap-4">
         <AcademicYearBadge />
         <ThemeToggle />
-        <NotificationButton />
         {isAuthenticated ? signOutButton : signInButton}
       </div>
       <MobileNav

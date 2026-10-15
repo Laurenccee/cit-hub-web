@@ -80,4 +80,8 @@ export {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  PopoverAnchor,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverDescription,
 }

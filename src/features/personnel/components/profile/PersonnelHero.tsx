@@ -47,13 +47,13 @@ export default function PersonnelHero({
 
         {/* Name & Title */}
         <div className="text-center mt-2">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground font-serif">
+          <h1 className="text-title text-foreground">
             {personnel.first_name} {personnel.last_name}
           </h1>
           <p className="mt-1 text-base text-muted-foreground flex items-center justify-center gap-2">
             <span>{rankName || "Instructor"}</span>
             <span className="text-primary">•</span>
-            <span>{personnel.office || "College of Information Technology"}</span>
+            <span>{personnel.office || "CIT Hub"}</span>
           </p>
         </div>
 

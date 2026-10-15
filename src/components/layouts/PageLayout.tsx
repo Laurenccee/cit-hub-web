@@ -76,9 +76,7 @@ export function PageHeader({ eyebrow, title, description, actions, className }: 
         <div className={cn('flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between', className)}>
             <div className="flex min-w-0 flex-col gap-2">
                 {eyebrow}
-                <h1 className="font-serif text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                    {title}
-                </h1>
+                <h1 className="text-title text-foreground">{title}</h1>
                 {description && (
                     <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p>
                 )}

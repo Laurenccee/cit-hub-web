@@ -187,4 +187,7 @@ export {
   CommandEmpty,
   CommandGroup,
   CommandItem,
+  CommandDialog,
+  CommandSeparator,
+  CommandShortcut,
 }

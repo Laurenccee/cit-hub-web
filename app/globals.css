@@ -49,7 +49,7 @@
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --font-sans: var(--font-oswald);
+    --font-sans: var(--font-instrument-sans);
     --font-serif: var(--font-instrument);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
@@ -143,9 +143,71 @@
         background-size: 80px 80px;
         background-attachment: fixed;
     }
-    h1 {
+    /* Display headings use the serif face; balance line breaks. */
+    h1,
+    h2 {
         @apply font-serif;
     }
+    h1,
+    h2,
+    h3 {
+        text-wrap: balance;
+    }
+}
+
+/* ---------------------------------------------------------------------------
+ * Typography scale — the single source of truth for heading hierarchy.
+ *
+ * Serif (Instrument Serif, weight 400) carries display hierarchy: emphasis
+ * comes from size, color, and tracking — never synthetic bold, which the
+ * single-weight serif face cannot render cleanly. Sans (Instrument Sans)
+ * is used for UI, labels, card titles, and body copy.
+ * ------------------------------------------------------------------------- */
+
+/* Largest heading: hero/article/event titles. */
+@utility text-display {
+    font-family: var(--font-instrument);
+    font-weight: 400;
+    font-size: clamp(2.25rem, 1.65rem + 2.6vw, 3.75rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+}
+
+/* Page title (the `h1` inside PageHeader). */
+@utility text-title {
+    font-family: var(--font-instrument);
+    font-weight: 400;
+    font-size: clamp(1.75rem, 1.5rem + 1.1vw, 2.25rem);
+    line-height: 1.12;
+    letter-spacing: -0.015em;
+}
+
+/* Section heading (`h2`) within a page. */
+@utility text-section {
+    font-family: var(--font-instrument);
+    font-weight: 400;
+    font-size: 1.5rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+}
+
+/* Card titles and subsection headings. */
+@utility text-subtitle {
+    font-family: var(--font-instrument-sans);
+    font-weight: 600;
+    font-size: 1.125rem;
+    line-height: 1.35;
+    letter-spacing: -0.005em;
+}
+
+/* Uppercase micro label: page eyebrows, table heads, stat labels. */
+@utility text-eyebrow {
+    font-family: var(--font-instrument-sans);
+    font-weight: 700;
+    font-size: 0.625rem;
+    line-height: 0.875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
 }
 
 /* Micro label type used by badges, stat chips, and eyebrow text. */

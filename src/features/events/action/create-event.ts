@@ -4,15 +4,7 @@ import { getAuthorizedAdmin } from '@/actions';
 import { runMutation } from '@/actions/mutation';
 import { ROUTES } from '@/utils/constants/routes';
 import { EventSchema, type EventFormData } from '../schema/event';
-import { GetEventCategories } from './queries';
-import type { QueryResult } from '@/types/action';
-import type { CreateEventResult, EventCategory } from '../types';
-
-export async function getEventCategoriesAction(): Promise<QueryResult<EventCategory[]>> {
-  const { success, data } = await GetEventCategories();
-  if (!success) return { success: false, data: [] };
-  return { success: true, data };
-}
+import type { CreateEventResult } from '../types';
 
 /** Maps the camelCase form fields onto their snake_case `events` columns. */
 function toEventPayload(data: EventFormData, imageUrl: string | null | undefined) {

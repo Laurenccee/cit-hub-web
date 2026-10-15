@@ -32,7 +32,7 @@ export interface Student {
   majors?: Major | null;
 }
 
-export type RfidStatus = "linked" | "pending" | "unlinked";
+export type RfidStatus = "linked" | "unlinked";
 
 export interface DirectoryStudent {
   id: string;
@@ -42,18 +42,18 @@ export interface DirectoryStudent {
   yearLevel: string;
   studentId: string;
   course: string;
+  /** Short course code from public.courses — shown beside the year level */
+  courseCode?: string | null;
   /** Display name from public.majors */
   major?: string | null;
   /** Foreign key to public.majors.id */
   majorId?: string | null;
   /** Code from public.majors — drives the major filter */
   majorCode?: string | null;
-  college: string;
   rfidStatus: RfidStatus;
   nfcTag?: string | null;
   rfidUid?: string | null;
   rfidNote?: string | null;
-  presence: "inside" | "outside" | "issue";
   source?: Student | null;
 }
 
@@ -67,7 +67,6 @@ export type StudentSubmitPayload = StudentFormData & { id?: string };
 export interface UseStudentFormProps {
   student?: Student;
   mode: "setup" | "edit";
-  onPendingChange?: (isPending: boolean) => void;
   onSuccess?: () => void;
   submitAction: (data: StudentSubmitPayload) => Promise<ActionResult>;
   uploadAvatarAction: (

@@ -18,7 +18,7 @@ export default async function ProfileEditPage() {
             <PageContainer maxWidth="5xl" className="gap-8">
                 <PageHeader
                     eyebrow={
-                        <span className="text-xs font-semibold uppercase tracking-wider text-primary/80">
+                        <span className="text-eyebrow text-primary/80">
                             Edit Profile
                         </span>
                     }

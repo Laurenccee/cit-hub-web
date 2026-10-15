@@ -4,6 +4,7 @@ import CreateEventButton from "@/features/events/components/CreateEventButton";
 import {
   getEventsPageData,
   GetEventAttendance,
+  GetEventCategories,
 } from "@/features/events/action/queries";
 import { EventAttendance } from "@/features/events/types";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,7 +12,10 @@ import { Calendar } from "lucide-react";
 import { PageContainer, PageHeader, PageSection } from "@/components/layouts/PageLayout";
 
 export default async function EventsPage() {
-  const { featuredEvent, events } = await getEventsPageData();
+  const [{ featuredEvent, events }, { data: categories }] = await Promise.all([
+    getEventsPageData(),
+    GetEventCategories(),
+  ]);
 
   const heroEvent = featuredEvent ?? events[0];
   const heroAttendance: EventAttendance = heroEvent
@@ -27,7 +31,7 @@ export default async function EventsPage() {
           <Card className="border-dashed bg-card/80 py-12 text-center">
             <CardContent className="flex flex-col items-center gap-3">
               <Calendar className="h-12 w-12 text-muted-foreground/50" />
-              <h2 className="text-lg font-semibold text-foreground">No events yet</h2>
+              <h2 className="text-subtitle text-foreground">No events yet</h2>
               <p className="max-w-md text-sm text-muted-foreground">
                 There are no published events at the moment. Check back soon or
                 create a new event to get started.
@@ -40,7 +44,7 @@ export default async function EventsPage() {
           <PageHeader
             title="Campus Events"
             description="Stay updated with the latest events, workshops, and activities across the CIT community."
-            actions={<CreateEventButton />}
+            actions={<CreateEventButton categories={categories} />}
           />
 
           <EventsListing events={events} />

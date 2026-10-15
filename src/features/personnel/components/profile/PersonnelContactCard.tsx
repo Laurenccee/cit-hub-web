@@ -11,11 +11,11 @@ export default function PersonnelContactCard({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
+        <CardTitle className="flex items-center gap-2 text-subtitle">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
             <Phone className="w-4 h-4 text-primary" />
           </div>
-          Contact & Office Information
+          Contact &amp; Office Information
         </CardTitle>
         <Badge variant="secondary" className="text-xs">
           Official Channel

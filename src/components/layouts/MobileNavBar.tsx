@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { LogOut, Menu } from "lucide-react";
@@ -31,12 +31,13 @@ export function MobileNav({
   const pathname = usePathname();
   const visibleNavLinks = getVisibleNavLinks(role);
 
-  useEffect(() => {
-    if (open) {
-      setOpen(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  // Close the drawer on navigation. Adjusting state during render (rather than
+  // in an effect) avoids the extra commit + flash of a stale open drawer.
+  const [renderedPathname, setRenderedPathname] = useState(pathname);
+  if (renderedPathname !== pathname) {
+    setRenderedPathname(pathname);
+    setOpen(false);
+  }
 
   return (
     <div className="md:hidden">

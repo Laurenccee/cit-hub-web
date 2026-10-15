@@ -29,8 +29,8 @@ function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
     );
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
-    return <h1 data-slot="card-title" className={cn('text-sm', className)} {...props} />;
+function CardTitle({ className, ...props }: React.ComponentProps<'h3'>) {
+    return <h3 data-slot="card-title" className={className} {...props} />;
 }
 
 function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
@@ -70,4 +70,4 @@ function CardFooter({ className, ...props }: React.ComponentProps<'div'>) {
     );
 }
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent, CardAction };

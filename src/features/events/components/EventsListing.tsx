@@ -1,13 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarX2, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
+import { CalendarX2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { CardEmptyState } from "@/components/shared/CardEmptyState";
+import ListingFilterPills from "@/components/shared/ListingFilterPills";
+import ListingPagination from "@/components/shared/ListingPagination";
+import ListingSearchInput from "@/components/shared/ListingSearchInput";
+import ListingSortSelect from "@/components/shared/ListingSortSelect";
+import {
+  LISTING_PAGE_SIZE,
+  buildSearchText,
+  compareListItems,
+  paginate,
+} from "@/components/shared/listing-utils";
 import type { EventItem } from "../types";
 import EventCard, { isAcademicEvent } from "./EventCard";
-import { CardEmptyState } from "@/components/shared/CardEmptyState";
 
 type Tab = "all" | "upcoming" | "week" | "month" | "academic" | "student-life";
 type SortOrder = "soonest" | "latest" | "alphabetical";
@@ -15,8 +24,6 @@ type SortOrder = "soonest" | "latest" | "alphabetical";
 interface EventsListingProps {
   events: EventItem[];
 }
-
-const pageSize = 6;
 
 const tabs: { label: string; value: Tab }[] = [
   { label: "All Events", value: "all" },
@@ -27,6 +34,12 @@ const tabs: { label: string; value: Tab }[] = [
   { label: "Student Life", value: "student-life" },
 ];
 
+const sortOptions: { label: string; value: SortOrder }[] = [
+  { label: "Date: Soonest First", value: "soonest" },
+  { label: "Date: Latest First", value: "latest" },
+  { label: "Alphabetical", value: "alphabetical" },
+];
+
 export default function EventsListing({ events }: EventsListingProps) {
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,6 +48,11 @@ export default function EventsListing({ events }: EventsListingProps) {
 
   const selectTab = (tab: Tab) => {
     setActiveTab(tab);
+    setCurrentPage(1);
+  };
+
+  const selectSort = (value: SortOrder) => {
+    setSortOrder(value);
     setCurrentPage(1);
   };
 
@@ -73,36 +91,28 @@ export default function EventsListing({ events }: EventsListingProps) {
       if (activeTab === "student-life" && isAcademicEvent(event)) return false;
 
       if (!normalizedSearch) return true;
-      const searchableText = [
+      return buildSearchText([
         event.title,
         event.description,
         event.content,
         event.location,
         event.category?.label,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLocaleLowerCase();
-      return searchableText.includes(normalizedSearch);
+      ]).includes(normalizedSearch);
     })
-    .sort((first, second) => {
-      if (sortOrder === "alphabetical") {
-        return first.title.localeCompare(second.title);
-      }
-      const dateDifference =
-        new Date(first.start_date).getTime() -
-        new Date(second.start_date).getTime();
-      return sortOrder === "soonest" ? dateDifference : -dateDifference;
-    });
+    .sort((first, second) =>
+      compareListItems(
+        first,
+        second,
+        (item) => item.start_date,
+        sortOrder === "alphabetical",
+        sortOrder === "soonest",
+      ),
+    );
 
-  const pageCount = Math.ceil(filteredEvents.length / pageSize);
-  const visibleEvents = filteredEvents.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
-  const pageNumbers = Array.from(
-    { length: pageCount },
-    (_, index) => index + 1,
+  const { pageItems, pageCount } = paginate(
+    filteredEvents,
+    currentPage,
+    LISTING_PAGE_SIZE,
   );
 
   const updateSearch = (value: string) => {
@@ -119,78 +129,31 @@ export default function EventsListing({ events }: EventsListingProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Filters + search */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div
-          className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
-          role="group"
-          aria-label="Filter events"
-        >
-          {tabs.map(({ label, value }) => {
-            const isSelected = activeTab === value;
-            return (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={isSelected}
-                onClick={() => selectTab(value)}
-                className={`h-8 shrink-0 rounded-md border px-3 text-xs font-medium transition-colors ${
-                  isSelected
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                }`}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
+        <ListingFilterPills
+          options={tabs}
+          value={activeTab}
+          onChange={selectTab}
+          ariaLabel="Filter events"
+        />
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="relative w-full sm:w-72">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              value={searchTerm}
-              onChange={(event) => updateSearch(event.target.value)}
-              placeholder="Search events, workshops, venues..."
-              aria-label="Search events"
-              className="h-9 bg-card pl-9 pr-9 text-xs"
-            />
-            {searchTerm && (
-              <button
-                type="button"
-                aria-label="Clear search"
-                onClick={() => updateSearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-          <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-            Sort by:
-            <select
-              value={sortOrder}
-              onChange={(event) => {
-                setSortOrder(event.target.value as SortOrder);
-                setCurrentPage(1);
-              }}
-              className="h-9 rounded-md border border-input bg-card px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="soonest">Date: Soonest First</option>
-              <option value="latest">Date: Latest First</option>
-              <option value="alphabetical">Alphabetical</option>
-            </select>
-          </label>
+          <ListingSearchInput
+            value={searchTerm}
+            onChange={updateSearch}
+            placeholder="Search events, workshops, venues..."
+            ariaLabel="Search events"
+          />
+          <ListingSortSelect
+            value={sortOrder}
+            onChange={selectSort}
+            options={sortOptions}
+          />
         </div>
       </div>
 
-      {/* Grid */}
-      {visibleEvents.length > 0 ? (
+      {pageItems.length > 0 ? (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {visibleEvents.map((event) => (
+          {pageItems.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}
         </div>
@@ -214,54 +177,13 @@ export default function EventsListing({ events }: EventsListingProps) {
         </Card>
       )}
 
-      {pageCount > 1 && (
-        <nav
-          className="flex items-center justify-center gap-1.5 pt-2"
-          aria-label="Event pages"
-        >
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            aria-label="Previous page"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-            className="h-9 w-9 rounded-full"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          {pageNumbers.map((page) => (
-            <Button
-              key={page}
-              type="button"
-              variant={page === currentPage ? "default" : "outline"}
-              size="icon"
-              aria-label={`Page ${page}`}
-              aria-current={page === currentPage ? "page" : undefined}
-              onClick={() => setCurrentPage(page)}
-              className="h-9 w-9 rounded-full text-xs"
-            >
-              {page}
-            </Button>
-          ))}
-          {pageCount > 4 && (
-            <span className="px-1 text-xs text-muted-foreground">…</span>
-          )}
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            aria-label="Next page"
-            disabled={currentPage === pageCount}
-            onClick={() =>
-              setCurrentPage((page) => Math.min(pageCount, page + 1))
-            }
-            className="h-9 w-9 rounded-full"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </nav>
-      )}
+      <ListingPagination
+        page={currentPage}
+        pageCount={pageCount}
+        onPageChange={setCurrentPage}
+        ariaLabel="Event pages"
+        className="pt-2"
+      />
     </div>
   );
 }

@@ -5,25 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PersonnelEducationCardProps } from "../../types";
 
-const EXPERTISE_FIELDS = [
-  "Software Engineering",
-  "Web Development",
-  "Database Management",
-  "UI/UX Systems Design",
-  "Object-Oriented Programming",
-];
-
 export default function PersonnelEducationCard({
   education,
 }: PersonnelEducationCardProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-lg">
+        <CardTitle className="flex items-center gap-2 text-subtitle">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
             <GraduationCap className="w-4 h-4 text-primary" />
           </div>
-          Education & Credentials
+          Education &amp; Credentials
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -48,7 +40,7 @@ export default function PersonnelEducationCard({
                       </Badge>
                     )}
                   </div>
-                  <h4 className="font-bold text-foreground">{edu.degree}</h4>
+                  <h4 className="text-base font-semibold text-foreground">{edu.degree}</h4>
                   {edu.major && (
                     <p className="text-sm text-primary font-medium">
                       Major in {edu.major}
@@ -70,16 +62,12 @@ export default function PersonnelEducationCard({
 
         {/* Academic Fields of Expertise */}
         <div className="pt-4 border-t">
-          <h5 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
+          <h5 className="text-eyebrow text-muted-foreground mb-3">
             Academic Fields of Expertise
           </h5>
-          <div className="flex flex-wrap gap-2">
-            {EXPERTISE_FIELDS.map((field) => (
-              <Badge key={field} variant="outline" className="text-xs">
-                {field}
-              </Badge>
-            ))}
-          </div>
+          <p className="text-sm text-muted-foreground">
+            No fields of expertise on record.
+          </p>
         </div>
       </CardContent>
     </Card>

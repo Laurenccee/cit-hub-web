@@ -2,15 +2,13 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ROLES } from "@/utils/constants/roles";
 import { ROUTES } from "@/utils/constants/routes";
-import { Button } from "@/components/ui/button";
-import { ArrowDownUp, Download } from "lucide-react";
 import {
-  getStudents,
+  getStudentDirectory,
   getStudentsPageData,
 } from "@/features/students/action/queries";
+import ExportDirectoryCsvButton from "@/features/students/components/ExportDirectoryCsvButton";
 import RegisterStudentButton from "@/features/students/components/RegisterStudentButton";
 import StudentDirectory from "@/features/students/components/StudentDirectory";
-import { mapStudentToDirectory } from "@/features/students/utils/directory";
 import { PageContainer, PageHeader, PageSection } from "@/components/layouts/PageLayout";
 
 export default async function StudentsPage() {
@@ -31,35 +29,23 @@ export default async function StudentsPage() {
     redirect(ROUTES.HOME);
   }
 
-  const { data: students } = await getStudents();
+  const { data: directory } = await getStudentDirectory();
   const { courses, majors } = await getStudentsPageData();
-  const directory = students.map(mapStudentToDirectory);
 
   return (
     <PageSection>
       <PageContainer className="gap-6">
         <PageHeader
           eyebrow={
-            <p className="text-micro font-bold uppercase tracking-[0.14em]">
-              <span className="text-primary">Administrative Console</span>
-              <span className="mx-2 text-muted-foreground/50">/</span>
-              <span className="text-muted-foreground">Registrar &amp; Student Affairs</span>
-            </p>
+            <span className="text-eyebrow text-primary">
+              Student Records
+            </span>
           }
-          title="Student Directory & Records Management"
-          description="Manage academic enrollments, assign and synchronize contactless RFID/NFC credentials, and monitor live campus session attendance across collegiate departments."
+          title="Student Directory"
+          description="Manage academic enrollments, student records, and RFID access credentials."
           actions={
-            <div className="flex flex-col gap-2">
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="outline" size="xl" className="gap-2">
-                  <ArrowDownUp className="h-4 w-4 text-muted-foreground" />
-                  Import / SIS Sync
-                </Button>
-                <Button type="button" variant="outline" size="xl" className="gap-2">
-                  <Download className="h-4 w-4 text-muted-foreground" />
-                  Export Roster
-                </Button>
-              </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <ExportDirectoryCsvButton students={directory} />
               <RegisterStudentButton />
             </div>
           }

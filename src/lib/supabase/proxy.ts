@@ -77,7 +77,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user) {
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from("profiles")
       .select("id, role_id, change_password")
       .eq("id", user.id)
@@ -99,7 +99,7 @@ export async function updateSession(request: NextRequest) {
     const role = profile?.role_id;
 
     if (role === 1) {
-      const { data: personnel, error } = await supabase
+      const { data: personnel } = await supabase
         .from("personnel")
         .select("id")
         .eq("id", user.id)

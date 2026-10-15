@@ -131,4 +131,4 @@ function InputGroupTextarea({ className, ...props }: React.ComponentProps<'texta
     );
 }
 
-export { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, InputGroupTextarea };
+export { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, InputGroupTextarea, InputGroupText };

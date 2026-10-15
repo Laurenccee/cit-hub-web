@@ -11,7 +11,7 @@ export default function ClassScheduleCard({ schedule = [] }: { schedule: Schedul
     return (
         <Card className="flex flex-col h-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-serif">Today&apos;s Schedule</CardTitle>
+                <CardTitle className="text-subtitle">Today&apos;s Schedule</CardTitle>
                 <Badge variant="outline" className="ml-2 text-xs">
                     {hasSchedule ? `${schedule.length} ${schedule.length === 1 ? 'Class' : 'Classes'}` : '0 Classes'}
                 </Badge>
@@ -27,9 +27,9 @@ export default function ClassScheduleCard({ schedule = [] }: { schedule: Schedul
                                 </div>
 
                                 <div className="col-span-4">
-                                    <h1 className="text-sm font-medium text-primary leading-tight">
+                                    <h3 className="text-sm font-semibold text-primary leading-tight">
                                         {scheduleItem.class}
-                                    </h1>
+                                    </h3>
                                     <p className="text-xs text-muted-foreground">
                                         {scheduleItem.room} • {scheduleItem.type}
                                     </p>

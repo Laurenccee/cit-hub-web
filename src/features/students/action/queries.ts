@@ -1,15 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
 import type { QueryResult } from "@/types/action";
-import { Course, Major, Student } from "../types";
+import type { Course, Major, Student } from "../types";
+import type { DirectoryStudent } from "../types";
 
-export async function getStudents(): Promise<QueryResult<Student[]>> {
+const STUDENT_SELECT =
+  "*, profiles ( email, role_id ), courses ( id, code, name ), majors ( id, code, name )";
+
+async function fetchStudents(): Promise<QueryResult<Student[]>> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("students")
-    .select(
-      "*, profiles ( email, role_id ), courses ( id, code, name ), majors ( id, code, name )",
-    )
+    .select(STUDENT_SELECT)
     .order("last_name", { ascending: true });
 
   if (error) {
@@ -18,6 +20,50 @@ export async function getStudents(): Promise<QueryResult<Student[]>> {
   }
 
   return { success: true, data: (data ?? []) as Student[] };
+}
+
+export async function getStudentDirectory(): Promise<QueryResult<DirectoryStudent[]>> {
+  const result = await fetchStudents();
+
+  if (!result.success) {
+    return { success: false, data: [] };
+  }
+
+  const directory: DirectoryStudent[] = result.data.map((student) => {
+    const courseName = student.courses?.name ?? student.courses?.code ?? null;
+    const linked = Boolean(student.rfid_uid);
+    return {
+      id: student.id,
+      firstName: student.first_name,
+      lastName: student.last_name,
+      photoUrl: student.profile_picture_url,
+      yearLevel: formatYearLevel(student.year_level),
+      studentId: student.student_id ?? "—",
+      course: courseName ?? "—",
+      courseCode: student.courses?.code ?? null,
+      major: student.majors?.name ?? null,
+      majorId: student.major_id ?? student.majors?.id ?? null,
+      majorCode: student.majors?.code ?? null,
+      rfidStatus: linked ? "linked" : "unlinked",
+      nfcTag: linked ? `NFC-${student.rfid_uid!.slice(-6).toUpperCase()}` : null,
+      rfidUid: student.rfid_uid,
+      rfidNote: linked ? null : "No credential assigned",
+      source: student,
+    };
+  });
+
+  return { success: true, data: directory };
+}
+
+function formatYearLevel(yearLevel?: string | null) {
+  const raw = (yearLevel ?? "").trim();
+  if (!raw) return "—";
+  if (/year/i.test(raw)) return raw;
+  return `${raw} Year`;
+}
+
+export async function getStudents(): Promise<QueryResult<Student[]>> {
+  return fetchStudents();
 }
 
 async function getCourses(): Promise<QueryResult<Course[]>> {
@@ -62,32 +108,4 @@ export async function getStudentsPageData() {
     courses: coursesResult.success ? coursesResult.data : [],
     majors: majorsResult.success ? majorsResult.data : [],
   };
-}
-
-async function getCurrentUserStudent(): Promise<QueryResult<Student | null>> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { success: false, data: null };
-  }
-
-  const { data, error } = await supabase
-    .from("students")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (error) {
-    console.error(
-      "Error fetching current user student profile:",
-      error.message,
-    );
-    return { success: false, data: null };
-  }
-
-  return { success: true, data: data as Student | null };
 }

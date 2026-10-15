@@ -27,7 +27,7 @@ export function NewsHero({ news }: NewsHeroProps) {
                         </span>
                     </div>
 
-                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                    <h2 className="text-title text-foreground">
                         {news.title}
                     </h2>
 
@@ -36,17 +36,7 @@ export function NewsHero({ news }: NewsHeroProps) {
                     </p>
                 </div>
 
-                <div className="flex items-center justify-between mt-auto pt-6 border-t">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                            <span className="text-xs font-medium">CIT</span>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-sm font-medium">CIT Health Response Team</span>
-                            <span className="text-xs text-muted-foreground">3 min read • 1.4k views</span>
-                        </div>
-                    </div>
-
+                <div className="flex items-center justify-end mt-auto pt-6 border-t">
                     <Link href={`/bulletin/${news.slug}`}>
                         <Button variant="outline" size="lg" className="gap-2 text-primary border-primary rounded-full">
                             Read Full Article
@@ -72,9 +62,6 @@ export function NewsHero({ news }: NewsHeroProps) {
                         <span className="text-muted-foreground text-sm">No image</span>
                     </div>
                 )}
-                <div className="absolute bottom-4 right-4">
-                    <Badge className="bg-primary/90 text-primary-foreground text-xs px-2.5 py-0.5">Official Campus Incident Report</Badge>
-                </div>
             </div>
         </div>
     );

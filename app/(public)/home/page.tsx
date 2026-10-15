@@ -1,25 +1,41 @@
 import ClassScheduleCard from '@/features/home/components/ClassScheduleCard';
-import { formatDayDate } from '@/utils/formatters';
+import { formatDayDate, formatRange } from '@/utils/formatters';
 import Link from 'next/link';
-import NewsCard from '@/features/bulletin/components/NewsCard';
+import Image from 'next/image';
 import UpcomingEventsCard from '@/features/home/components/UpcomingEventsCard';
 import { Suspense } from 'react';
 import NewsCardSkeleton from '@/features/bulletin/components/skeletons/NewsCardSkeleton';
 import { Button } from '@/components/ui/button';
 import { getBulletinPageData } from '@/features/bulletin/action/queries';
+import { GetEvents } from '@/features/events/action/queries';
+import type { EventItemProps } from '@/features/home/types';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Calendar, BookOpen, CreditCard, Library } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Calendar } from 'lucide-react';
 import { PageContainer, PageHeader, PageSection } from '@/components/layouts/PageLayout';
 
-const QUICK_TOOLS = [
-    { href: '/grades', icon: BookOpen, label: 'Grades & Evaluation' },
-    { href: '/tuition', icon: CreditCard, label: 'Tuition Balance & Cashier' },
-    { href: '/library', icon: Library, label: 'Online University Library' },
-] as const;
-
 export default async function HomePage() {
-    const { featuredNews, news } = await getBulletinPageData();
+    const [{ featuredNews, news }, eventsResult] = await Promise.all([
+        getBulletinPageData(),
+        GetEvents(),
+    ]);
+    const events = eventsResult.success ? eventsResult.data : [];
+
+    const now = new Date();
+    const upcomingEvents: EventItemProps[] = events
+        .filter((event) => new Date(event.start_date) >= now)
+        .slice(0, 5)
+        .map((event) => ({
+            id: event.id,
+            title: event.title,
+            description: event.description ?? event.content ?? '',
+            imageUrl: event.image_url ?? '',
+            imageAlt: event.image_alt ?? event.title,
+            date: event.start_date,
+            startTime: formatRange(event.start_date, event.end_date),
+            endTime: '',
+            slug: event.slug,
+        }));
 
     const today = formatDayDate(new Date());
 
@@ -43,7 +59,7 @@ export default async function HomePage() {
                     {/* Left Column - News & Announcements */}
                     <section className="lg:col-span-2 flex flex-col gap-6">
                         <div className="flex items-center justify-between border-b pb-3">
-                            <h2 className="text-xl font-serif text-foreground">News &amp; Announcements</h2>
+                            <h2 className="text-section text-foreground">News &amp; Announcements</h2>
                             <Button asChild variant="ghost" size="sm" className="gap-2">
                                 <Link href="/bulletin">
                                     View all
@@ -59,27 +75,28 @@ export default async function HomePage() {
                                     <Card className="overflow-hidden">
                                         <div className="relative aspect-video">
                                             {featuredNews[0].image_url && (
-                                                <img
+                                                <Image
                                                     src={featuredNews[0].image_url}
                                                     alt={featuredNews[0].image_alt ?? featuredNews[0].title}
-                                                    className="h-full w-full object-cover"
+                                                    fill
+                                                    sizes="(max-width: 1024px) 100vw, 66vw"
+                                                    className="object-cover"
                                                 />
                                             )}
                                             <div className="absolute top-4 left-4 flex gap-2">
-                                                <Badge className="bg-primary text-primary-foreground">
-                                                    OFFICIAL ADVISORY
-                                                </Badge>
-                                                <Badge variant="secondary">Medical &amp; Wellness</Badge>
+                                                {featuredNews[0].content_type?.label && (
+                                                    <Badge className="bg-primary text-primary-foreground">
+                                                        {featuredNews[0].content_type.label}
+                                                    </Badge>
+                                                )}
                                             </div>
                                         </div>
                                         <CardContent className="p-6">
                                             <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
                                                 <Calendar className="h-4 w-4" />
                                                 <span>{formatDayDate(featuredNews[0].created_at)}</span>
-                                                <span>•</span>
-                                                <span>Internal Campus Report</span>
                                             </div>
-                                            <h3 className="mb-3 text-xl font-serif">{featuredNews[0].title}</h3>
+                                            <h3 className="mb-3 text-section">{featuredNews[0].title}</h3>
                                             <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
                                                 {featuredNews[0].description ||
                                                     featuredNews[0].content ||
@@ -105,15 +122,17 @@ export default async function HomePage() {
                                         <Card className="overflow-hidden">
                                             <div className="relative aspect-video">
                                                 {item.image_url && (
-                                                    <img
+                                                    <Image
                                                         src={item.image_url}
                                                         alt={item.image_alt ?? item.title}
-                                                        className="h-full w-full object-cover"
+                                                        fill
+                                                        sizes="(max-width: 640px) 100vw, 33vw"
+                                                        className="object-cover"
                                                     />
                                                 )}
                                                 <div className="absolute top-4 left-4">
                                                     <Badge className="bg-primary text-primary-foreground">
-                                                        {item.content_type?.label || 'EVENT HIGHLIGHTS'}
+                                                        {item.content_type?.label || 'News'}
                                                     </Badge>
                                                 </div>
                                             </div>
@@ -122,7 +141,7 @@ export default async function HomePage() {
                                                     <Calendar className="h-3 w-3" />
                                                     <span>{formatDayDate(item.created_at)}</span>
                                                 </div>
-                                                <h4 className="mb-2 font-serif line-clamp-2">{item.title}</h4>
+                                                <h4 className="mb-2 text-subtitle line-clamp-2">{item.title}</h4>
                                                 <p className="mb-3 text-sm text-muted-foreground line-clamp-2">
                                                     {item.description ||
                                                         item.content ||
@@ -150,36 +169,12 @@ export default async function HomePage() {
                     {/* Right Column - Dashboard */}
                     <section className="flex flex-col gap-6">
                         <div className="flex items-center justify-between border-b pb-3">
-                            <h2 className="text-xl font-serif text-foreground">Dashboard</h2>
+                            <h2 className="text-section text-foreground">Dashboard</h2>
                             <span className="text-sm text-muted-foreground">{today}</span>
                         </div>
 
                         <ClassScheduleCard schedule={[]} />
-                        <UpcomingEventsCard events={[]} />
-
-                        {/* Quick Pioneer Tools */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                                    Quick Pioneer Tools
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex flex-col gap-3">
-                                {QUICK_TOOLS.map(({ href, icon: Icon, label }) => (
-                                    <Link
-                                        key={href}
-                                        href={href}
-                                        className="flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-accent"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <Icon className="h-5 w-5 text-primary" />
-                                            <span className="text-sm font-medium">{label}</span>
-                                        </div>
-                                        <span className="text-muted-foreground">›</span>
-                                    </Link>
-                                ))}
-                            </CardContent>
-                        </Card>
+                        <UpcomingEventsCard events={upcomingEvents} />
                     </section>
                 </div>
             </PageContainer>

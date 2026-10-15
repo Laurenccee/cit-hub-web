@@ -4,7 +4,6 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { SignInSchema, type SignInFormData } from '../schema/auth';
 import { signInAction } from '../action';
 import { useRouter } from 'next/navigation';

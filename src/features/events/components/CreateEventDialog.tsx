@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,64 +21,33 @@ import {
   Loader2,
   Calendar,
   MapPin,
-  Image,
+  Image as ImageIcon,
 } from "lucide-react";
 import ComboboxField from "@/components/shared/ComboboxField";
 import ImageDropzone from "@/components/shared/ImageDropzone";
-import type { EventCategory } from "../types";
-import { ReactNode } from "react";
-import { getEventCategoriesAction } from "../action/create-event";
+import type { CreateEventDialogProps } from "../types";
 import { useEventForm } from "../hooks/useEventForm";
-
-interface CreateEventDialogProps {
-  children: ReactNode;
-  onSuccess?: () => void;
-}
 
 export default function CreateEventDialog({
   children,
-  onSuccess,
+  categories,
 }: CreateEventDialogProps) {
   const [open, setOpen] = useState(false);
-  const [categories, setCategories] = useState<EventCategory[]>([]);
   const imageBlobRef = useRef<Blob | null>(null);
 
   const {
     control,
     isPending,
     formState: { errors },
-    titleValue,
     syncSlug,
     onSubmit,
     reset,
   } = useEventForm({
-    onSuccess,
     onClose: () => {
       setOpen(false);
       imageBlobRef.current = null;
     },
   });
-
-  useEffect(() => {
-    if (!open) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const result = await getEventCategoriesAction();
-        if (!cancelled && result.success) setCategories(result.data);
-      } catch {
-        // Error surfaced on submit if categories are still empty
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [open]);
-
-  // Sync slug whenever title changes.
-  useEffect(() => {
-    syncSlug(titleValue ?? "");
-  }, [titleValue, syncSlug]);
 
   const handleClose = () => {
     setOpen(false);
@@ -123,7 +92,7 @@ export default function CreateEventDialog({
 
             <div className="space-y-1.5">
               <Label className="text-sm font-medium flex items-center gap-1.5">
-                <Image className="h-3.5 w-3.5 text-muted-foreground" />
+                <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
                 Cover Image
               </Label>
               <ImageDropzone
@@ -178,7 +147,10 @@ export default function CreateEventDialog({
                   <Input
                     id="title"
                     {...field}
-                    onChange={(e) => field.onChange(e.target.value)}
+                    onChange={(e) => {
+                      field.onChange(e.target.value);
+                      syncSlug(e.target.value);
+                    }}
                     placeholder="e.g., CIT Annual Tech Symposium & Hackathon"
                     className={
                       errors.title

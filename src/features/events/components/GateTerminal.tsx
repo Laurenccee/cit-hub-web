@@ -109,7 +109,7 @@ export default function GateTerminal({
             <ChevronLeft className="h-3.5 w-3.5" />
             Back to Events
           </Link>
-          <h1 className="mt-2 font-serif text-3xl font-black tracking-tight text-foreground sm:text-4xl">
+          <h1 className="mt-2 text-title text-foreground">
             {event.title}
           </h1>
           <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -120,7 +120,7 @@ export default function GateTerminal({
               </span>
             </span>
             <span className="text-muted-foreground/60">•</span>
-            <span>{isLogin ? "Gate A Inbound" : "Gate A Outbound"}</span>
+            <span>{isLogin ? "Inbound" : "Outbound"}</span>
           </p>
           <p className="mt-3 flex flex-wrap items-center gap-2">
             <DeskSyncBadge status={syncStatus} />
@@ -145,7 +145,7 @@ export default function GateTerminal({
             <span className="block text-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
               Total Checked In
             </span>
-            <span className="block font-serif text-3xl font-black leading-none text-foreground">
+            <span className="block text-3xl font-bold leading-none text-foreground">
               {attendance.total.toLocaleString()}
             </span>
           </span>
@@ -167,7 +167,7 @@ export default function GateTerminal({
               {pill.text}
             </Badge>
             <span className="shrink-0 font-mono text-micro uppercase tracking-wider text-muted-foreground">
-              Gate A • Reader #02
+              RFID Reader
             </span>
           </div>
 

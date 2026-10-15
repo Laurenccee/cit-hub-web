@@ -1,3 +1,6 @@
+import type { ActionResult } from '@/types/action';
+import type { NewsFormData } from '../schema/news';
+
 export interface ContentType {
     id: string;
     slug?: string;
@@ -25,7 +28,14 @@ export interface NewsItem {
 }
 export interface NewsCardProps {
     news: NewsItem;
-    variant?: 'featured' | 'grid' | 'list';
     priority?: boolean;
+}
+
+export interface UseNewsFormProps {
+    mode?: 'create' | 'update';
+    news?: NewsItem;
+    initialValues: NewsFormData;
     contentTypes: ContentType[];
+    onSuccess?: () => void;
+    submitAction: (data: NewsFormData & { imageUrl?: string }, targetId: string) => Promise<ActionResult>;
 }

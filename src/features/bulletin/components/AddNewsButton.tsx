@@ -20,10 +20,23 @@ import { ContentType } from "../types";
 import NewsForm from "./NewsForm";
 import { NewsFormData } from "../schema/news";
 import { addNewsAction } from "../action";
+import { useNewsForm } from "../hooks/useNewsForm";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Loading02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 
 const FORM_ID = "add-news-form";
+
+const INITIAL_VALUES: NewsFormData = {
+  title: "",
+  description: "",
+  content: "",
+  slug: "",
+  imageUrl: undefined,
+  imageAlt: "",
+  typesId: undefined,
+  isPublished: false,
+  isFeatured: false,
+};
 
 export default function AddNewsButton({
   contentTypes,
@@ -31,25 +44,24 @@ export default function AddNewsButton({
   contentTypes: ContentType[];
 }) {
   const { isAdmin, isFaculty } = useAuth();
-  const [isPending, setIsPending] = useState(false);
   const [open, setOpen] = useState(false);
-  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(
-    null,
-  );
+
+  const {
+    control,
+    isPending,
+    pendingBlobRef,
+    handleTitleChange,
+    handleTypeChange,
+    onSubmit,
+  } = useNewsForm({
+    mode: "create",
+    initialValues: INITIAL_VALUES,
+    contentTypes,
+    submitAction: addNewsAction,
+    onSuccess: () => setOpen(false),
+  });
 
   if (!isAdmin && !isFaculty) return null;
-
-  const INITIAL_VALUES: NewsFormData = {
-    title: "",
-    description: "",
-    content: "",
-    slug: "",
-    imageUrl: undefined,
-    imageAlt: "",
-    typesId: undefined,
-    isPublished: false,
-    isFeatured: false,
-  };
 
   return (
     (isAdmin || isFaculty) && (
@@ -65,10 +77,7 @@ export default function AddNewsButton({
           <TooltipContent>Add News & Announcement</TooltipContent>
         </Tooltip>
         <DialogContent className="sm:max-w-2xl flex p-0 flex-row max-h-[80vh]">
-          <div
-            ref={setPortalContainer}
-            className="flex flex-col flex-1 min-w-0 max-h-[80vh]"
-          >
+          <div className="flex flex-col flex-1 min-w-0 max-h-[80vh]">
             <DialogHeader className="px-6 pt-6 pb-2">
               <DialogTitle>Add News & Announcement</DialogTitle>
               <DialogDescription>
@@ -78,13 +87,13 @@ export default function AddNewsButton({
             </DialogHeader>
             <NewsForm
               id={FORM_ID}
-              mode="create"
-              initialValues={INITIAL_VALUES}
-              submitAction={addNewsAction}
               contentTypes={contentTypes}
-              onPendingChange={setIsPending}
-              onSuccess={() => setOpen(false)}
-              portalContainer={portalContainer}
+              control={control}
+              isPending={isPending}
+              pendingBlobRef={pendingBlobRef}
+              handleTitleChange={handleTitleChange}
+              handleTypeChange={handleTypeChange}
+              onSubmit={onSubmit}
             />
             <DialogFooter className="px-6 py-4 border-t shrink-0">
               <Button

@@ -43,7 +43,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     <div className="flex flex-col gap-16">
       <section className="flex flex-col gap-8">
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl md:text-5xl lg:text-6xl leading-tight tracking-tight">
+          <h1 className="text-display">
             {article.title}
           </h1>
           <span className="text-sm text-muted-foreground">

@@ -84,9 +84,9 @@ export default function PromoteToPioneerButton({
           </Badge>
         ) : (
           <Button
-            size="icon-xs"
-            variant="outline"
-            className="cursor-pointer"
+            size="icon-lg"
+            variant="ghost"
+            className="cursor-pointer text-muted-foreground hover:text-foreground"
             aria-label="Register as Pioneer"
           >
             <HugeiconsIcon icon={Award01Icon} />

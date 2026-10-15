@@ -5,6 +5,7 @@ import { EventItemProps } from '../types';
 import { formatDayDate } from '@/utils/formatters';
 import { CalendarX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 export default function UpcomingEventsCard({ events = [] }: { events: EventItemProps[] }) {
     const hasEvents = events && events.length > 0;
@@ -13,7 +14,7 @@ export default function UpcomingEventsCard({ events = [] }: { events: EventItemP
     return (
         <Card className="flex flex-col h-full">
             <CardHeader className="flex items-center justify-between pb-2">
-                <CardTitle className="text-lg font-serif">Upcoming Events</CardTitle>
+                <CardTitle className="text-subtitle">Upcoming Events</CardTitle>
                 <Badge variant="outline" className="text-xs">
                     {currentMonth}
                 </Badge>
@@ -32,13 +33,13 @@ export default function UpcomingEventsCard({ events = [] }: { events: EventItemP
                                 </div>
 
                                 <div className="col-span-5">
-                                    <h1 className="text-sm font-medium text-primary leading-tight">
+                                    <h3 className="text-sm font-semibold text-primary leading-tight">
                                         {event.title}
-                                    </h1>
+                                    </h3>
                                     <p className="text-xs text-muted-foreground truncate">{event.description}</p>
                                     <div className="flex items-center gap-1 text-[11px] text-muted-foreground/80 mt-0.5">
                                         <span className="shrink-0">
-                                            {event.startTime} – {event.endTime}
+                                            {event.endTime ? `${event.startTime} – ${event.endTime}` : event.startTime}
                                         </span>
                                     </div>
                                 </div>
@@ -55,13 +56,8 @@ export default function UpcomingEventsCard({ events = [] }: { events: EventItemP
             </CardContent>
 
             <CardFooter className="mt-auto pt-4">
-                <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full h-10 text-sm"
-                    disabled={!hasEvents}
-                >
-                    View All Events
+                <Button asChild size="lg" variant="outline" className="w-full h-10 text-sm">
+                    <Link href="/events">View All Events</Link>
                 </Button>
             </CardFooter>
         </Card>

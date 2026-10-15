@@ -68,9 +68,10 @@ export default function EditStudentDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
-          size="icon-xs"
-          variant="outline"
-          className="cursor-pointer hover:bg-accent transition-colors"
+          size="icon-lg"
+          variant="ghost"
+          className="cursor-pointer transition-colors"
+          aria-label={`Edit ${student.first_name} ${student.last_name}`}
         >
           <HugeiconsIcon icon={Edit01Icon} />
         </Button>

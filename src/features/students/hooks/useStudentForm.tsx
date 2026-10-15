@@ -1,28 +1,19 @@
 "use client";
 
-import { useRef, useTransition, useEffect, type BaseSyntheticEvent } from "react";
+import { type BaseSyntheticEvent } from "react";
 import { useForm, useWatch, SubmitHandler, type FieldValues, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import { StudentSchema, UpdateStudentSchema } from "../schema/student";
 import { UseStudentFormProps, StudentSubmitPayload } from "../types";
-import { deleteStorageFileAction } from "@/actions/image";
-import { uploadPendingAvatar } from "@/lib/avatar";
-import { getErrorMessage } from "@/utils/errors";
+import { useProfileSubmit } from "@/hooks/useProfileSubmit";
 
 export function useStudentForm({
   student,
   mode,
-  onPendingChange,
   onSuccess,
   submitAction,
   uploadAvatarAction,
 }: UseStudentFormProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const pendingBlobRef = useRef<Blob | null>(null);
-
   const defaultValues =
     mode === "edit" && student
       ? {
@@ -61,46 +52,25 @@ export function useStudentForm({
 
   const formValues = useWatch({ control });
 
-  useEffect(() => {
-    onPendingChange?.(isPending);
-  }, [isPending, onPendingChange]);
-
-  const handleFormSubmit: SubmitHandler<FieldValues> = async (data) => {
-    startTransition(async () => {
-      const payload = data as StudentSubmitPayload;
-      let profilePictureUrl = student?.profile_picture_url || undefined;
-      try {
-        profilePictureUrl = await uploadPendingAvatar(
-          pendingBlobRef.current,
-          uploadAvatarAction,
-          profilePictureUrl,
-        );
-
-        const result = await submitAction({
-          ...payload,
-          profilePictureUrl,
-          ...(mode === "edit" && student ? { id: student.id } : {}),
-        });
-
-        if (!result.success) {
-          toast.error(result.message ?? "Failed to save student profile.");
-          return;
-        }
-
-        toast.success(
-          mode === "edit"
-            ? "Student updated successfully."
-            : "Student profile created successfully!",
-        );
-        onSuccess?.();
-        if (mode === "setup") router.replace("/home");
-      } catch (error) {
-        if (profilePictureUrl && mode === "setup") {
-          await deleteStorageFileAction(profilePictureUrl, "avatar-images");
-        }
-        toast.error(getErrorMessage(error, "An unexpected error occurred."));
-      }
+  const { isPending, pendingBlobRef, submit } =
+    useProfileSubmit<StudentSubmitPayload>({
+      mode,
+      onSuccess,
+      submitAction,
+      uploadAvatarAction,
+      initialProfilePictureUrl: student?.profile_picture_url || undefined,
+      failureMessage: "Failed to save student profile.",
+      editSuccessMessage: "Student updated successfully.",
+      createSuccessMessage: "Student profile created successfully!",
+      buildPayload: (values, profilePictureUrl) => ({
+        ...(values as StudentSubmitPayload),
+        profilePictureUrl,
+        ...(mode === "edit" && student ? { id: student.id } : {}),
+      }),
     });
+
+  const handleFormSubmit: SubmitHandler<FieldValues> = (data) => {
+    submit(data);
   };
 
   // Deferred so `handleSubmit` runs at event time, not during render — the

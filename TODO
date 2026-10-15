@@ -39,7 +39,6 @@
 - [x] Updated `src/features/auth/hooks/useAuth.ts` and left backward-compatible re-exports in `features/auth`.
 
 ## Next Opportunities:
-- [ ] Move `DeskDirection` and `AttendeeVia` from `desk-lookup.ts` into `src/features/events/types/index.ts`.
-- [ ] Deduplicate college program mapping (`collegeFromProgram` / `collegeIdentityFromCourse`) into `src/utils/college.ts`.
+- [x] Move `DeskDirection` and `AttendeeVia` from `desk-lookup.ts` into `src/features/events/types/index.ts`.
 - [ ] Standardize `students/utils/` vs `events/utils.ts`.
 - [ ] Feature-level barrel exports (`index.ts` per feature).

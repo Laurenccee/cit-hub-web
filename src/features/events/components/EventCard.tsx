@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin, Pencil, QrCode, Users } from "lucide-react";
+import { Clock, MapPin, Users } from "lucide-react";
 import Link from "next/link";
 import type { EventItem } from "../types";
 import EventImage from "./EventImage";
@@ -80,7 +80,7 @@ export default function EventCard({ event }: EventCardProps) {
           </div>
         </div>
 
-        <h3 className="mt-3 line-clamp-2 text-base font-bold leading-snug text-foreground">
+        <h3 className="mt-3 line-clamp-2 text-subtitle leading-snug text-foreground">
           {event.title}
         </h3>
         <p className="mt-1.5 line-clamp-2 min-h-10 text-sm leading-relaxed text-muted-foreground">
@@ -120,29 +120,6 @@ export default function EventCard({ event }: EventCardProps) {
         >
           <Link href={`/events/${event.slug}`}>View Details</Link>
         </Button>
-        <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label={`Edit ${event.title}`}
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            asChild
-          >
-            <Link href={`/events/${event.slug}`}>
-              <Pencil className="h-4 w-4" />
-            </Link>
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label={`Show QR code for ${event.title}`}
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-          >
-            <QrCode className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
     </Card>
   );

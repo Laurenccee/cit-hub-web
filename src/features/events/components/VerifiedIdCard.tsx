@@ -5,7 +5,6 @@ import Image from "next/image";
 import { BadgeCheck, ScanLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DeskStudent, LastTapResult } from "../types";
-import { collegeIdentityFromCourse } from "../utils";
 
 interface VerifiedIdCardProps {
   result: LastTapResult | null;
@@ -29,7 +28,6 @@ export default function VerifiedIdCard({ result }: VerifiedIdCardProps) {
   const initials = student
     ? `${student.first_name.charAt(0)}${student.last_name.charAt(0)}`.toUpperCase()
     : "";
-  const college = student ? collegeIdentityFromCourse(student.course_name).label : "";
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
@@ -42,7 +40,7 @@ export default function VerifiedIdCard({ result }: VerifiedIdCardProps) {
           <span className="block truncate text-micro font-bold tracking-[0.08em] text-warning">
             CEBU INSTITUTE OF TECHNOLOGY - UNIVERSITY
           </span>
-          <span className="block font-serif text-base font-bold tracking-wide text-primary-foreground">
+          <span className="block font-serif text-base tracking-wide text-primary-foreground">
             STUDENT IDENTIFICATION CARD
           </span>
         </span>
@@ -71,7 +69,7 @@ export default function VerifiedIdCard({ result }: VerifiedIdCardProps) {
               <p className="text-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 Scan Result
               </p>
-              <p className="font-serif text-xl font-black leading-tight text-destructive">
+              <p className="font-serif text-xl leading-tight text-destructive">
                 Unknown Card
               </p>
               <p className="mt-2 text-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
@@ -116,7 +114,7 @@ export default function VerifiedIdCard({ result }: VerifiedIdCardProps) {
               <p className="text-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
                 Full Name
               </p>
-              <p className="truncate font-serif text-xl font-black leading-tight text-foreground">
+              <p className="truncate font-serif text-xl leading-tight text-foreground">
                 {name}
               </p>
 
@@ -146,9 +144,6 @@ export default function VerifiedIdCard({ result }: VerifiedIdCardProps) {
                 <p className="truncate text-sm font-bold text-foreground">
                   {student.course_name ?? student.major_name ?? "—"}
                 </p>
-                {college && (
-                  <p className="truncate text-micro text-muted-foreground">{college}</p>
-                )}
               </div>
             </div>
           </div>

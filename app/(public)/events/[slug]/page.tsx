@@ -101,7 +101,7 @@ export default async function EventDetailPage({
                 {event.category?.label ?? "Campus Event"}
               </span>
             </div>
-            <h1 className="mt-2 font-serif text-3xl font-bold leading-tight sm:text-5xl">
+            <h1 className="mt-2 text-display text-white">
               {event.title}
             </h1>
             <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-white/80">
@@ -127,10 +127,10 @@ export default async function EventDetailPage({
             {/* Description & Details */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl">About this Event</CardTitle>
+                <CardTitle className="text-subtitle">About this Event</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="max-w-none text-sm leading-relaxed text-muted-foreground [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_h2]:mt-6 [&_h2]:font-serif [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-foreground [&_h3]:mt-4 [&_h3]:font-serif [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-foreground [&_li]:mt-1 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3 [&_strong]:font-semibold [&_strong]:text-foreground [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-5">
+                <div className="max-w-none text-sm leading-relaxed text-muted-foreground [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-4 [&_blockquote]:italic [&_h2]:mt-6 [&_h2]:font-serif [&_h2]:text-xl [&_h2]:text-foreground [&_h3]:mt-4 [&_h3]:font-serif [&_h3]:text-lg [&_h3]:text-foreground [&_li]:mt-1 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-3 [&_strong]:font-semibold [&_strong]:text-foreground [&_ul]:my-3 [&_ul]:list-disc [&_ul]:pl-5">
                   {event.content ? (
                     <div dangerouslySetInnerHTML={{ __html: event.content }} />
                   ) : event.description ? (
@@ -145,7 +145,7 @@ export default async function EventDetailPage({
             {/* Event Meta */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl">Event Details</CardTitle>
+                <CardTitle className="text-subtitle">Event Details</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
                 <dl className="grid gap-4 sm:grid-cols-2">
@@ -203,7 +203,7 @@ export default async function EventDetailPage({
             {/* Related Events */}
             {relatedEvents.length > 0 && (
               <section>
-                <h2 className="font-serif text-2xl font-semibold text-foreground">
+                <h2 className="text-section text-foreground">
                   Related Events
                 </h2>
                 <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -221,7 +221,7 @@ export default async function EventDetailPage({
                             label={relatedEvent.category?.label ?? "Event"}
                           />
                         </div>
-                        <h3 className="font-bold text-foreground transition-colors group-hover:text-primary">
+                        <h3 className="text-subtitle text-foreground transition-colors group-hover:text-primary">
                           {relatedEvent.title}
                         </h3>
                         <p className="mt-1.5 flex-1 text-sm text-muted-foreground line-clamp-2">
@@ -279,7 +279,7 @@ export default async function EventDetailPage({
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-serif text-3xl font-bold text-foreground">
+                    <p className="text-3xl font-bold text-foreground">
                       {present}
                     </p>
                     <p className="text-micro font-bold uppercase tracking-wide text-success">

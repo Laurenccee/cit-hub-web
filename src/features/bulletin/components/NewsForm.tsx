@@ -1,129 +1,44 @@
 'use client';
 import { Separator } from '@/components/ui/separator';
-import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { type NewsFormData, NewsSchema } from '../schema/news';
 import ImageDropzone from '@/components/shared/ImageDropzone';
-import { useEffect, useRef, useTransition, type BaseSyntheticEvent } from 'react';
-import { toast } from 'sonner';
-import { slugify } from '@/utils/formatters';
+import type {
+    BaseSyntheticEvent,
+    ChangeEvent,
+    RefObject,
+} from 'react';
+import type { Control } from 'react-hook-form';
 import type { ContentType, NewsItem } from '../types';
-import type { ActionResult } from '@/types/action';
+import type { NewsFormData } from '../schema/news';
 import InputField from '@/components/shared/InputField';
 import { HugeiconsIcon } from '@hugeicons/react';
 import AreaField from '@/components/shared/AreaField';
 import ComboboxField from '@/components/shared/ComboboxField';
 import SwitchToggle from '@/components/shared/SwitchToggle';
 import { Link01Icon, Link04Icon, NewsIcon, TextIcon } from '@hugeicons/core-free-icons';
-import { deleteStorageFileAction, uploadNewsImageAction } from '@/actions/image';
 
 interface NewsFormProps {
     id?: string;
-    mode?: 'create' | 'update';
     news?: NewsItem;
-    initialValues: NewsFormData; // Vital for hydration
     contentTypes: ContentType[];
-    onPendingChange?: (isPending: boolean) => void;
-    onSuccess?: () => void;
-    portalContainer?: HTMLElement | null;
-    submitAction: (data: NewsFormData & { imageUrl?: string }, targetId: string) => Promise<ActionResult>;
+    control: Control<NewsFormData>;
+    isPending: boolean;
+    pendingBlobRef: RefObject<Blob | null>;
+    handleTitleChange: (e: ChangeEvent<HTMLInputElement>) => void;
+    handleTypeChange: (value: string) => void;
+    onSubmit: (e?: BaseSyntheticEvent) => void;
 }
 
 export default function NewsForm({
     id,
-    mode,
     news,
-    initialValues,
     contentTypes,
-    onPendingChange,
-    onSuccess,
-    submitAction,
+    control,
+    isPending,
+    pendingBlobRef,
+    handleTitleChange,
+    handleTypeChange,
+    onSubmit,
 }: NewsFormProps) {
-    const pendingBlobRef = useRef<Blob | null>(null);
-    const isEditMode = mode === 'update';
-
-    const {
-        control,
-        handleSubmit,
-        setValue,
-        reset,
-        formState: { isSubmitting },
-    } = useForm<NewsFormData>({
-        resolver: zodResolver(NewsSchema),
-        defaultValues: initialValues,
-    });
-
-    useEffect(() => {
-        reset(initialValues);
-    }, [initialValues, reset]);
-
-    useEffect(() => {
-        onPendingChange?.(isSubmitting);
-    }, [isSubmitting, onPendingChange]);
-
-    const titleValue = useWatch({ control, name: 'title' });
-    const typesIdValue = useWatch({ control, name: 'typesId' });
-
-    const [isPending, startTransition] = useTransition();
-
-    useEffect(() => {
-        if (isEditMode) return;
-
-        const typeSlug = contentTypes.find((ct) => ct.id === typesIdValue)?.slug;
-        const titleSlug = slugify(titleValue ?? '');
-        const generated = typeSlug ? `${typeSlug}/${titleSlug}` : titleSlug;
-        setValue('slug', generated, { shouldValidate: false });
-    }, [titleValue, typesIdValue, contentTypes, setValue, isEditMode]);
-
-    const handleFormSubmit: SubmitHandler<NewsFormData> = async (data) => {
-        startTransition(async () => {
-            let imageUrl: string | undefined = data.imageUrl || undefined;
-            const originalImageUrl = news?.image_url; // 👈 Track original state for cleanup checks
-
-            try {
-                if (pendingBlobRef.current) {
-                    const fd = new FormData();
-                    fd.append('file', pendingBlobRef.current, 'news.jpg');
-
-                    // 1. Pass originalImageUrl here so it deletes the old file on upload success!
-                    const uploadResult = await uploadNewsImageAction(fd, originalImageUrl);
-                    if (!uploadResult.success) {
-                        toast.error(uploadResult.message ?? 'Failed to upload image.');
-                        return;
-                    }
-                    imageUrl = uploadResult.url;
-                }
-
-                const targetId = isEditMode ? news!.id : '';
-                const result = await submitAction({ ...data, imageUrl }, targetId);
-
-                if (!result.success) {
-                    // Rollback uploaded image if the DB update itself failed
-                    if (imageUrl && imageUrl !== originalImageUrl) {
-                        await deleteStorageFileAction(imageUrl, 'news-images');
-                    }
-                    toast.error(result.message || `Failed to ${isEditMode ? 'update' : 'add'} news`);
-                    return;
-                }
-
-                toast.success(`News ${isEditMode ? 'updated' : 'added'} successfully.`);
-                if (!isEditMode) reset();
-                onSuccess?.();
-            } catch {
-                // Error safety rollback
-                if (imageUrl && imageUrl !== originalImageUrl) {
-                    await deleteStorageFileAction(imageUrl, 'news-images');
-                }
-                toast.error('An unexpected error occurred');
-            }
-        });
-    };
-
-    // Deferred so `handleSubmit` runs at event time, not during render — the
-    // submit handler reads `pendingBlobRef`, and refs must not be read in render.
-    const onSubmit = (event?: BaseSyntheticEvent) =>
-        handleSubmit(handleFormSubmit)(event);
-
     return (
         <form
             id={id}
@@ -166,6 +81,7 @@ export default function NewsForm({
                     isPending={isPending}
                     placeholder="Enter news title"
                     leadingIcon={<HugeiconsIcon icon={TextIcon} color="currentColor" strokeWidth={1.5} />}
+                    onChange={handleTitleChange}
                 />
                 <AreaField
                     label="Description"
@@ -201,6 +117,7 @@ export default function NewsForm({
                     placeholder="Select content type"
                     searchPlaceholder="Search content types..."
                     isPending={isPending}
+                    onChange={handleTypeChange}
                 />
                 <InputField
                     label="Slug"

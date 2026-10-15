@@ -10,12 +10,10 @@ export default function AreaField<TFieldValues extends FieldValues>({
     label,
     control,
     isPending = false,
-    type = 'text',
     leadingIcon,
     trailingIcon,
     description,
     error,
-    forgetPasswordLink,
     ...rest
 }: InputFieldProps<TFieldValues>) {
     return (

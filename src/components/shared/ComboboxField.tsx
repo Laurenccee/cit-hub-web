@@ -23,6 +23,7 @@ export interface ComboboxProps<TData, TFieldValues extends FieldValues = FieldVa
     error?: string;
     disabled?: boolean;
     isPending?: boolean;
+    onChange?: (value: string) => void;
 }
 
 export default function ComboboxField<TData, TFieldValues extends FieldValues>({
@@ -39,6 +40,7 @@ export default function ComboboxField<TData, TFieldValues extends FieldValues>({
     error,
     disabled = false,
     isPending = false,
+    onChange,
 }: ComboboxProps<TData, TFieldValues>) {
     const [open, setOpen] = useState(false);
 
@@ -95,7 +97,9 @@ export default function ComboboxField<TData, TFieldValues extends FieldValues>({
                                                         value={labelStr} // used for local client searching
                                                         onSelect={() => {
                                                             // Set form value; toggle off if clicked again
-                                                            field.onChange(isSelected ? '' : valueStr);
+                                                            const nextValue = isSelected ? '' : valueStr;
+                                                            field.onChange(nextValue);
+                                                            onChange?.(nextValue);
                                                             setOpen(false);
                                                         }}
                                                     >

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import InputField from '@/components/shared/InputField';
 import { Label } from '@/components/ui/label';
-import { Controller, useFieldArray, useWatch, type Control, type FieldValues } from 'react-hook-form';
+import { Controller, useFieldArray, type Control, type FieldValues } from 'react-hook-form';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   GraduationScrollIcon,
@@ -21,7 +21,6 @@ interface EducationStepProps {
 
 export function EducationStep({ control, isPending }: EducationStepProps) {
   const { fields, append, remove } = useFieldArray({ control, name: 'education' });
-  const educationValues = useWatch({ control, name: 'education' });
 
   return (
     <div className="flex flex-col gap-4">

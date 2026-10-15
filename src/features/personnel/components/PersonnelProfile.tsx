@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { Personnel, PersonnelProfileProps } from '../types';
+import { PersonnelProfileProps } from '../types';
 import PersonnelHero from './profile/PersonnelHero';
 import PersonnelContactCard from './profile/PersonnelContactCard';
 import PersonnelEducationCard from './profile/PersonnelEducationCard';
