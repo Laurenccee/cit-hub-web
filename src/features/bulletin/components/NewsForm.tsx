@@ -4,10 +4,11 @@ import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type NewsFormData, NewsSchema } from '../schema/news';
 import ImageDropzone from '@/components/shared/ImageDropzone';
-import { useEffect, useRef, useTransition } from 'react';
+import { useEffect, useRef, useTransition, type BaseSyntheticEvent } from 'react';
 import { toast } from 'sonner';
 import { slugify } from '@/utils/formatters';
-import { ContentType, NewsItem } from '../types';
+import type { ContentType, NewsItem } from '../types';
+import type { ActionResult } from '@/types/action';
 import InputField from '@/components/shared/InputField';
 import { HugeiconsIcon } from '@hugeicons/react';
 import AreaField from '@/components/shared/AreaField';
@@ -25,7 +26,7 @@ interface NewsFormProps {
     onPendingChange?: (isPending: boolean) => void;
     onSuccess?: () => void;
     portalContainer?: HTMLElement | null;
-    submitAction: (data: NewsFormData & { imageUrl?: string }, targetId: string) => Promise<any>;
+    submitAction: (data: NewsFormData & { imageUrl?: string }, targetId: string) => Promise<ActionResult>;
 }
 
 export default function NewsForm({
@@ -36,7 +37,6 @@ export default function NewsForm({
     contentTypes,
     onPendingChange,
     onSuccess,
-    portalContainer,
     submitAction,
 }: NewsFormProps) {
     const pendingBlobRef = useRef<Blob | null>(null);
@@ -119,11 +119,16 @@ export default function NewsForm({
         });
     };
 
+    // Deferred so `handleSubmit` runs at event time, not during render — the
+    // submit handler reads `pendingBlobRef`, and refs must not be read in render.
+    const onSubmit = (event?: BaseSyntheticEvent) =>
+        handleSubmit(handleFormSubmit)(event);
+
     return (
         <form
             id={id}
             className="flex flex-col gap-6 overflow-y-auto flex-1 py-4 px-6"
-            onSubmit={handleSubmit(handleFormSubmit)}
+            onSubmit={onSubmit}
         >
             <div className="flex flex-col gap-3">
                 <div className="flex flex-col gap-3">

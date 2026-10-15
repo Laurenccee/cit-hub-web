@@ -4,7 +4,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/providers/theme-provider';
-import AuthWrapper from '@/features/auth/components/AuthWrapper';
+import { AuthWrapper } from '@/components/providers/auth-wrapper';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 const instrumentSerif = Instrument_Serif({

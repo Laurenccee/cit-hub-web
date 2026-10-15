@@ -6,7 +6,7 @@ import { ArrowRight, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { formatDayDate } from '@/utils/formatters';
-import { NewsItem } from '../types';
+import type { NewsItem } from '../types';
 
 interface NewsHeroProps {
     news: NewsItem;
@@ -20,7 +20,7 @@ export function NewsHero({ news }: NewsHeroProps) {
                 <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-2">
                         <Badge className="bg-primary text-primary-foreground text-xs px-2 py-0.5">NEWS</Badge>
-                        <Badge variant="outline" className="text-xs px-2 py-0.5">{(news as any).content_type?.label || 'Campus Advisory'}</Badge>
+                        <Badge variant="outline" className="text-xs px-2 py-0.5">{news.content_type?.label || 'Campus Advisory'}</Badge>
                         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <Calendar className="w-3.5 h-3.5" />
                             {formatDayDate(news.created_at)}

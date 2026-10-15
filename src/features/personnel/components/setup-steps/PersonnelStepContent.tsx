@@ -1,14 +1,12 @@
 "use client";
 
 import { ProfilePictureStep } from "@/components/shared/ProfilePictureStep";
-import { Designation, Rank } from "../../types";
+import type { Designation, Rank } from "../../types";
 import type { Control, FieldValues } from "react-hook-form";
-import {
-  IdentityStep,
-  WorkAssignmentsStep,
-  EducationStep,
-  SocialStep,
-} from "./index";
+import { IdentityStep } from "./IdentityStep";
+import { WorkAssignmentsStep } from "./WorkAssignmentsStep";
+import { EducationStep } from "./EducationStep";
+import { SocialStep } from "./SocialStep";
 
 interface PersonnelStepContentProps {
   stepId: string;

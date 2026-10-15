@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { CardEmptyState } from '@/components/shared/CardEmptyState';
-import { EventItemProps } from '../../../types';
+import { EventItemProps } from '../types';
 import { formatDayDate } from '@/utils/formatters';
 import { CalendarX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';

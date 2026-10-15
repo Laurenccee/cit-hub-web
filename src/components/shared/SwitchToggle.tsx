@@ -3,7 +3,14 @@
 import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { SwitchToggleProps } from '@/types';
+
+export interface SwitchToggleProps<TFieldValues extends FieldValues = FieldValues> {
+    name: Path<TFieldValues>;
+    control: Control<TFieldValues>;
+    label: string;
+    description?: string;
+    disabled?: boolean;
+}
 
 export default function SwitchToggle<TFieldValues extends FieldValues>({
     name,

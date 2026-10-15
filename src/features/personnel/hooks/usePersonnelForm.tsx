@@ -1,17 +1,20 @@
-import { useRef, useTransition, useEffect } from "react";
+import { useRef, useTransition, useEffect, type BaseSyntheticEvent } from "react";
 import {
   useForm,
   useFieldArray,
   useWatch,
   SubmitHandler,
+  type FieldValues,
+  type Resolver,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { PersonnelSchema, UpdatePersonnelSchema } from "../schema/personnel";
-import { Personnel, UsePersonnelFormProps } from "../types";
+import type { PersonnelSubmitPayload, UsePersonnelFormProps } from "../types";
 import { deleteStorageFileAction } from "@/actions/image";
 import { uploadPendingAvatar } from "@/lib/avatar";
+import { getErrorMessage } from "@/utils/errors";
 
 function getFirstErrorMessage(error: unknown): string | null {
   if (!error || typeof error !== "object") return null;
@@ -88,10 +91,13 @@ export function usePersonnelForm({
           },
         };
 
-  const { control, handleSubmit } = useForm<any>({
+  // The control is intentionally form-shape agnostic (`FieldValues`) so it can
+  // flow into the shared, reusable field components; `handleFormSubmit` narrows
+  // the values back to `PersonnelSubmitPayload` when handing them to the action.
+  const { control, handleSubmit } = useForm<FieldValues>({
     resolver: zodResolver(
       mode === "edit" ? UpdatePersonnelSchema : PersonnelSchema,
-    ),
+    ) as unknown as Resolver<FieldValues>,
     defaultValues,
   });
 
@@ -106,8 +112,9 @@ export function usePersonnelForm({
     name: "education",
   });
 
-  const handleFormSubmit: SubmitHandler<any> = async (data) => {
+  const handleFormSubmit: SubmitHandler<FieldValues> = async (data) => {
     startTransition(async () => {
+      const payload = data as PersonnelSubmitPayload;
       let profilePictureUrl = personnel?.profile_picture_url || undefined;
       try {
         profilePictureUrl = await uploadPendingAvatar(
@@ -116,7 +123,7 @@ export function usePersonnelForm({
           profilePictureUrl,
         );
 
-        const result = await submitAction({ ...data, profilePictureUrl });
+        const result = await submitAction({ ...payload, profilePictureUrl });
         if (!result.success) {
           toast.error(result.message ?? "Failed to save personnel profile.");
           return;
@@ -129,14 +136,24 @@ export function usePersonnelForm({
         );
         onSuccess?.();
         if (mode === "setup") router.replace("/home");
-      } catch (error: any) {
+      } catch (error) {
         if (profilePictureUrl && mode === "setup") {
           await deleteStorageFileAction(profilePictureUrl, "avatar-images");
         }
-        toast.error(error.message || "An unexpected error occurred.");
+        toast.error(getErrorMessage(error, "An unexpected error occurred."));
       }
     });
   };
+
+  // Deferred so `handleSubmit` runs at event time, not during render — the
+  // submit handler reads `pendingBlobRef`, and refs must not be read in render.
+  const onSubmit = (event?: BaseSyntheticEvent) =>
+    handleSubmit(handleFormSubmit, (errors) => {
+      toast.error(
+        getFirstErrorMessage(errors) ??
+          "Please complete all required fields before submitting.",
+      );
+    })(event);
 
   return {
     control,
@@ -147,11 +164,6 @@ export function usePersonnelForm({
     educationValues,
     formValues,
     pendingBlobRef,
-    onSubmit: handleSubmit(handleFormSubmit, (errors) => {
-      toast.error(
-        getFirstErrorMessage(errors) ??
-          "Please complete all required fields before submitting.",
-      );
-    }),
+    onSubmit,
   };
 }

@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, MapPin, Pencil, QrCode, Users } from "lucide-react";
 import Link from "next/link";
-import { EventItem } from "../types";
+import type { EventItem } from "../types";
 import EventImage from "./EventImage";
 
 interface EventCardProps {

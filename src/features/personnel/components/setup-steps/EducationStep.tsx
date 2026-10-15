@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import InputField from '@/components/shared/InputField';
 import { Label } from '@/components/ui/label';
-import { Controller, useFieldArray, useWatch } from 'react-hook-form';
+import { Controller, useFieldArray, useWatch, type Control, type FieldValues } from 'react-hook-form';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   GraduationScrollIcon,
@@ -15,7 +15,7 @@ import {
 } from '@hugeicons/core-free-icons';
 
 interface EducationStepProps {
-  control: ReturnType<typeof import('react-hook-form').useForm<any>>['control'];
+  control: Control<FieldValues>;
   isPending: boolean;
 }
 

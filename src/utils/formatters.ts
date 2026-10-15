@@ -38,19 +38,19 @@ export function formatDayDate(
   return dayDateFormatter.format(d);
 }
 
-function formatCurrency(amount: number) {
+export function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-PH", {
     style: "currency",
     currency: "PHP",
   }).format(amount);
 }
 
-function truncateText(text: string, length: number) {
+export function truncateText(text: string, length: number) {
   if (text.length <= length) return text;
   return text.slice(0, length).trim() + "...";
 }
 
-function formatTime(time: string) {
+export function formatTime(time: string) {
   const [hours, minutes] = time.split(":");
   const h = parseInt(hours, 10);
   const ampm = h >= 12 ? "PM" : "AM";

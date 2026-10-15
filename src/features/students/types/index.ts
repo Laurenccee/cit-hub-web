@@ -75,3 +75,65 @@ export interface UseStudentFormProps {
     oldUrl?: string | null,
   ) => Promise<UploadActionResult>;
 }
+
+// ---------------------------------------------------------------------------
+// Directory & Component prop types
+// ---------------------------------------------------------------------------
+
+export type MajorFilter =
+  | "ALL"
+  | "AT"
+  | "MT"
+  | "ET"
+  | "ELX"
+  | "CT"
+  | "ARDT"
+  | "CLT"
+  | "BCWT"
+  | "AFT";
+
+export interface StudentDirectoryProps {
+  students: DirectoryStudent[];
+  courses: Course[];
+  majors: Major[];
+}
+
+export interface DirectoryFiltersProps {
+  search: string;
+  onSearchChange: (value: string) => void;
+  yearFilter: string;
+  onYearFilterChange: (value: string) => void;
+  rfidFilter: string;
+  onRfidFilterChange: (value: string) => void;
+  major: MajorFilter;
+  onMajorChange: (value: MajorFilter) => void;
+  counts: Record<string, number>;
+  onResetPage: () => void;
+}
+
+export interface StudentTableRowProps {
+  student: DirectoryStudent;
+  courses: Course[];
+  majors: Major[];
+}
+
+export interface DirectoryPaginationProps {
+  showingFrom: number;
+  showingTo: number;
+  total: number;
+  page: number;
+  pageCount: number;
+  onPageChange: (page: number) => void;
+}
+
+export interface EditStudentDialogProps {
+  student: Student;
+  courses: Course[];
+  majors: Major[];
+}
+
+export interface RfidLinkButtonProps {
+  studentId: string;
+  studentName: string;
+}
+

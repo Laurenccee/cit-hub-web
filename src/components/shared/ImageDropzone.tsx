@@ -15,7 +15,13 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ImageDropzoneProps } from '@/types';
+
+export interface ImageDropzoneProps {
+    variant?: 'avatar' | 'news' | 'onboarding';
+    onFile?: (blob: Blob | null) => void;
+    initialUrl?: string;
+    inputId?: string;
+}
 
 // ─── crop helper ─────────────────────────────────────────────────────────────
 

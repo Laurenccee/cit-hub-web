@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { DeskCheckin, EventAttendanceRecord } from "../types";
-import { getRecentCheckinsAction } from "../action";
+import type { DeskCheckin, EventAttendanceRecord } from "../types";
+import { getRecentCheckinsAction } from "../action/desk-checkin";
 import { createDebouncer } from "../utils";
 
 interface ScanRow {

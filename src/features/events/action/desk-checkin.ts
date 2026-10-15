@@ -2,198 +2,16 @@
 
 import { createClient } from '@/lib/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getAuthorizedAdmin } from '@/actions';
-import { runMutation } from '@/actions/mutation';
-import { ROUTES } from '@/utils/constants/routes';
-import { EventSchema, type EventFormData } from '../schema/event';
-import { GetEventCategories, GetDeskCheckins, GetEventAttendance } from './queries';
-import { uidVariants } from '../utils';
-import type { QueryResult } from '@/types/action';
+import { GetDeskCheckins, GetEventAttendance } from './queries';
+import { resolveAttendeeAction } from './desk-lookup';
 import type {
-  CreateEventResult,
   DeskCheckinRecord,
   DeskCheckinResult,
+  DeskDirection,
   DeskStudent,
   DeskTapContext,
-  EventCategory,
   OpenVisitMessages,
 } from '../types';
-
-export async function getEventCategoriesAction(): Promise<QueryResult<EventCategory[]>> {
-  const { success, data } = await GetEventCategories();
-  if (!success) return { success: false, data: [] };
-  return { success: true, data };
-}
-
-/** Maps the camelCase form fields onto their snake_case `events` columns. */
-function toEventPayload(data: EventFormData, imageUrl: string | null | undefined) {
-  return {
-    title: data.title,
-    slug: data.slug,
-    description: data.description || null,
-    location: data.location,
-    start_date: data.startDate ? new Date(data.startDate).toISOString() : data.startDate,
-    end_date: data.endDate ? new Date(data.endDate).toISOString() : null,
-    category_id: data.categoryId || null,
-    image_url: imageUrl ?? null,
-    image_alt: data.imageAlt || null,
-    is_published: data.isPublished,
-    is_featured: data.isFeatured,
-    is_archived: false,
-  };
-}
-
-/**
- * Create a new event. Accepts a validated, typed EventFormData object —
- * the caller (useEventForm) owns form validation via zodResolver and uploads
- * the cover image through `uploadEventImageAction` before submitting.
- * Form keys use camelCase; this action maps them to snake_case DB columns.
- */
-export async function createEventAction(
-  values: EventFormData,
-  imageUrl?: string | null,
-): Promise<CreateEventResult> {
-  return runMutation({
-    values,
-    schema: EventSchema,
-    authorize: getAuthorizedAdmin,
-    revalidate: [ROUTES.EVENTS, { path: `${ROUTES.EVENTS}/[slug]`, type: 'page' }],
-    unauthorizedMessage: 'Forbidden: Admin only',
-    invalidMessage: 'Validation failed',
-    failureMessage: 'Failed to create event',
-    conflictMessage: 'An event with this slug already exists',
-    execute: async (data, { supabase, userId }) => {
-      const { data: event, error } = await supabase
-        .from('events')
-        .insert({ ...toEventPayload(data, imageUrl), created_by: userId, updated_by: userId })
-        .select('id')
-        .single();
-      return { error, extra: { eventId: event?.id } };
-    },
-  });
-}
-
-export type DeskDirection = 'in' | 'out';
-
-/**
- * Everything the gate badge and roster need to identify a student, flattened
- * from the courses/majors joins. `rfid_uid` is intentionally stripped by
- * `toDeskStudent` before anything leaves the server.
- */
-function toDeskStudent(row: {
-  id: string;
-  first_name: string;
-  last_name: string;
-  student_id?: string | null;
-  profile_picture_url?: string | null;
-  year_level?: string | null;
-  rfid_uid?: string | null;
-  courses?: { code?: string | null; name?: string | null } | null | Array<{ code?: string | null; name?: string | null } | null>;
-  majors?: { code?: string | null; name?: string | null } | null | Array<{ code?: string | null; name?: string | null } | null>;
-}): DeskStudent {
-  return {
-    id: row.id,
-    first_name: row.first_name,
-    last_name: row.last_name,
-    student_id: row.student_id ?? null,
-    profile_picture_url: row.profile_picture_url ?? null,
-    year_level: row.year_level ?? null,
-    course_code: Array.isArray(row.courses) ? (row.courses[0]?.code ?? null) : (row.courses?.code ?? null),
-    course_name: Array.isArray(row.courses) ? (row.courses[0]?.name ?? null) : (row.courses?.name ?? null),
-    major_code: Array.isArray(row.majors) ? (row.majors[0]?.code ?? null) : (row.majors?.code ?? null),
-    major_name: Array.isArray(row.majors) ? (row.majors[0]?.name ?? null) : (row.majors?.name ?? null),
-  };
-}
-
-
-const ATTENDEE_SELECT =
-  'id, first_name, last_name, student_id, profile_picture_url, year_level, rfid_uid, courses ( code, name ), majors ( code, name )';
-
-/**
- * Resolve a tapped card to a student. Uses the service-role client because
- * the desk runs on public kiosk sessions that cannot read the students
- * table under RLS. Only minimal identity fields are returned.
- */
-// fallow-ignore-next-line unused-server-action
-export async function lookupStudentByCardAction(
-  cardUid: string,
-): Promise<{ success: boolean; student: DeskStudent | null }> {
-  const { createAdminClient } = await import('@/lib/supabase/admin');
-  const admin = createAdminClient();
-
-  const { data, error } = await admin
-    .from('students')
-    .select(ATTENDEE_SELECT)
-    .in('rfid_uid', uidVariants(cardUid))
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    console.error('RFID lookup error:', error.message);
-    return { success: false, student: null };
-  }
-  if (!data) return { success: true, student: null };
-
-  return { success: true, student: toDeskStudent(data) };
-}
-
-
-/**
- * Resolve whatever the operator provides — a tapped card UID or a typed
- * student ID like CIT-2023-8812 — to a student. Card lookup runs first so a
- * tap never misresolves; the student-ID match is case-insensitive exact.
- * Read-only: nothing is written, so the gate can preview the badge before
- * the operator confirms the tap.
- */
-// fallow-ignore-next-line unused-type
-export type AttendeeVia = 'card' | 'student_id';
-
-// fallow-ignore-next-line unused-server-action
-export async function resolveAttendeeAction(identifier: string): Promise<{
-  success: boolean;
-  student: DeskStudent | null;
-  via: AttendeeVia | null;
-}> {
-  const trimmed = identifier.trim();
-  if (!trimmed) return { success: true, student: null, via: null };
-
-  const cardLookup = await lookupStudentByCardAction(trimmed);
-  if (!cardLookup.success) return { success: false, student: null, via: null };
-  if (cardLookup.student) return { success: true, student: cardLookup.student, via: 'card' };
-
-  const { createAdminClient } = await import('@/lib/supabase/admin');
-  const admin = createAdminClient();
-
-  // Demo and replay flows identify the student by row id.
-  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)) {
-    const { data: byId, error: byIdError } = await admin
-      .from('students')
-      .select(ATTENDEE_SELECT)
-      .eq('id', trimmed)
-      .maybeSingle();
-
-    if (byIdError) {
-      console.error('Student lookup error:', byIdError.message);
-      return { success: false, student: null, via: null };
-    }
-    if (byId) return { success: true, student: toDeskStudent(byId), via: 'student_id' };
-  }
-
-  const { data, error } = await admin
-    .from('students')
-    .select(ATTENDEE_SELECT)
-    .ilike('student_id', trimmed)
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    console.error('Student ID lookup error:', error.message);
-    return { success: false, student: null, via: null };
-  }
-  if (!data) return { success: true, student: null, via: null };
-
-  return { success: true, student: toDeskStudent(data), via: 'student_id' };
-}
 
 /**
  * Has this exact device tap already been committed? Offline replays retry
@@ -223,6 +41,66 @@ async function findAppliedTap(
   }
 
   return (data as DeskCheckinRecord | null) ?? null;
+}
+
+/**
+ * The student's currently open visit, if any. A tap can be blocked by an open
+ * visit at this event or another one, so every check shares this lookup.
+ */
+async function findOpenVisit(supabase: SupabaseClient, studentId: string) {
+  const { data } = await supabase
+    .from('event_attendance')
+    .select('event_id')
+    .eq('student_id', studentId)
+    .not('check_in', 'is', null)
+    .is('check_out', null)
+    .limit(1)
+    .maybeSingle();
+
+  return data;
+}
+
+/** The blocked "already checked in" result, wherever the open visit lives. */
+async function alreadyCheckedInResult(
+  supabase: SupabaseClient,
+  student: DeskStudent,
+  eventId: string,
+): Promise<DeskCheckinResult> {
+  const name = `${student.first_name} ${student.last_name}`;
+  return {
+    success: false,
+    message: await describeOpenVisit(supabase, student, eventId, {
+      sameEvent: `${name} is already checked in.`,
+      otherEvent: (title) => `${name} is already checked in at "${title}".`,
+      none: `${name} is already checked in.`,
+    }),
+    student,
+    alreadyInside: true,
+  };
+}
+
+/**
+ * Turn a blocked visit into an actionable message: at this event, somewhere
+ * else, or never checked in.
+ */
+async function describeOpenVisit(
+  supabase: SupabaseClient,
+  student: DeskStudent,
+  currentEventId: string,
+  messages: OpenVisitMessages,
+): Promise<string> {
+  const openVisit = await findOpenVisit(supabase, student.id);
+
+  if (!openVisit) return messages.none;
+  if (openVisit.event_id === currentEventId) return messages.sameEvent;
+
+  const { data: event } = await supabase
+    .from('events')
+    .select('title')
+    .eq('id', openVisit.event_id)
+    .maybeSingle();
+
+  return event?.title ? messages.otherEvent(event.title) : messages.sameEvent;
 }
 
 /**
@@ -444,39 +322,6 @@ export async function logDeskCheckinAction(
 }
 
 /**
- * Remove one attendance record from the roster. Admin only — the gate pages
- * run on public kiosk sessions, so the write goes through the service-role
- * client after the role check instead of trusting RLS on the anon session.
- */
-export async function deleteAttendanceRecordAction(
-  recordId: string,
-): Promise<{ success: boolean; message: string }> {
-  const authorized = await getAuthorizedAdmin();
-  if (!authorized) {
-    return { success: false, message: 'Only admins can remove attendance records. Sign in as admin first.' };
-  }
-
-  const { createAdminClient } = await import('@/lib/supabase/admin');
-  const admin = createAdminClient();
-
-  const { data, error } = await admin
-    .from('event_attendance')
-    .delete()
-    .eq('id', recordId)
-    .select('id')
-    .maybeSingle();
-
-  if (error) {
-    console.error('Delete attendance error:', error.message);
-    return { success: false, message: `Could not delete that record (${error.code ?? 'db-error'}).` };
-  }
-  if (!data) {
-    return { success: false, message: 'That record is already gone.' };
-  }
-  return { success: true, message: 'Record removed.' };
-}
-
-/**
  * Server-action replacement for the /api/events/[eventId]/checkins/recent
  * route. Returns recent check-ins with student details and the attendance
  * summary for one event. Used by useScanTerminal and LiveActivityFeed.
@@ -509,64 +354,4 @@ export async function getRecentCheckinsAction(eventId: string): Promise<{
       total: attendance.total,
     },
   };
-}
-
-/**
- * The student's currently open visit, if any. A tap can be blocked by an open
- * visit at this event or another one, so every check shares this lookup.
- */
-async function findOpenVisit(supabase: SupabaseClient, studentId: string) {
-  const { data } = await supabase
-    .from('event_attendance')
-    .select('event_id')
-    .eq('student_id', studentId)
-    .not('check_in', 'is', null)
-    .is('check_out', null)
-    .limit(1)
-    .maybeSingle();
-
-  return data;
-}
-
-/** The blocked "already checked in" result, wherever the open visit lives. */
-async function alreadyCheckedInResult(
-  supabase: SupabaseClient,
-  student: DeskStudent,
-  eventId: string,
-): Promise<DeskCheckinResult> {
-  const name = `${student.first_name} ${student.last_name}`;
-  return {
-    success: false,
-    message: await describeOpenVisit(supabase, student, eventId, {
-      sameEvent: `${name} is already checked in.`,
-      otherEvent: (title) => `${name} is already checked in at "${title}".`,
-      none: `${name} is already checked in.`,
-    }),
-    student,
-    alreadyInside: true,
-  };
-}
-
-/**
- * Turn a blocked visit into an actionable message: at this event, somewhere
- * else, or never checked in.
- */
-async function describeOpenVisit(
-  supabase: SupabaseClient,
-  student: DeskStudent,
-  currentEventId: string,
-  messages: OpenVisitMessages,
-): Promise<string> {
-  const openVisit = await findOpenVisit(supabase, student.id);
-
-  if (!openVisit) return messages.none;
-  if (openVisit.event_id === currentEventId) return messages.sameEvent;
-
-  const { data: event } = await supabase
-    .from('events')
-    .select('title')
-    .eq('id', openVisit.event_id)
-    .maybeSingle();
-
-  return event?.title ? messages.otherEvent(event.title) : messages.sameEvent;
 }

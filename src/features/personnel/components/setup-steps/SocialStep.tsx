@@ -2,6 +2,7 @@
 
 import InputField from '@/components/shared/InputField';
 import { HugeiconsIcon } from '@hugeicons/react';
+import type { Control, FieldValues } from 'react-hook-form';
 import {
   FacebookIcon,
   TwitterIcon,
@@ -10,7 +11,7 @@ import {
 } from '@hugeicons/core-free-icons';
 
 interface SocialStepProps {
-  control: ReturnType<typeof import('react-hook-form').useForm<any>>['control'];
+  control: Control<FieldValues>;
   isPending: boolean;
 }
 

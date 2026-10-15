@@ -1,3 +1,54 @@
+import type { DeskStudent } from "./types";
+
+export const ATTENDEE_SELECT =
+  "id, first_name, last_name, student_id, profile_picture_url, year_level, rfid_uid, courses ( code, name ), majors ( code, name )";
+
+export interface RawAttendeeRow {
+  id: string;
+  first_name: string;
+  last_name: string;
+  student_id?: string | null;
+  profile_picture_url?: string | null;
+  year_level?: string | null;
+  rfid_uid?: string | null;
+  courses?:
+    | { code?: string | null; name?: string | null }
+    | null
+    | Array<{ code?: string | null; name?: string | null } | null>;
+  majors?:
+    | { code?: string | null; name?: string | null }
+    | null
+    | Array<{ code?: string | null; name?: string | null } | null>;
+}
+
+/**
+ * Everything the gate badge and roster need to identify a student, flattened
+ * from the courses/majors joins. `rfid_uid` is intentionally stripped by
+ * `toDeskStudent` before anything leaves the server.
+ */
+export function toDeskStudent(row: RawAttendeeRow): DeskStudent {
+  return {
+    id: row.id,
+    first_name: row.first_name,
+    last_name: row.last_name,
+    student_id: row.student_id ?? null,
+    profile_picture_url: row.profile_picture_url ?? null,
+    year_level: row.year_level ?? null,
+    course_code: Array.isArray(row.courses)
+      ? (row.courses[0]?.code ?? null)
+      : (row.courses?.code ?? null),
+    course_name: Array.isArray(row.courses)
+      ? (row.courses[0]?.name ?? null)
+      : (row.courses?.name ?? null),
+    major_code: Array.isArray(row.majors)
+      ? (row.majors[0]?.code ?? null)
+      : (row.majors?.code ?? null),
+    major_name: Array.isArray(row.majors)
+      ? (row.majors[0]?.name ?? null)
+      : (row.majors?.name ?? null),
+  };
+}
+
 /**
  * Canonical form of a card UID: trimmed, separators stripped, upper-cased.
  * Used as the cache key so a card resolves the same way offline and online.

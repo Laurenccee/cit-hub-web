@@ -4,11 +4,12 @@ import { useCallback, useState } from "react";
 import { Camera, Fingerprint, GraduationCap } from "lucide-react";
 import { SetupWizard, type WizardStep } from "@/components/shared/SetupWizard";
 import { ProfilePictureStep } from "@/components/shared/ProfilePictureStep";
-import { IdentityStep, AcademicStep } from "./setup-steps";
+import { IdentityStep } from "./setup-steps/IdentityStep";
+import { AcademicStep } from "./setup-steps/AcademicStep";
 import { useStudentForm } from "../hooks/useStudentForm";
 import { studentSetupAction } from "../action";
 import { uploadAvatarAction } from "@/actions/image";
-import { Course, Major } from "../types";
+import type { Course, Major } from "../types";
 
 const STEPS = [
   {

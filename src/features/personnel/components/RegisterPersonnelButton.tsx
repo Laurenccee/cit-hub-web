@@ -21,15 +21,14 @@ import { RegisterPersonnelData, RegisterPersonnelSchema } from '../schema/person
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerPersonnelAction } from '../action';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/utils/errors';
 
 const FORM_ID = 'register-user';
 
 export default function RegisterPersonnelButton() {
-    const { isAdmin, isFaculty } = useAuth();
+    const { isAdmin } = useAuth();
     const [isPending, startTransition] = useTransition();
     const [open, setOpen] = useState(false);
-
-    if (!isAdmin) return null;
 
     const { control, handleSubmit, reset } = useForm<RegisterPersonnelData>({
         resolver: zodResolver(RegisterPersonnelSchema),
@@ -37,6 +36,8 @@ export default function RegisterPersonnelButton() {
             email: '',
         },
     });
+
+    if (!isAdmin) return null;
 
     const handleFormSubmit: SubmitHandler<RegisterPersonnelData> = async (data) => {
         startTransition(async () => {
@@ -53,8 +54,8 @@ export default function RegisterPersonnelButton() {
 
                 reset();
                 setOpen(false);
-            } catch (error: any) {
-                toast.error(error.message || 'An unexpected error occurred.');
+            } catch (error) {
+                toast.error(getErrorMessage(error, 'An unexpected error occurred.'));
             }
         });
     };

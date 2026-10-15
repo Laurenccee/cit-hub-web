@@ -1,14 +1,30 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Controller, FieldValues } from 'react-hook-form';
+import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 import { Field, FieldDescription, FieldError, FieldLabel } from '../ui/field';
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '../ui/input-group';
 import Link from 'next/link';
-import { InputFieldProps } from '@/types';
 import { ROUTES } from '@/utils/constants/routes';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { EyeClosedIcon, EyeIcon } from '@hugeicons/core-free-icons';
+
+export interface InputFieldProps<TFieldValues extends FieldValues = FieldValues> {
+    name: Path<TFieldValues>;
+    control: Control<TFieldValues>;
+    label: string;
+    isPending?: boolean;
+    type?: string;
+    placeholder?: string;
+    description?: string;
+    error?: string;
+    forgetPasswordLink?: boolean;
+    readOnly?: boolean;
+    disabled?: boolean;
+    leadingIcon?: React.ReactNode;
+    trailingIcon?: React.ReactNode;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
 
 export default function InputField<TFieldValues extends FieldValues>({
     name,

@@ -1,14 +1,29 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Controller, FieldValues } from 'react-hook-form';
+import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Field, FieldDescription, FieldError, FieldLabel } from '../ui/field';
-import { ComboboxProps } from '@/types';
+
+export interface ComboboxProps<TData, TFieldValues extends FieldValues = FieldValues> {
+    name: Path<TFieldValues>;
+    control: Control<TFieldValues>;
+    options: TData[];
+    valueKey: keyof TData;
+    labelKey: keyof TData;
+    label?: string;
+    placeholder?: string;
+    searchPlaceholder?: string;
+    emptyMessage?: string;
+    description?: string;
+    error?: string;
+    disabled?: boolean;
+    isPending?: boolean;
+}
 
 export default function ComboboxField<TData, TFieldValues extends FieldValues>({
     name,

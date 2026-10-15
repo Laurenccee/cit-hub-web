@@ -1,7 +1,7 @@
 "use client";
 
 import { Clock, MapPin, User, Users } from "lucide-react";
-import { EventAttendance, EventItem } from "../types";
+import type { EventAttendance, EventItem } from "../types";
 import EventImage from "./EventImage";
 import LiveActivityFeed from "./LiveActivityFeed";
 import { EventAttendanceStats } from "./EventAttendanceStats";

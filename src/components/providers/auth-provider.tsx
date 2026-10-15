@@ -4,7 +4,7 @@ import { createContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
 
-type AuthContextType = {
+export type AuthContextType = {
   user: User | null;
   role: number | null;
   isLoading: boolean;
@@ -14,7 +14,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(
   undefined,
 );
 
-export default function AuthProvider({
+export function AuthProvider({
   children,
   initialUser,
   initialRole,
@@ -30,11 +30,19 @@ export default function AuthProvider({
 
   const ssrRoleConsumed = useRef(false);
 
-  useEffect(() => {
+  // Sync state when the server re-renders the layout with a new session (e.g.
+  // after sign-in). Adjusting state during render is the React-sanctioned
+  // alternative to a layout effect and avoids a cascading render.
+  const [prevInitial, setPrevInitial] = useState({ initialUser, initialRole });
+  if (
+    prevInitial.initialUser !== initialUser ||
+    prevInitial.initialRole !== initialRole
+  ) {
+    setPrevInitial({ initialUser, initialRole });
     setUser(initialUser);
     setRole(initialRole);
     if (initialUser) setIsLoading(false);
-  }, [initialUser, initialRole]);
+  }
 
   useEffect(() => {
     const {
@@ -71,3 +79,5 @@ export default function AuthProvider({
     </AuthContext.Provider>
   );
 }
+
+export default AuthProvider;

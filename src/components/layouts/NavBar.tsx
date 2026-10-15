@@ -118,7 +118,19 @@ export default function NavigationBar() {
     </Button>
   );
 
-  // Public pages: marketing-style navbar with a Sign In call to action.
+  const signInButton = (
+    <Button
+      onClick={() => router.push(ROUTES.SIGN_IN)}
+      size="lg"
+      className="gap-2"
+      disabled={isPending}
+    >
+      <span>Sign In</span>
+      <ArrowRight className="h-4 w-4" />
+    </Button>
+  );
+
+  // Public pages: marketing-style navbar with an auth-aware call to action.
   if (isPublicPage) {
     return (
       <HeaderShell>
@@ -128,15 +140,7 @@ export default function NavigationBar() {
           <AcademicYearBadge />
           <ThemeToggle />
           <NotificationButton />
-          <Button
-            onClick={() => router.push(ROUTES.SIGN_IN)}
-            size="lg"
-            className="gap-2"
-            disabled={isPending}
-          >
-            <span>Sign In</span>
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+          {isAuthenticated ? signOutButton : signInButton}
         </div>
         <MobileNav
           onSignOut={handleSignOut}
@@ -161,16 +165,17 @@ export default function NavigationBar() {
     );
   }
 
-  // Default authenticated navbar.
+  // Default navbar: nav links and sign-out only for authenticated users,
+  // otherwise a sign-in call to action.
   return (
     <HeaderShell>
       <BrandMark />
-      {navLinks}
+      {isAuthenticated && navLinks}
       <div className="flex items-center gap-4">
         <AcademicYearBadge />
         <ThemeToggle />
         <NotificationButton />
-        {signOutButton}
+        {isAuthenticated ? signOutButton : signInButton}
       </div>
       <MobileNav
         onSignOut={handleSignOut}

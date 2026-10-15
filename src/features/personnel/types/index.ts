@@ -121,3 +121,46 @@ export interface UsePersonnelFormProps {
     submitAction: (data: PersonnelSubmitPayload) => Promise<ActionResult>;
     uploadAvatarAction: (formData: FormData, oldUrl?: string | null) => Promise<UploadActionResult>;
 }
+
+// ---------------------------------------------------------------------------
+// Profile component prop types
+// ---------------------------------------------------------------------------
+
+export interface PersonnelProfileProps {
+    personnel: Personnel;
+}
+
+export interface PersonnelHeroProps {
+    personnel: Personnel;
+    rankName: string | null;
+    designationName: string | null;
+}
+
+export interface PersonnelContactCardProps {
+    personnel: Personnel;
+}
+
+export interface PersonnelEducationCardProps {
+    education: EducationEntry[];
+}
+
+export interface TeachingLoadItem {
+    courseCode: string;
+    courseTitle: string;
+    section: string;
+    schedule: string;
+    room: string;
+    units?: number;
+}
+
+export interface PersonnelTeachingLoadCardProps {
+    loads?: TeachingLoadItem[];
+    semester?: string;
+}
+
+export interface PersonnelSidebarProps {
+    personnel: Personnel;
+    rankName: string | null;
+    designationName: string | null;
+}
+

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Controller } from "react-hook-form";
+import { Controller, type Control, type FieldValues } from "react-hook-form";
 import { toast } from "sonner";
 import { Camera, Check, TriangleAlert, Upload, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import ImageDropzone from "@/components/shared/ImageDropzone";
 const DEFAULT_DROPZONE_INPUT_ID = "profile-photo-input";
 
 interface ProfilePictureStepProps {
-  control: ReturnType<typeof import("react-hook-form").useForm<any>>["control"];
+  control: Control<FieldValues>;
   isPending: boolean;
   profilePreviewUrl: string;
   onProfilePreviewChange: (url: string) => void;

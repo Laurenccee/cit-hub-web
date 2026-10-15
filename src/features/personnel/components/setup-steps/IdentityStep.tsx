@@ -1,9 +1,10 @@
 "use client";
 
 import { IdentityFields } from "@/components/shared/IdentityFields";
+import type { Control, FieldValues } from "react-hook-form";
 
 interface IdentityStepProps {
-  control: ReturnType<typeof import("react-hook-form").useForm<any>>["control"];
+  control: Control<FieldValues>;
   isPending: boolean;
 }
 

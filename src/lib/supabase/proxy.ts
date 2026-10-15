@@ -53,12 +53,7 @@ export async function updateSession(request: NextRequest) {
     ROUTES.PIONEERS,
     ROUTES.EVENTS,
   ];
-  const PUBLIC_ROUTE_PREFIXES = [
-    "/personnel/", // Matches /personnel/[id]
-    "/bulletin/", // Matches /bulletin/[slug]
-    "/events/", // Matches /events/[slug]
-  ];
-  // Matches /events/[idOrSlug]/login and /events/[idOrSlug]/logout (RFID gate terminals).
+  const PUBLIC_ROUTE_PREFIXES = ["/personnel/", "/bulletin/", "/events/"];
   const EVENT_GATE_PATTERN = /^\/events\/[^/]+\/(login|logout)$/;
 
   if (!user) {

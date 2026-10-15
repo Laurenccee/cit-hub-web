@@ -46,18 +46,7 @@ export interface EventAttendanceRecord {
 }
 
 export interface DeskCheckin extends EventAttendanceRecord {
-  student?: {
-    first_name: string;
-    last_name: string;
-    student_id: string | null;
-    profile_picture_url: string | null;
-    /** Year level as stored (e.g. "3rd Year"). */
-    year_level?: string | null;
-    course_code?: string | null;
-    course_name?: string | null;
-    major_code?: string | null;
-    major_name?: string | null;
-  } | null;
+  student?: DeskStudent | null;
 }
 
 export interface EventAttendance {
@@ -70,6 +59,9 @@ export interface EventAttendance {
 // ---------------------------------------------------------------------------
 // Attendance / check-in types
 // ---------------------------------------------------------------------------
+
+export type DeskDirection = 'in' | 'out';
+export type AttendeeVia = 'card' | 'student_id';
 
 export interface DeskCheckinRecord {
   id: string;
@@ -177,3 +169,75 @@ export interface DeskSyncStatus {
   /** When the local roster cache was last refreshed. */
   rosterSyncedAt: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Component prop types
+// ---------------------------------------------------------------------------
+
+export type { EventItemProps } from '@/features/home/types';
+
+export interface EventCardProps {
+  event: EventItem;
+}
+
+export interface EventsListingProps {
+  events: EventItem[];
+}
+
+export interface EventHeroProps {
+  event: EventItem;
+}
+
+export interface EventCoverProps {
+  event: EventItem;
+  className?: string;
+  priority?: boolean;
+}
+
+export interface EventImageProps {
+  event: EventItem;
+  className?: string;
+  fill?: boolean;
+  priority?: boolean;
+}
+
+export interface EventGatePageProps {
+  event: EventItem;
+  initialAttendance: EventAttendance;
+  initialCheckins: DeskCheckin[];
+}
+
+export interface GateTerminalProps {
+  event: EventItem;
+  initialAttendance: EventAttendance;
+  initialCheckins: DeskCheckin[];
+}
+
+export interface LiveEntryRosterProps {
+  event: EventItem;
+  checkins: DeskCheckin[];
+  online: boolean;
+  pendingCount: number;
+  onRemoveRecord?: (recordId: string) => Promise<void>;
+}
+
+export interface EventAttendanceStatsProps {
+  attendance: EventAttendance;
+  className?: string;
+}
+
+export interface VerifiedIdCardProps {
+  lastResult: LastTapResult | null;
+  scan: ScanState;
+}
+
+export interface StudentAvatarProps {
+  student: DeskStudent | null;
+  size?: number;
+  className?: string;
+}
+
+export interface CreateEventDialogProps {
+  categories: EventCategory[];
+  onCreated?: () => void;
+}

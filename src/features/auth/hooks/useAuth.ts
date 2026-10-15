@@ -1,7 +1,7 @@
 "use client";
 
 import { useContext } from "react";
-import { AuthContext } from "@/features/auth/providers/AuthProvider";
+import { AuthContext } from "@/components/providers/auth-provider";
 import { ROLES } from "@/utils/constants/roles";
 
 export function useAuth() {

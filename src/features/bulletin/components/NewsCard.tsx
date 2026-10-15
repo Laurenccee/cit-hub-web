@@ -13,7 +13,7 @@ export default function NewsCard({ news, variant = 'grid', priority = false, con
     const { isAdmin, isFaculty } = useAuth();
 
     const getCategoryBadgeColor = () => {
-        const label = (news as any).content_type?.label?.toLowerCase() || '';
+        const label = news.content_type?.label?.toLowerCase() || '';
         if (label.includes('event')) return 'bg-primary';
         if (label.includes('advisory') || label.includes('campus')) return 'bg-orange-500';
         if (label.includes('guidance') || label.includes('health')) return 'bg-primary';
@@ -35,7 +35,7 @@ export default function NewsCard({ news, variant = 'grid', priority = false, con
                 )}
                 <div className="absolute top-3 left-3 z-10">
                     <Badge className={`${getCategoryBadgeColor()} text-primary-foreground text-xs px-2 py-0.5`}>
-                        {(news as any).content_type?.label || 'News'}
+                        {news.content_type?.label || 'News'}
                     </Badge>
                 </div>
             </div>

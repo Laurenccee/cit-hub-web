@@ -1,10 +1,11 @@
 "use client";
 
-import { Course, Major } from "../../types";
+import type { Course, Major } from "../../types";
 import { AcademicFields } from "./AcademicFields";
+import type { Control, FieldValues } from "react-hook-form";
 
 interface AcademicStepProps {
-  control: ReturnType<typeof import("react-hook-form").useForm<any>>["control"];
+  control: Control<FieldValues>;
   isPending: boolean;
   courses: Course[];
   majors: Major[];

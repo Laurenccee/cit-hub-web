@@ -3,7 +3,7 @@
 import { CloudOff, RefreshCw, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { DeskSyncStatus } from "../types";
+import type { DeskSyncStatus } from "../types";
 
 /**
  * Connectivity + queue readout for the check-in desk. Taps keep working while

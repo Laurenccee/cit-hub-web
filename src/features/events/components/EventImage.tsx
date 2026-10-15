@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { EventItem } from "../types";
+import type { EventItem } from "../types";
 import EventCover from "./EventCover";
 
 interface EventImageProps {

@@ -2,16 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import {
+import type {
   DeskCheckin,
   DeskCheckinRecord,
+  DeskDirection,
   DeskStudent,
   DeskSyncStatus,
   EventAttendance,
   LastTapResult,
   ScanState,
 } from "../types";
-import { DeskDirection, deleteAttendanceRecordAction, logDeskCheckinAction, getRecentCheckinsAction } from "../action";
+import { logDeskCheckinAction, getRecentCheckinsAction } from "../action/desk-checkin";
+import { deleteAttendanceRecordAction } from "../action/desk-admin";
 import { getRosterSnapshotAction } from "../action/roster";
 import { createClientId, createDebouncer } from "../utils";
 import {
@@ -67,17 +69,7 @@ export function useScanTerminal({
     (record: DeskCheckinRecord, student: DeskStudent, tapDirection: DeskDirection) => {
       const entry: DeskCheckin = {
         ...record,
-        student: {
-          first_name: student.first_name,
-          last_name: student.last_name,
-          student_id: student.student_id,
-          profile_picture_url: student.profile_picture_url,
-          year_level: student.year_level ?? null,
-          course_code: student.course_code ?? null,
-          course_name: student.course_name ?? null,
-          major_code: student.major_code ?? null,
-          major_name: student.major_name ?? null,
-        },
+        student,
       };
       setCheckins((prev) => mergeCheckins(prev, [entry]));
       setAttendance((prev) =>
@@ -376,7 +368,8 @@ export function useScanTerminal({
     };
 
     const debouncedSync = createDebouncer();
-    const channel = createClient()
+    const supabase = createClient();
+    const channel = supabase
       .channel(`attendance:${eventId}`)
       .on(
         "postgres_changes",
@@ -398,7 +391,7 @@ export function useScanTerminal({
       cancelled = true;
       window.clearInterval(timer);
       debouncedSync.cancel();
-      void createClient().removeChannel(channel);
+      void supabase.removeChannel(channel);
     };
   }, [eventId]);
 

@@ -1,0 +1,45 @@
+# Tasks & Modernization Roadmap
+
+## Option A: Type & Schema Cleanup [COMPLETED]
+- [x] Colocate component prop types:
+  - `InputFieldProps` colocated in `src/components/shared/InputField.tsx`
+  - `ComboboxProps` colocated in `src/components/shared/ComboboxField.tsx`
+  - `SwitchToggleProps` colocated in `src/components/shared/SwitchToggle.tsx`
+  - `ImageDropzoneProps` colocated in `src/components/shared/ImageDropzone.tsx`
+- [x] Colocate domain types:
+  - `EventItemProps` & `ScheduleItemProps` moved to `src/features/home/types/index.ts`
+- [x] Clean global `src/types/index.ts` to focus on shared action contracts (`export * from './action'`) and clean re-exports.
+- [x] Export unexported functions in `src/utils/formatters.ts` (`formatCurrency`, `truncateText`, `formatTime`).
+- [x] Export `UpdateEventSchema` and `UpdateEventFormData` in `src/features/events/schema/event.ts`.
+- [x] Delete empty `app/api/` directory.
+
+## Option B: Desk & Realtime Performance Polish [COMPLETED]
+- [x] Deduplicate `toDeskStudent`: Shared `ATTENDEE_SELECT` and `toDeskStudent` moved to `src/features/events/utils.ts`.
+- [x] Eliminate `(s: any)` cast in `src/features/events/action/queries.ts`.
+- [x] Unify `DeskCheckin['student']` with `DeskStudent`.
+- [x] Fix Supabase client lifecycle in `useScanTerminal`: Reusing a single client instance for subscribing and channel removal on cleanup.
+
+## Option C: Large Component Decomposition [COMPLETED]
+- [x] Break down `StudentDirectory.tsx` (reduced from 543 lines to 157 lines):
+  - Extracted `DirectoryFilters.tsx` (Search, year level, RFID status, major filter pills)
+  - Extracted `StudentTableRow.tsx` (Student avatar, info, status pills, action buttons)
+  - Extracted `DirectoryPagination.tsx` (Footer count and pagination controls)
+- [x] Break down `PersonnelProfile.tsx` (reduced from 383 lines to 75 lines):
+  - Extracted `profile/PersonnelHero.tsx` (Avatar, role badge, title, status pills, consultation buttons)
+  - Extracted `profile/PersonnelContactCard.tsx` (Phone, email, office, hours)
+  - Extracted `profile/PersonnelEducationCard.tsx` (Degrees, institutions, fields of expertise)
+  - Extracted `profile/PersonnelTeachingLoadCard.tsx` (Teaching load courses & lab info)
+  - Extracted `profile/PersonnelSidebar.tsx` (Profile details, consultation slot booking, academic resource links)
+
+## Option D: Consolidate App Providers [COMPLETED]
+- [x] Moved `AuthProvider` to `src/components/providers/auth-provider.tsx` alongside `theme-provider.tsx`.
+- [x] Moved `AuthWrapper` to `src/components/providers/auth-wrapper.tsx`.
+- [x] Created `src/components/providers/index.ts` barrel.
+- [x] Updated root `app/layout.tsx` to import cleanly from `@/components/providers`.
+- [x] Updated `src/features/auth/hooks/useAuth.ts` and left backward-compatible re-exports in `features/auth`.
+
+## Next Opportunities:
+- [ ] Move `DeskDirection` and `AttendeeVia` from `desk-lookup.ts` into `src/features/events/types/index.ts`.
+- [ ] Deduplicate college program mapping (`collegeFromProgram` / `collegeIdentityFromCourse`) into `src/utils/college.ts`.
+- [ ] Standardize `students/utils/` vs `events/utils.ts`.
+- [ ] Feature-level barrel exports (`index.ts` per feature).

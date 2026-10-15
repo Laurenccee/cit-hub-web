@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { CardEmptyState } from '@/components/shared/CardEmptyState';
-import { ScheduleItemProps } from '../../../types';
+import { ScheduleItemProps } from '../types';
 import { Clock, BookOpenCheck } from 'lucide-react';
 
 export default function ClassScheduleCard({ schedule = [] }: { schedule: ScheduleItemProps[] }) {
@@ -11,7 +11,7 @@ export default function ClassScheduleCard({ schedule = [] }: { schedule: Schedul
     return (
         <Card className="flex flex-col h-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg font-serif">Today's Schedule</CardTitle>
+                <CardTitle className="text-lg font-serif">Today&apos;s Schedule</CardTitle>
                 <Badge variant="outline" className="ml-2 text-xs">
                     {hasSchedule ? `${schedule.length} ${schedule.length === 1 ? 'Class' : 'Classes'}` : '0 Classes'}
                 </Badge>

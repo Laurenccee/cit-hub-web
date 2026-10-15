@@ -5,7 +5,7 @@ import { CalendarX2, ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { EventItem } from "../types";
+import type { EventItem } from "../types";
 import EventCard, { isAcademicEvent } from "./EventCard";
 import { CardEmptyState } from "@/components/shared/CardEmptyState";
 

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import type { QueryResult } from '@/types/action';
-import { DeskCheckin, EventAttendance, EventAttendanceRecord, EventCategory, EventItem } from '../types';
+import type { DeskCheckin, DeskStudent, EventAttendance, EventAttendanceRecord, EventCategory, EventItem } from '../types';
+import { ATTENDEE_SELECT, toDeskStudent, type RawAttendeeRow } from '../utils';
 
 
 const RECENT_CHECKIN_LIMIT = 5;
@@ -184,33 +185,23 @@ export async function GetDeskCheckins(eventId: string, limit = 50): Promise<Quer
     const rows = (data ?? []) as DeskCheckin[];
     const studentIds = Array.from(new Set(rows.map((row) => row.student_id).filter((id): id is string => Boolean(id))));
 
-    let studentsById = new Map<string, NonNullable<DeskCheckin['student']>>();
+    let studentsById = new Map<string, DeskStudent>();
     if (studentIds.length > 0) {
         const { createAdminClient } = await import('@/lib/supabase/admin');
         const admin = createAdminClient();
         const { data: students, error: studentsError } = await admin
             .from('students')
-            .select('id, first_name, last_name, student_id, profile_picture_url, year_level, courses ( code, name ), majors ( code, name )')
+            .select(ATTENDEE_SELECT)
             .in('id', studentIds);
 
         if (studentsError) {
             console.error('Error fetching check-in students:', studentsError.message);
         } else {
             studentsById = new Map(
-                (students ?? []).map((s: any) => [
-                    s.id as string,
-                    {
-                        first_name: s.first_name as string,
-                        last_name: s.last_name as string,
-                        student_id: (s.student_id ?? null) as string | null,
-                        profile_picture_url: (s.profile_picture_url ?? null) as string | null,
-                        year_level: (s.year_level ?? null) as string | null,
-                        course_code: (s.courses?.code ?? null) as string | null,
-                        course_name: (s.courses?.name ?? null) as string | null,
-                        major_code: (s.majors?.code ?? null) as string | null,
-                        major_name: (s.majors?.name ?? null) as string | null,
-                    },
-                ]),
+                (students ?? []).map((s) => {
+                    const student = toDeskStudent(s as unknown as RawAttendeeRow);
+                    return [student.id, student];
+                }),
             );
         }
     }

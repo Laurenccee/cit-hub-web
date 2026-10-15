@@ -25,9 +25,9 @@ import {
 } from "lucide-react";
 import ComboboxField from "@/components/shared/ComboboxField";
 import ImageDropzone from "@/components/shared/ImageDropzone";
-import { EventCategory } from "../types";
+import type { EventCategory } from "../types";
 import { ReactNode } from "react";
-import { getEventCategoriesAction } from "../action";
+import { getEventCategoriesAction } from "../action/create-event";
 import { useEventForm } from "../hooks/useEventForm";
 
 interface CreateEventDialogProps {

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { EventSchema, type EventFormData } from "../schema/event";
-import { createEventAction } from "../action";
+import { createEventAction } from "../action/create-event";
 import { deleteStorageFileAction, uploadEventImageAction } from "@/actions/image";
 import type { UseEventFormProps } from "../types";
 

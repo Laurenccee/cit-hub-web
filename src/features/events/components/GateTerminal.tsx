@@ -14,9 +14,9 @@ import {
 } from "@/components/ui/input-group";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { RotateCcw } from "@hugeicons/core-free-icons";
-import { DeskDirection } from "../action";
 import type {
   DeskCheckin,
+  DeskDirection,
   EventAttendance,
   EventItem,
   ScanState,

@@ -3,7 +3,7 @@
 import { Controller, FieldValues } from 'react-hook-form';
 import { Field, FieldDescription, FieldError, FieldLabel } from '../ui/field';
 import { InputGroup, InputGroupAddon, InputGroupTextarea } from '../ui/input-group';
-import { InputFieldProps } from '@/types';
+import type { InputFieldProps } from './InputField';
 
 export default function AreaField<TFieldValues extends FieldValues>({
     name,

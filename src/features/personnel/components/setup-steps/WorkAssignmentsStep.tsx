@@ -4,10 +4,11 @@ import InputField from '@/components/shared/InputField';
 import ComboboxField from '@/components/shared/ComboboxField';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { OfficeIcon, TelephoneIcon } from '@hugeicons/core-free-icons';
-import { Rank, Designation } from '../../types';
+import type { Control, FieldValues } from 'react-hook-form';
+import type { Rank, Designation } from '../../types';
 
 interface WorkAssignmentsStepProps {
-  control: ReturnType<typeof import('react-hook-form').useForm<any>>['control'];
+  control: Control<FieldValues>;
   isPending: boolean;
   ranks: Rank[];
   designations: Designation[];

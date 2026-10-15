@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
-import AuthProvider from '../providers/AuthProvider';
+import { AuthProvider } from './auth-provider';
 
-export default async function AuthWrapper({ children }: { children: React.ReactNode }) {
+export async function AuthWrapper({ children }: { children: React.ReactNode }) {
     const supabase = await createClient();
     const {
         data: { user },
@@ -28,3 +28,5 @@ export default async function AuthWrapper({ children }: { children: React.ReactN
         </AuthProvider>
     );
 }
+
+export default AuthWrapper;

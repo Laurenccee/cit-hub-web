@@ -1,23 +1,15 @@
 "use client";
 
-import { useRef, useTransition, useEffect } from "react";
-import { useForm, useWatch, SubmitHandler } from "react-hook-form";
+import { useRef, useTransition, useEffect, type BaseSyntheticEvent } from "react";
+import { useForm, useWatch, SubmitHandler, type FieldValues, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import {
-  StudentFormData,
-  StudentSchema,
-  UpdateStudentFormData,
-  UpdateStudentSchema,
-} from "../schema/student";
-import { UseStudentFormProps } from "../types";
+import { StudentSchema, UpdateStudentSchema } from "../schema/student";
+import { UseStudentFormProps, StudentSubmitPayload } from "../types";
 import { deleteStorageFileAction } from "@/actions/image";
 import { uploadPendingAvatar } from "@/lib/avatar";
 import { getErrorMessage } from "@/utils/errors";
-
-type StudentFormValues = StudentFormData &
-  Partial<Pick<UpdateStudentFormData, "id" | "rfidUid">>;
 
 export function useStudentForm({
   student,
@@ -57,10 +49,13 @@ export function useStudentForm({
           profilePictureUrl: "",
         };
 
-  const { control, handleSubmit } = useForm<any>({
+  // The control is intentionally form-shape agnostic (`FieldValues`) so it can
+  // flow into the shared, reusable field components; `handleFormSubmit` narrows
+  // the values back to `StudentSubmitPayload` when handing them to the action.
+  const { control, handleSubmit } = useForm<FieldValues>({
     resolver: zodResolver(
       mode === "edit" ? UpdateStudentSchema : StudentSchema,
-    ),
+    ) as unknown as Resolver<FieldValues>,
     defaultValues,
   });
 
@@ -70,8 +65,9 @@ export function useStudentForm({
     onPendingChange?.(isPending);
   }, [isPending, onPendingChange]);
 
-  const handleFormSubmit: SubmitHandler<StudentFormValues> = async (data) => {
+  const handleFormSubmit: SubmitHandler<FieldValues> = async (data) => {
     startTransition(async () => {
+      const payload = data as StudentSubmitPayload;
       let profilePictureUrl = student?.profile_picture_url || undefined;
       try {
         profilePictureUrl = await uploadPendingAvatar(
@@ -81,7 +77,7 @@ export function useStudentForm({
         );
 
         const result = await submitAction({
-          ...data,
+          ...payload,
           profilePictureUrl,
           ...(mode === "edit" && student ? { id: student.id } : {}),
         });
@@ -107,11 +103,16 @@ export function useStudentForm({
     });
   };
 
+  // Deferred so `handleSubmit` runs at event time, not during render — the
+  // submit handler reads `pendingBlobRef`, and refs must not be read in render.
+  const onSubmit = (event?: BaseSyntheticEvent) =>
+    handleSubmit(handleFormSubmit)(event);
+
   return {
     control,
     isPending,
     formValues,
     pendingBlobRef,
-    onSubmit: handleSubmit(handleFormSubmit),
+    onSubmit,
   };
 }
