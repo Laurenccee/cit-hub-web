@@ -38,26 +38,6 @@ export function formatDayDate(
   return dayDateFormatter.format(d);
 }
 
-export function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-  }).format(amount);
-}
-
-export function truncateText(text: string, length: number) {
-  if (text.length <= length) return text;
-  return text.slice(0, length).trim() + "...";
-}
-
-export function formatTime(time: string) {
-  const [hours, minutes] = time.split(":");
-  const h = parseInt(hours, 10);
-  const ampm = h >= 12 ? "PM" : "AM";
-  const displayHours = h % 12 || 12;
-  return `${displayHours}:${minutes} ${ampm}`;
-}
-
 export function slugify(text: string): string {
   return text
     .toLowerCase()

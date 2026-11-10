@@ -6,7 +6,7 @@ export function buildSearchText(
   return parts.filter(Boolean).join(" ").toLocaleLowerCase();
 }
 
-export function compareByDate<T>(
+function compareByDate<T>(
   a: T,
   b: T,
   getDate: (item: T) => string,

@@ -4,8 +4,40 @@ import { type BaseSyntheticEvent } from "react";
 import { useForm, useWatch, SubmitHandler, type FieldValues, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { StudentSchema, UpdateStudentSchema } from "../schema/student";
-import { UseStudentFormProps, StudentSubmitPayload } from "../types";
+import { UseStudentFormProps, StudentSubmitPayload, type Student } from "../types";
 import { useProfileSubmit } from "@/hooks/useProfileSubmit";
+
+const EMPTY_DEFAULTS = {
+  studentId: "",
+  firstName: "",
+  lastName: "",
+  courseId: "",
+  majorId: "",
+  yearLevel: "",
+  section: "",
+  contactNumber: "",
+  profilePictureUrl: "",
+};
+
+function studentToDefaults(student: Student) {
+  return {
+    studentId: student.student_id ?? "",
+    firstName: student.first_name,
+    lastName: student.last_name,
+    courseId: student.course_id ?? "",
+    majorId: student.major_id ?? "",
+    yearLevel: student.year_level ?? "",
+    section: student.section ?? "",
+    contactNumber: student.contact_number ?? "",
+    rfidUid: student.rfid_uid ?? "",
+    profilePictureUrl: student.profile_picture_url ?? "",
+  };
+}
+
+function buildDefaultValues(mode: UseStudentFormProps["mode"], student?: Student) {
+  if (mode === "edit" && student) return studentToDefaults(student);
+  return EMPTY_DEFAULTS;
+}
 
 export function useStudentForm({
   student,
@@ -14,31 +46,7 @@ export function useStudentForm({
   submitAction,
   uploadAvatarAction,
 }: UseStudentFormProps) {
-  const defaultValues =
-    mode === "edit" && student
-      ? {
-          studentId: student.student_id ?? "",
-          firstName: student.first_name,
-          lastName: student.last_name,
-          courseId: student.course_id ?? "",
-          majorId: student.major_id ?? "",
-          yearLevel: student.year_level ?? "",
-          section: student.section ?? "",
-          contactNumber: student.contact_number ?? "",
-          rfidUid: student.rfid_uid ?? "",
-          profilePictureUrl: student.profile_picture_url ?? "",
-        }
-      : {
-          studentId: "",
-          firstName: "",
-          lastName: "",
-          courseId: "",
-          majorId: "",
-          yearLevel: "",
-          section: "",
-          contactNumber: "",
-          profilePictureUrl: "",
-        };
+  const defaultValues = buildDefaultValues(mode, student);
 
   // The control is intentionally form-shape agnostic (`FieldValues`) so it can
   // flow into the shared, reusable field components; `handleFormSubmit` narrows

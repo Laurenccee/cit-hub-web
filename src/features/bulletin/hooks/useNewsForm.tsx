@@ -14,6 +14,72 @@ import { NewsSchema, type NewsFormData } from '../schema/news';
 import { deleteStorageFileAction, uploadNewsImageAction } from '@/actions/image';
 import type { UseNewsFormProps } from '../types';
 
+type SubmitOutcome = { success: true } | { success: false; message: string };
+type ImageStep = { success: true; url?: string } | { success: false; message: string };
+
+interface SubmitNewsArgs {
+    data: NewsFormData;
+    blob: Blob | null;
+    originalImageUrl?: string | null;
+    targetId: string;
+    isEditMode: boolean;
+    submitAction: UseNewsFormProps['submitAction'];
+}
+
+async function uploadPendingImage(
+    blob: Blob | null,
+    currentUrl: string | undefined,
+    originalUrl?: string | null,
+): Promise<ImageStep> {
+    if (!blob) return { success: true, url: currentUrl };
+
+    const fd = new FormData();
+    fd.append('file', blob, 'news.jpg');
+
+    // Passing the original URL makes the action delete the old file on upload success.
+    const uploadResult = await uploadNewsImageAction(fd, originalUrl);
+    if (!uploadResult.success) {
+        return { success: false, message: uploadResult.message ?? 'Failed to upload image.' };
+    }
+    return { success: true, url: uploadResult.url };
+}
+
+async function rollbackUploadedImage(imageUrl: string | undefined, originalUrl?: string | null) {
+    if (imageUrl && imageUrl !== originalUrl) {
+        await deleteStorageFileAction(imageUrl, 'news-images');
+    }
+}
+
+function failureMessage(message: string | undefined, isEditMode: boolean) {
+    return message || `Failed to ${isEditMode ? 'update' : 'add'} news`;
+}
+
+async function submitNews({
+    data,
+    blob,
+    originalImageUrl,
+    targetId,
+    isEditMode,
+    submitAction,
+}: SubmitNewsArgs): Promise<SubmitOutcome> {
+    let imageUrl: string | undefined = data.imageUrl || undefined;
+
+    try {
+        const upload = await uploadPendingImage(blob, imageUrl, originalImageUrl);
+        if (!upload.success) return upload;
+        imageUrl = upload.url;
+
+        const result = await submitAction({ ...data, imageUrl }, targetId);
+        if (result.success) return { success: true };
+
+        await rollbackUploadedImage(imageUrl, originalImageUrl);
+        return { success: false, message: failureMessage(result.message, isEditMode) };
+    } catch {
+        await rollbackUploadedImage(imageUrl, originalImageUrl);
+        return { success: false, message: 'An unexpected error occurred' };
+    }
+}
+
 /**
  * Owns the News form engine (RHF + zodResolver + useTransition + toast +
  * action call) so rendering surfaces stay presentational. Mirrors the
@@ -59,45 +125,23 @@ export function useNewsForm({
 
     const handleFormSubmit: SubmitHandler<NewsFormData> = async (data) => {
         startTransition(async () => {
-            let imageUrl: string | undefined = data.imageUrl || undefined;
-            const originalImageUrl = news?.image_url; // 👈 Track original state for cleanup checks
+            const outcome = await submitNews({
+                data,
+                blob: pendingBlobRef.current,
+                originalImageUrl: news?.image_url,
+                targetId: isEditMode ? news!.id : '',
+                isEditMode,
+                submitAction,
+            });
 
-            try {
-                if (pendingBlobRef.current) {
-                    const fd = new FormData();
-                    fd.append('file', pendingBlobRef.current, 'news.jpg');
-
-                    // 1. Pass originalImageUrl here so it deletes the old file on upload success!
-                    const uploadResult = await uploadNewsImageAction(fd, originalImageUrl);
-                    if (!uploadResult.success) {
-                        toast.error(uploadResult.message ?? 'Failed to upload image.');
-                        return;
-                    }
-                    imageUrl = uploadResult.url;
-                }
-
-                const targetId = isEditMode ? news!.id : '';
-                const result = await submitAction({ ...data, imageUrl }, targetId);
-
-                if (!result.success) {
-                    // Rollback uploaded image if the DB update itself failed
-                    if (imageUrl && imageUrl !== originalImageUrl) {
-                        await deleteStorageFileAction(imageUrl, 'news-images');
-                    }
-                    toast.error(result.message || `Failed to ${isEditMode ? 'update' : 'add'} news`);
-                    return;
-                }
-
-                toast.success(`News ${isEditMode ? 'updated' : 'added'} successfully.`);
-                if (!isEditMode) reset();
-                onSuccess?.();
-            } catch {
-                // Error safety rollback
-                if (imageUrl && imageUrl !== originalImageUrl) {
-                    await deleteStorageFileAction(imageUrl, 'news-images');
-                }
-                toast.error('An unexpected error occurred');
+            if (!outcome.success) {
+                toast.error(outcome.message);
+                return;
             }
+
+            toast.success(`News ${isEditMode ? 'updated' : 'added'} successfully.`);
+            if (!isEditMode) reset();
+            onSuccess?.();
         });
     };
 

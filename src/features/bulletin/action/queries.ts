@@ -41,10 +41,12 @@ async function GetFeaturedNews(): Promise<QueryResult<NewsItem[]>> {
     return { success: true, data: results as NewsItem[] };
 }
 
-async function GetNews(): Promise<QueryResult<NewsItem[]>> {
+async function GetNews(limit?: number): Promise<QueryResult<NewsItem[]>> {
     const supabase = await createClient();
 
-    const { data, error } = await publishedNewsQuery(supabase).order('created_at', { ascending: false });
+    let query = publishedNewsQuery(supabase).order('created_at', { ascending: false });
+    if (limit) query = query.limit(limit);
+    const { data, error } = await query;
 
     if (error) {
         console.error('Error fetching news:', error.message);
@@ -54,11 +56,12 @@ async function GetNews(): Promise<QueryResult<NewsItem[]>> {
     return { success: true, data: (data ?? []) as NewsItem[] };
 }
 
-export async function getBulletinPageData() {
+/** `newsLimit` caps the news list for callers that only show the latest few. */
+export async function getBulletinPageData({ newsLimit }: { newsLimit?: number } = {}) {
     const [contentTypeResult, featuredNewsResult, newsResult] = await Promise.all([
         GetContentTypes(),
         GetFeaturedNews(),
-        GetNews(),
+        GetNews(newsLimit),
     ]);
 
     return {

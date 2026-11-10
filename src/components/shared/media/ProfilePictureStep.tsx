@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import ImageDropzone from "@/components/shared/ImageDropzone";
+import ImageDropzone from "@/components/shared/media/ImageDropzone";
 
 const DEFAULT_DROPZONE_INPUT_ID = "profile-photo-input";
 
@@ -196,27 +196,25 @@ function WebcamDialog({
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    setError(null);
 
     const stopStream = () => {
       streamRef.current?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     };
 
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setError("This browser does not support camera access.");
-      return;
-    }
+    const unsupported = !navigator.mediaDevices?.getUserMedia;
+    const request = unsupported
+      ? Promise.reject(new Error("unsupported"))
+      : navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 800 },
+            height: { ideal: 800 },
+            facingMode: "user",
+          },
+          audio: false,
+        });
 
-    navigator.mediaDevices
-      .getUserMedia({
-        video: {
-          width: { ideal: 800 },
-          height: { ideal: 800 },
-          facingMode: "user",
-        },
-        audio: false,
-      })
+    request
       .then((stream) => {
         if (cancelled) {
           stream.getTracks().forEach((track) => track.stop());
@@ -227,12 +225,17 @@ function WebcamDialog({
       })
       .catch(() => {
         if (!cancelled)
-          setError("Camera unavailable. Check permissions and try again.");
+          setError(
+            unsupported
+              ? "This browser does not support camera access."
+              : "Camera unavailable. Check permissions and try again.",
+          );
       });
 
     return () => {
       cancelled = true;
       stopStream();
+      setError(null);
     };
   }, [open]);
 

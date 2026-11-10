@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUserProfile } from "@/lib/supabase/current-user";
 import { ROLES } from "@/utils/constants/roles";
 import { ROUTES } from "@/utils/constants/routes";
 import {
@@ -12,25 +12,19 @@ import StudentDirectory from "@/features/students/components/StudentDirectory";
 import { PageContainer, PageHeader, PageSection } from "@/components/layouts/PageLayout";
 
 export default async function StudentsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const current = await getCurrentUserProfile();
 
-  if (!user) redirect(ROUTES.SIGN_IN);
+  if (!current) redirect(ROUTES.SIGN_IN);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role_id")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role_id !== ROLES.ADMIN && profile?.role_id !== ROLES.PIONEER) {
+  const roleId = current.profile?.role_id;
+  if (roleId !== ROLES.ADMIN && roleId !== ROLES.PIONEER) {
     redirect(ROUTES.HOME);
   }
 
-  const { data: directory } = await getStudentDirectory();
-  const { courses, majors } = await getStudentsPageData();
+  const [{ data: directory }, { courses, majors }] = await Promise.all([
+    getStudentDirectory(),
+    getStudentsPageData(),
+  ]);
 
   return (
     <PageSection>

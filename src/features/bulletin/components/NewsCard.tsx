@@ -7,16 +7,9 @@ import { ArrowRight, Calendar } from 'lucide-react';
 import { formatDayDate } from '@/utils/formatters';
 import Link from 'next/link';
 import { NewsCardProps } from '../types';
+import { getCategoryBadgeColor, getNewsCategoryLabel, getNewsExcerpt, getNewsHref } from '../utils';
 
 export default function NewsCard({ news, priority = false }: NewsCardProps) {
-    const getCategoryBadgeColor = () => {
-        const label = news.content_type?.label?.toLowerCase() || '';
-        if (label.includes('event')) return 'bg-primary';
-        if (label.includes('advisory') || label.includes('campus')) return 'bg-orange-500';
-        if (label.includes('guidance') || label.includes('health')) return 'bg-primary';
-        return 'bg-primary';
-    };
-
     return (
         <Card className="overflow-hidden flex flex-col h-full">
             <div className="relative aspect-video overflow-hidden bg-muted">
@@ -31,8 +24,8 @@ export default function NewsCard({ news, priority = false }: NewsCardProps) {
                     />
                 )}
                 <div className="absolute top-3 left-3 z-10">
-                    <Badge className={`${getCategoryBadgeColor()} text-primary-foreground text-xs px-2 py-0.5`}>
-                        {news.content_type?.label || 'News'}
+                    <Badge className={`                    ${getCategoryBadgeColor(news)} text-primary-foreground text-xs px-2 py-0.5`}>
+                                            {getNewsCategoryLabel(news)}
                     </Badge>
                 </div>
             </div>
@@ -44,12 +37,12 @@ export default function NewsCard({ news, priority = false }: NewsCardProps) {
                 </div>
                 <CardTitle className="text-subtitle leading-snug line-clamp-2">{news.title}</CardTitle>
                 <CardDescription className="line-clamp-2 text-sm text-muted-foreground leading-relaxed">
-                    {news.description || news.content || 'No description available.'}
+                    {getNewsExcerpt(news)}
                 </CardDescription>
             </CardHeader>
 
             <CardFooter className="flex items-center justify-end px-4 pb-4 pt-0">
-                <Link href={`/bulletin/${news.slug}`}>
+                <Link href={getNewsHref(news)}>
                     <Button variant="ghost" size="sm" className="gap-1.5 text-primary text-sm">
                         View Full Article
                         <ArrowRight className="w-3.5 h-3.5" />

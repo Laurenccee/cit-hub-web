@@ -15,6 +15,76 @@ export type RegisterUserConfig = {
   failureCleanup?: 'none' | 'user';
 };
 
+type AdminClient = ReturnType<typeof createAdminClient>;
+
+type AuthUserOutcome = { userId: string; failure?: undefined } | { failure: ActionResult };
+
+async function createAuthUser(admin: AdminClient, email: string): Promise<AuthUserOutcome> {
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password: DEFAULT_TEMP_PASSWORD,
+    email_confirm: false,
+  });
+
+  if (error || !data.user) {
+    return {
+      failure: {
+        success: false,
+        message: error?.message || 'Failed to create authentication user.',
+      },
+    };
+  }
+  return { userId: data.user.id };
+}
+
+async function insertProfile(
+  admin: AdminClient,
+  userId: string,
+  email: string,
+  roleId: number,
+  failureCleanup: 'none' | 'user',
+): Promise<ActionResult | null> {
+  const { error } = await admin.from('profiles').insert({
+    id: userId,
+    email,
+    role_id: roleId,
+    change_password: true,
+  });
+
+  if (!error) return null;
+  if (failureCleanup === 'user') {
+    await admin.auth.admin.deleteUser(userId);
+  }
+  return { success: false, message: error.message };
+}
+
+async function sendVerificationEmail(
+  admin: AdminClient,
+  email: string,
+): Promise<ActionResult | null> {
+  const { error } = await admin.auth.resend({
+    type: 'signup',
+    email,
+    options: {
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/${ROUTES.SIGN_IN}`,
+    },
+  });
+
+  if (!error) return null;
+  console.error('Verification email failed to send:', error.message);
+  return {
+    success: false,
+    message: error.message || 'User created but failed to send verification email.',
+  };
+}
+
+function revalidateAll(revalidatePaths: string | string[]): void {
+  const paths = Array.isArray(revalidatePaths) ? revalidatePaths : [revalidatePaths];
+  for (const path of paths) {
+    revalidatePath(path);
+  }
+}
+
 export async function registerUserWithRole({
   email,
   roleId,
@@ -24,55 +94,22 @@ export async function registerUserWithRole({
   const supabaseAdmin = createAdminClient();
 
   try {
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    const authOutcome = await createAuthUser(supabaseAdmin, email);
+    if (authOutcome.failure) return authOutcome.failure;
+
+    const profileFailure = await insertProfile(
+      supabaseAdmin,
+      authOutcome.userId,
       email,
-      password: DEFAULT_TEMP_PASSWORD,
-      email_confirm: false,
-    });
+      roleId,
+      failureCleanup,
+    );
+    if (profileFailure) return profileFailure;
 
-    if (authError || !authData.user) {
-      return {
-        success: false,
-        message: authError?.message || 'Failed to create authentication user.',
-      };
-    }
+    const emailFailure = await sendVerificationEmail(supabaseAdmin, email);
+    if (emailFailure) return emailFailure;
 
-    const { error: profileError } = await supabaseAdmin.from('profiles').insert({
-      id: authData.user.id,
-      email,
-      role_id: roleId,
-      change_password: true,
-    });
-
-    if (profileError) {
-      if (failureCleanup === 'user') {
-        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-      }
-      return { success: false, message: profileError.message };
-    }
-
-    const { error: emailError } = await supabaseAdmin.auth.resend({
-      type: 'signup',
-      email,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/${ROUTES.SIGN_IN}`,
-      },
-    });
-
-    if (emailError) {
-      console.error('Verification email failed to send:', emailError.message);
-      return {
-        success: false,
-        message: emailError.message || 'User created but failed to send verification email.',
-      };
-    }
-
-    if (revalidatePaths) {
-      const paths = Array.isArray(revalidatePaths) ? revalidatePaths : [revalidatePaths];
-      for (const path of paths) {
-        revalidatePath(path);
-      }
-    }
+    if (revalidatePaths) revalidateAll(revalidatePaths);
     return { success: true };
   } catch (error) {
     console.error('Registration Action Error:', error);

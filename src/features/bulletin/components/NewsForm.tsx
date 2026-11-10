@@ -1,6 +1,6 @@
 'use client';
 import { Separator } from '@/components/ui/separator';
-import ImageDropzone from '@/components/shared/ImageDropzone';
+import ImageDropzone from '@/components/shared/media/ImageDropzone';
 import type {
     BaseSyntheticEvent,
     ChangeEvent,
@@ -9,11 +9,11 @@ import type {
 import type { Control } from 'react-hook-form';
 import type { ContentType, NewsItem } from '../types';
 import type { NewsFormData } from '../schema/news';
-import InputField from '@/components/shared/InputField';
+import InputField from '@/components/shared/forms/InputField';
 import { HugeiconsIcon } from '@hugeicons/react';
-import AreaField from '@/components/shared/AreaField';
-import ComboboxField from '@/components/shared/ComboboxField';
-import SwitchToggle from '@/components/shared/SwitchToggle';
+import AreaField from '@/components/shared/forms/AreaField';
+import ComboboxField from '@/components/shared/forms/ComboboxField';
+import SwitchToggle from '@/components/shared/forms/SwitchToggle';
 import { Link01Icon, Link04Icon, NewsIcon, TextIcon } from '@hugeicons/core-free-icons';
 
 interface NewsFormProps {

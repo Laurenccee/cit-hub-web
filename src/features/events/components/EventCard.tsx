@@ -11,19 +11,6 @@ interface EventCardProps {
   event: EventItem;
 }
 
-const ACADEMIC_KEYWORDS = [
-  "academic",
-  "career",
-  "competition",
-  "research",
-  "workshop",
-  "colloquium",
-  "expo",
-  "challenge",
-  "fair",
-  "ctf",
-];
-
 function badgeClasses(label: string) {
   const lower = label.toLowerCase();
   if (
@@ -43,22 +30,33 @@ function formatTime(value: string) {
   });
 }
 
-export function isAcademicEvent(event: EventItem) {
-  const haystack =
-    `${event.category?.label ?? ""} ${event.title}`.toLowerCase();
-  return ACADEMIC_KEYWORDS.some((keyword) => haystack.includes(keyword));
+function eventDateParts(value: string) {
+  const start = new Date(value);
+  return {
+    monthDay: start
+      .toLocaleDateString("en-US", { month: "short", day: "2-digit" })
+      .toUpperCase(),
+    weekday: start.toLocaleDateString("en-US", { weekday: "long" }),
+  };
+}
+
+function headcountLabel(event: EventItem) {
+  const filled = event.capacity_filled ?? 0;
+  return event.capacity_unit === "teams" ? `${filled} Teams` : `${filled} Attendees`;
+}
+
+function eventBlurb(event: EventItem) {
+  return event.description || event.content || "Details will be announced soon.";
+}
+
+function endTimeSuffix(event: EventItem) {
+  return event.end_date ? ` – ${formatTime(event.end_date)}` : "";
 }
 
 export default function EventCard({ event }: EventCardProps) {
-  const start = new Date(event.start_date);
-  const monthDay = start
-    .toLocaleDateString("en-US", { month: "short", day: "2-digit" })
-    .toUpperCase();
-  const weekday = start.toLocaleDateString("en-US", { weekday: "long" });
-
-  const filled = event.capacity_filled ?? 0;
-  const headcount =
-    event.capacity_unit === "teams" ? `${filled} Teams` : `${filled} Attendees`;
+  const { monthDay, weekday } = eventDateParts(event.start_date);
+  const categoryLabel = event.category?.label;
+  const headcount = headcountLabel(event);
 
   return (
     <Card className="flex h-full flex-col overflow-hidden rounded-xl bg-card shadow-sm transition-shadow hover:shadow-md">
@@ -68,9 +66,9 @@ export default function EventCard({ event }: EventCardProps) {
         <div className="flex items-start justify-between gap-3">
           <Badge
             variant="outline"
-            className={`max-w-[65%] truncate rounded-full px-2.5 py-1 text-micro font-semibold ${badgeClasses(event.category?.label ?? "")}`}
+            className={`max-w-[65%] truncate rounded-full px-2.5 py-1 text-micro font-semibold ${badgeClasses(categoryLabel ?? "")}`}
           >
-            {event.category?.label ?? "Campus Event"}
+            {categoryLabel ?? "Campus Event"}
           </Badge>
           <div className="shrink-0 text-right leading-tight">
             <p className="text-xs font-bold uppercase tracking-wide text-foreground">
@@ -84,9 +82,7 @@ export default function EventCard({ event }: EventCardProps) {
           {event.title}
         </h3>
         <p className="mt-1.5 line-clamp-2 min-h-10 text-sm leading-relaxed text-muted-foreground">
-          {event.description ||
-            event.content ||
-            "Details will be announced soon."}
+          {eventBlurb(event)}
         </p>
 
         <div className="mt-3 flex flex-col gap-1.5 text-xs text-muted-foreground">
@@ -97,7 +93,7 @@ export default function EventCard({ event }: EventCardProps) {
           <span className="inline-flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
             {formatTime(event.start_date)}
-            {event.end_date ? ` – ${formatTime(event.end_date)}` : ""}
+            {endTimeSuffix(event)}
           </span>
         </div>
 

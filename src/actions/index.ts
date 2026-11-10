@@ -1,22 +1,9 @@
 'use server';
 
-import { cache } from 'react';
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUserProfile } from '@/lib/supabase/current-user';
 import { ROLES } from '@/utils/constants/roles';
 
 const { ADMIN, FACULTY } = ROLES;
-
-const getCurrentUserProfile = cache(async () => {
-    const supabase = await createClient();
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return null;
-
-    const { data: profile } = await supabase.from('profiles').select('role_id').eq('id', user.id).single();
-
-    return { user, profile };
-});
 
 /** The signed-in Supabase user, without a role requirement. */
 export async function getAuthenticatedUser() {

@@ -5,16 +5,16 @@ import { Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CardEmptyState } from "@/components/shared/CardEmptyState";
-import ListingFilterPills from "@/components/shared/ListingFilterPills";
-import ListingPagination from "@/components/shared/ListingPagination";
-import ListingSearchInput from "@/components/shared/ListingSearchInput";
-import ListingSortSelect from "@/components/shared/ListingSortSelect";
+import ListingFilterPills from "@/components/shared/listing/ListingFilterPills";
+import ListingPagination from "@/components/shared/listing/ListingPagination";
+import ListingSearchInput from "@/components/shared/listing/ListingSearchInput";
+import ListingSortSelect from "@/components/shared/listing/ListingSortSelect";
 import {
   LISTING_PAGE_SIZE,
   buildSearchText,
   compareListItems,
   paginate,
-} from "@/components/shared/listing-utils";
+} from "@/utils/listing";
 import NewsCard from "./NewsCard";
 import type { ContentType, NewsItem } from "../types";
 

@@ -26,7 +26,7 @@ export function EventAttendanceStats({
           key={stat.label}
           className="rounded-md border border-border bg-card px-2 py-2 text-center"
         >
-          <p className="text-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="text-micro font-bold uppercase tracking-label-wide text-muted-foreground">
             {stat.label}
           </p>
           <p

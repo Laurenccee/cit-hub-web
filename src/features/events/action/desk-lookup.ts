@@ -38,7 +38,6 @@ export async function lookupStudentByCardAction(
  * tap never misresolves; the student-ID match is case-insensitive exact.
  * Read-only: nothing is written while the tap is being resolved.
  */
-// fallow-ignore-next-line unused-server-action
 export async function resolveAttendeeAction(identifier: string): Promise<{
   success: boolean;
   student: DeskStudent | null;

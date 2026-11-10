@@ -21,12 +21,20 @@ export interface RawAttendeeRow {
     | Array<{ code?: string | null; name?: string | null } | null>;
 }
 
+/** Supabase returns a to-one join as an object or a one-element array. */
+function flattenJoin(joined: RawAttendeeRow["courses"]) {
+  const first = Array.isArray(joined) ? joined[0] : joined;
+  return { code: first?.code ?? null, name: first?.name ?? null };
+}
+
 /**
  * Everything the gate badge and roster need to identify a student, flattened
  * from the courses/majors joins. `rfid_uid` is intentionally stripped by
  * `toDeskStudent` before anything leaves the server.
  */
 export function toDeskStudent(row: RawAttendeeRow): DeskStudent {
+  const course = flattenJoin(row.courses);
+  const major = flattenJoin(row.majors);
   return {
     id: row.id,
     first_name: row.first_name,
@@ -34,18 +42,10 @@ export function toDeskStudent(row: RawAttendeeRow): DeskStudent {
     student_id: row.student_id ?? null,
     profile_picture_url: row.profile_picture_url ?? null,
     year_level: row.year_level ?? null,
-    course_code: Array.isArray(row.courses)
-      ? (row.courses[0]?.code ?? null)
-      : (row.courses?.code ?? null),
-    course_name: Array.isArray(row.courses)
-      ? (row.courses[0]?.name ?? null)
-      : (row.courses?.name ?? null),
-    major_code: Array.isArray(row.majors)
-      ? (row.majors[0]?.code ?? null)
-      : (row.majors?.code ?? null),
-    major_name: Array.isArray(row.majors)
-      ? (row.majors[0]?.name ?? null)
-      : (row.majors?.name ?? null),
+    course_code: course.code,
+    course_name: course.name,
+    major_code: major.code,
+    major_name: major.name,
   };
 }
 

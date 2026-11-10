@@ -50,20 +50,22 @@ function AcademicYearBadge() {
   );
 }
 
-export default function NavigationBar() {
-  const { isAuthenticated, role } = useAuth();
-  const [isPending, startTransition] = useTransition();
-  const router = useRouter();
-  const pathname = usePathname();
-  const visibleNavLinks = getVisibleNavLinks(role);
+function isSetupPath(pathname: string) {
+  return pathname.startsWith("/personnel/setup") || pathname.startsWith("/student/setup");
+}
 
-  const isSetupPage =
-    pathname.startsWith("/personnel/setup") || pathname.startsWith("/student/setup");
-  const isPublicPage =
+function isPublicPath(pathname: string) {
+  return (
     pathname === ROUTES.ROOT ||
     pathname === ROUTES.SIGN_IN ||
     pathname === ROUTES.FORGET_PASSWORD ||
-    pathname === ROUTES.RESET_PASSWORD;
+    pathname === ROUTES.RESET_PASSWORD
+  );
+}
+
+function useSignOut() {
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const handleSignOut = async () => {
     startTransition(async () => {
@@ -82,9 +84,19 @@ export default function NavigationBar() {
     });
   };
 
-  const navLinks = (
+  return { isPending, handleSignOut };
+}
+
+function NavLinks({
+  links,
+  pathname,
+}: {
+  links: ReturnType<typeof getVisibleNavLinks>;
+  pathname: string;
+}) {
+  return (
     <nav className="hidden items-center gap-6 md:flex">
-      {visibleNavLinks.map(({ label, href }) => (
+      {links.map(({ label, href }) => (
         <Link
           key={href}
           href={href}
@@ -98,15 +110,20 @@ export default function NavigationBar() {
       ))}
     </nav>
   );
+}
 
-  const signOutButton = (
-    <Button onClick={handleSignOut} size="lg" className="gap-2" disabled={isPending}>
+function SignOutButton({ onSignOut, isPending }: { onSignOut: () => void; isPending: boolean }) {
+  return (
+    <Button onClick={onSignOut} size="lg" className="gap-2" disabled={isPending}>
       <span>Sign Out</span>
       <LogOut className="h-4 w-4" />
     </Button>
   );
+}
 
-  const signInButton = (
+function SignInButton({ isPending }: { isPending: boolean }) {
+  const router = useRouter();
+  return (
     <Button
       onClick={() => router.push(ROUTES.SIGN_IN)}
       size="lg"
@@ -117,9 +134,40 @@ export default function NavigationBar() {
       <ArrowRight className="h-4 w-4" />
     </Button>
   );
+}
+
+function AuthAction({
+  isAuthenticated,
+  onSignOut,
+  isPending,
+}: {
+  isAuthenticated: boolean;
+  onSignOut: () => void;
+  isPending: boolean;
+}) {
+  return isAuthenticated ? (
+    <SignOutButton onSignOut={onSignOut} isPending={isPending} />
+  ) : (
+    <SignInButton isPending={isPending} />
+  );
+}
+
+export default function NavigationBar() {
+  const { isAuthenticated, role } = useAuth();
+  const { isPending, handleSignOut } = useSignOut();
+  const pathname = usePathname();
+
+  const navLinks = <NavLinks links={getVisibleNavLinks(role)} pathname={pathname} />;
+  const authAction = (
+    <AuthAction
+      isAuthenticated={isAuthenticated}
+      onSignOut={handleSignOut}
+      isPending={isPending}
+    />
+  );
 
   // Public pages: marketing-style navbar with an auth-aware call to action.
-  if (isPublicPage) {
+  if (isPublicPath(pathname)) {
     return (
       <HeaderShell>
         <BrandMark />
@@ -127,7 +175,7 @@ export default function NavigationBar() {
         <div className="flex items-center gap-4">
           <AcademicYearBadge />
           <ThemeToggle />
-          {isAuthenticated ? signOutButton : signInButton}
+          {authAction}
         </div>
         <MobileNav
           onSignOut={handleSignOut}
@@ -140,13 +188,13 @@ export default function NavigationBar() {
   }
 
   // Setup wizard: strip navigation, keep only brand and sign-out.
-  if (isSetupPage) {
+  if (isSetupPath(pathname)) {
     return (
       <HeaderShell>
         <BrandMark withText={false} />
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          {signOutButton}
+          <SignOutButton onSignOut={handleSignOut} isPending={isPending} />
         </div>
       </HeaderShell>
     );
@@ -161,7 +209,7 @@ export default function NavigationBar() {
       <div className="flex items-center gap-4">
         <AcademicYearBadge />
         <ThemeToggle />
-        {isAuthenticated ? signOutButton : signInButton}
+        {authAction}
       </div>
       <MobileNav
         onSignOut={handleSignOut}

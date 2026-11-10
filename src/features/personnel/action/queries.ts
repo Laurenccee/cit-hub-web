@@ -1,3 +1,4 @@
+import { getCurrentUserProfile } from '@/lib/supabase/current-user';
 import { createClient } from '@/lib/supabase/server';
 import type { QueryResult } from '@/types/action';
 import { Designation, Personnel, Rank } from '../types';
@@ -38,15 +39,14 @@ export async function getPersonnelPageData() {
 }
 
 export async function getCurrentUserPersonnel(): Promise<QueryResult<Personnel | null>> {
-    const supabase = await createClient();
-
-    const {
-        data: { user },
-    } = await supabase.auth.getUser();
+    const current = await getCurrentUserProfile();
+    const user = current?.user;
 
     if (!user) {
         return { success: false, data: null };
     }
+
+    const supabase = await createClient();
 
     const { data, error } = await supabase
         .from('personnel')

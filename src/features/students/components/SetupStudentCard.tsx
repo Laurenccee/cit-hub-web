@@ -2,8 +2,8 @@
 
 import { useCallback, useState } from "react";
 import { Camera, Fingerprint, GraduationCap } from "lucide-react";
-import { SetupWizard, type WizardStep } from "@/components/shared/SetupWizard";
-import { ProfilePictureStep } from "@/components/shared/ProfilePictureStep";
+import { SetupWizard, type WizardStep } from "@/components/shared/wizard/SetupWizard";
+import { ProfilePictureStep } from "@/components/shared/media/ProfilePictureStep";
 import { IdentityStep } from "./setup-steps/IdentityStep";
 import { AcademicStep } from "./setup-steps/AcademicStep";
 import { useStudentForm } from "../hooks/useStudentForm";
@@ -44,6 +44,14 @@ const STEPS = [
   },
 ] as const satisfies readonly WizardStep[];
 
+const REQUIRED_FIELDS_BY_STEP: Record<
+  string,
+  readonly ("studentId" | "firstName" | "lastName" | "courseId" | "yearLevel" | "section")[]
+> = {
+  identity: ["studentId", "firstName", "lastName"],
+  academic: ["courseId", "yearLevel", "section"],
+};
+
 interface SetupStudentCardProps {
   courses: Course[];
   majors: Major[];
@@ -64,22 +72,9 @@ export default function SetupStudentCard({
 
   const canGoNext = useCallback(
     (stepId: string) => {
-      switch (stepId) {
-        case "identity":
-          return !!(
-            formValues?.studentId &&
-            formValues?.firstName &&
-            formValues?.lastName
-          );
-        case "academic":
-          return !!(
-            formValues?.courseId &&
-            formValues?.yearLevel &&
-            formValues?.section
-          );
-        default:
-          return true;
-      }
+      const requiredFields = REQUIRED_FIELDS_BY_STEP[stepId];
+      if (!requiredFields) return true;
+      return requiredFields.every((field) => !!formValues?.[field]);
     },
     [formValues],
   );

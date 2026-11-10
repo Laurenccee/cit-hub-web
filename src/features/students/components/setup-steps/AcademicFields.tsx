@@ -1,7 +1,7 @@
 "use client";
 
-import InputField from "@/components/shared/InputField";
-import ComboboxField from "@/components/shared/ComboboxField";
+import InputField from "@/components/shared/forms/InputField";
+import ComboboxField from "@/components/shared/forms/ComboboxField";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { TelephoneIcon } from "@hugeicons/core-free-icons";
 import type { Control, FieldValues } from "react-hook-form";

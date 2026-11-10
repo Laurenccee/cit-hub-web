@@ -1,6 +1,6 @@
 "use client";
 
-import { ProfilePictureStep } from "@/components/shared/ProfilePictureStep";
+import { ProfilePictureStep } from "@/components/shared/media/ProfilePictureStep";
 import type { Designation, Rank } from "../../types";
 import type { Control, FieldValues } from "react-hook-form";
 import { IdentityStep } from "./IdentityStep";

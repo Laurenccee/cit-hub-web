@@ -10,20 +10,83 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { PersonnelSchema, UpdatePersonnelSchema } from "../schema/personnel";
-import type { PersonnelSubmitPayload, UsePersonnelFormProps } from "../types";
+import type {
+  Personnel,
+  PersonnelSubmitPayload,
+  UsePersonnelFormProps,
+} from "../types";
 import { useProfileSubmit } from "@/hooks/useProfileSubmit";
+
+function getOwnMessage(error: object): string | null {
+  const message = (error as { message?: unknown }).message;
+  return typeof message === "string" && message ? message : null;
+}
 
 function getFirstErrorMessage(error: unknown): string | null {
   if (!error || typeof error !== "object") return null;
-  if ("message" in error) {
-    const message = (error as { message?: unknown }).message;
-    if (typeof message === "string" && message) return message;
-  }
+  const own = getOwnMessage(error);
+  if (own) return own;
   for (const value of Object.values(error as Record<string, unknown>)) {
     const nested = getFirstErrorMessage(value);
     if (nested) return nested;
   }
   return null;
+}
+
+function buildSocialMediaDefaults(socialMedia: Personnel["social_media"]) {
+  return {
+    facebook: socialMedia?.facebook ?? "",
+    twitter: socialMedia?.twitter ?? "",
+    instagram: socialMedia?.instagram ?? "",
+    linkedin: socialMedia?.linkedin ?? "",
+  };
+}
+
+function buildEditDefaults(personnel: Personnel) {
+  return {
+    id: personnel.id,
+    employeeId: personnel.employee_id,
+    firstName: personnel.first_name,
+    lastName: personnel.last_name,
+    rankId: personnel.ranks?.id,
+    designationId: personnel.designations?.id,
+    office: personnel.office,
+    contactNumber: personnel.contact_number,
+    education:
+      personnel.education.length > 0
+        ? personnel.education
+        : [{ degree: "", major: "", institution: "", onGoing: false }],
+    socialMedia: buildSocialMediaDefaults(personnel.social_media),
+    profilePictureUrl: personnel.profile_picture_url ?? "",
+  };
+}
+
+function buildCreateDefaults() {
+  return {
+    employeeId: "",
+    firstName: "",
+    lastName: "",
+    rankId: "",
+    designationId: null,
+    office: "",
+    contactNumber: "",
+    education: [
+      {
+        degree: "",
+        major: "",
+        institution: "",
+        yearGraduated: "",
+        onGoing: false,
+      },
+    ],
+    socialMedia: buildSocialMediaDefaults({}),
+  };
+}
+
+function buildDefaultValues(mode: UsePersonnelFormProps["mode"], personnel?: Personnel) {
+  return mode === "edit" && personnel
+    ? buildEditDefaults(personnel)
+    : buildCreateDefaults();
 }
 
 export function usePersonnelForm({
@@ -33,55 +96,7 @@ export function usePersonnelForm({
   submitAction,
   uploadAvatarAction,
 }: UsePersonnelFormProps) {
-  // Compute pre-filled states if we are editing an existing profile
-
-  const defaultValues =
-    mode === "edit" && personnel
-      ? {
-          id: personnel.id,
-          employeeId: personnel.employee_id,
-          firstName: personnel.first_name,
-          lastName: personnel.last_name,
-          rankId: personnel.ranks?.id,
-          designationId: personnel.designations?.id,
-          office: personnel.office,
-          contactNumber: personnel.contact_number,
-          education:
-            personnel.education.length > 0
-              ? personnel.education
-              : [{ degree: "", major: "", institution: "", onGoing: false }],
-          socialMedia: {
-            facebook: personnel.social_media?.facebook ?? "",
-            twitter: personnel.social_media?.twitter ?? "",
-            instagram: personnel.social_media?.instagram ?? "",
-            linkedin: personnel.social_media?.linkedin ?? "",
-          },
-          profilePictureUrl: personnel.profile_picture_url ?? "",
-        }
-      : {
-          employeeId: "",
-          firstName: "",
-          lastName: "",
-          rankId: "",
-          designationId: null,
-          office: "",
-          contactNumber: "",
-          education: [
-            {
-              degree: "",
-              major: "",
-              institution: "",
-              yearGraduated: "",
-              onGoing: false,
-            },
-          ],
-          socialMedia: {
-            facebook: "",
-            twitter: "",
-            instagram: "",
-            linkedin: "",
-          },
-        };
+  const defaultValues = buildDefaultValues(mode, personnel);
 
   // The control is intentionally form-shape agnostic (`FieldValues`) so it can
   // flow into the shared, reusable field components; `handleFormSubmit` narrows

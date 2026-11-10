@@ -175,69 +175,6 @@ export interface DeskSyncStatus {
 // Component prop types
 // ---------------------------------------------------------------------------
 
-export type { EventItemProps } from '@/features/home/types';
-
-export interface EventCardProps {
-  event: EventItem;
-}
-
-export interface EventsListingProps {
-  events: EventItem[];
-}
-
-export interface EventHeroProps {
-  event: EventItem;
-}
-
-export interface EventCoverProps {
-  event: EventItem;
-  className?: string;
-  priority?: boolean;
-}
-
-export interface EventImageProps {
-  event: EventItem;
-  className?: string;
-  fill?: boolean;
-  priority?: boolean;
-}
-
-export interface EventGatePageProps {
-  event: EventItem;
-  initialAttendance: EventAttendance;
-  initialCheckins: DeskCheckin[];
-}
-
-export interface GateTerminalProps {
-  event: EventItem;
-  initialAttendance: EventAttendance;
-  initialCheckins: DeskCheckin[];
-}
-
-export interface LiveEntryRosterProps {
-  event: EventItem;
-  checkins: DeskCheckin[];
-  online: boolean;
-  pendingCount: number;
-  onRemoveRecord?: (recordId: string) => Promise<void>;
-}
-
-export interface EventAttendanceStatsProps {
-  attendance: EventAttendance;
-  className?: string;
-}
-
-export interface VerifiedIdCardProps {
-  lastResult: LastTapResult | null;
-  scan: ScanState;
-}
-
-export interface StudentAvatarProps {
-  student: DeskStudent | null;
-  size?: number;
-  className?: string;
-}
-
 export interface CreateEventDialogProps {
   children: ReactNode;
   categories: EventCategory[];

@@ -1,6 +1,6 @@
 "use client";
 
-import { IdentityFields } from "@/components/shared/IdentityFields";
+import { IdentityFields } from "@/components/shared/forms/IdentityFields";
 import type { Control, FieldValues } from "react-hook-form";
 
 interface IdentityStepProps {

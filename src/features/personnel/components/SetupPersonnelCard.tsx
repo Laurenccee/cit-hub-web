@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { SetupWizard } from "@/components/shared/SetupWizard";
+import { SetupWizard } from "@/components/shared/wizard/SetupWizard";
 import { SetupPersonnelCardProps } from "../types";
 import { PersonnelStepContent } from "./setup-steps/PersonnelStepContent";
 import { PERSONNEL_WIZARD_STEPS } from "./setup-steps/steps";

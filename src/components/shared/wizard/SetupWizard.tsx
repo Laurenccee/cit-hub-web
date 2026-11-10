@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRightIcon, ArrowLeftIcon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
-import { SetupStepper } from "@/components/shared/SetupStepper";
+import { SetupStepper } from "@/components/shared/wizard/SetupStepper";
 
 export interface WizardStep {
   id: string;

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Field, FieldDescription, FieldError, FieldLabel } from '../ui/field';
+import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
 
 export interface ComboboxProps<TData, TFieldValues extends FieldValues = FieldValues> {
     name: Path<TFieldValues>;
@@ -24,6 +24,45 @@ export interface ComboboxProps<TData, TFieldValues extends FieldValues = FieldVa
     disabled?: boolean;
     isPending?: boolean;
     onChange?: (value: string) => void;
+}
+
+function ComboboxOption({
+    valueStr,
+    labelStr,
+    isSelected,
+    onPick,
+}: {
+    valueStr: string;
+    labelStr: string;
+    isSelected: boolean;
+    onPick: (value: string) => void;
+}) {
+    return (
+        <CommandItem
+            value={labelStr} // used for local client searching
+            // Set form value; toggle off if clicked again
+            onSelect={() => onPick(isSelected ? '' : valueStr)}
+        >
+            <Check className={cn('mr-2 h-4 w-4', isSelected ? 'opacity-100' : 'opacity-0')} />
+            {labelStr}
+        </CommandItem>
+    );
+}
+
+function ComboboxMessages({ description, errorMessage }: { description?: string; errorMessage?: string }) {
+    return (
+        <>
+            {description && (
+                <FieldDescription className="text-muted-foreground text-xs mt-1 block">
+                    {description}
+                </FieldDescription>
+            )}
+
+            {errorMessage && (
+                <FieldError className="text-xs font-semibold text-destructive mt-1 block">{errorMessage}</FieldError>
+            )}
+        </>
+    );
 }
 
 export default function ComboboxField<TData, TFieldValues extends FieldValues>({
@@ -88,29 +127,19 @@ export default function ComboboxField<TData, TFieldValues extends FieldValues>({
                                         <CommandGroup>
                                             {options.map((option, index) => {
                                                 const valueStr = String(option[valueKey]);
-                                                const labelStr = String(option[labelKey]);
-                                                const isSelected = String(field.value) === valueStr;
 
                                                 return (
-                                                    <CommandItem
+                                                    <ComboboxOption
                                                         key={valueStr || index}
-                                                        value={labelStr} // used for local client searching
-                                                        onSelect={() => {
-                                                            // Set form value; toggle off if clicked again
-                                                            const nextValue = isSelected ? '' : valueStr;
+                                                        valueStr={valueStr}
+                                                        labelStr={String(option[labelKey])}
+                                                        isSelected={String(field.value) === valueStr}
+                                                        onPick={(nextValue) => {
                                                             field.onChange(nextValue);
                                                             onChange?.(nextValue);
                                                             setOpen(false);
                                                         }}
-                                                    >
-                                                        <Check
-                                                            className={cn(
-                                                                'mr-2 h-4 w-4',
-                                                                isSelected ? 'opacity-100' : 'opacity-0',
-                                                            )}
-                                                        />
-                                                        {labelStr}
-                                                    </CommandItem>
+                                                    />
                                                 );
                                             })}
                                         </CommandGroup>
@@ -119,17 +148,7 @@ export default function ComboboxField<TData, TFieldValues extends FieldValues>({
                             </PopoverContent>
                         </Popover>
 
-                        {description && (
-                            <FieldDescription className="text-muted-foreground text-xs mt-1 block">
-                                {description}
-                            </FieldDescription>
-                        )}
-
-                        {fieldErrorMessage && (
-                            <FieldError className="text-xs font-semibold text-destructive mt-1 block">
-                                {fieldErrorMessage}
-                            </FieldError>
-                        )}
+                        <ComboboxMessages description={description} errorMessage={fieldErrorMessage} />
                     </Field>
                 );
             }}

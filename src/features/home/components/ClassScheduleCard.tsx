@@ -41,7 +41,7 @@ export default function ClassScheduleCard({ schedule = [] }: { schedule: Schedul
                                 <div className="col-span-1 flex justify-end">
                                     <Badge
                                         variant={scheduleItem.status === 'Cancelled' ? 'destructive' : 'secondary'}
-                                        className="text-[10px] px-1.5 py-0"
+                                        className="text-2xs px-1.5 py-0"
                                     >
                                         {scheduleItem.status}
                                     </Badge>

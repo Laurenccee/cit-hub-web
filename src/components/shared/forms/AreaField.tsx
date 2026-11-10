@@ -1,8 +1,8 @@
 'use client';
 
 import { Controller, FieldValues } from 'react-hook-form';
-import { Field, FieldDescription, FieldError, FieldLabel } from '../ui/field';
-import { InputGroup, InputGroupAddon, InputGroupTextarea } from '../ui/input-group';
+import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field';
+import { InputGroup, InputGroupAddon, InputGroupTextarea } from '@/components/ui/input-group';
 import type { InputFieldProps } from './InputField';
 
 export default function AreaField<TFieldValues extends FieldValues>({
@@ -49,12 +49,12 @@ export default function AreaField<TFieldValues extends FieldValues>({
                     </InputGroup>
 
                     {description && (
-                        <FieldDescription className="text-muted-foreground text-xs tracking-[0.2em]">
+                        <FieldDescription className="text-muted-foreground text-xs tracking-spaced">
                             {description}
                         </FieldDescription>
                     )}
                     {error && (
-                        <FieldError className="font-mono text-xs font-semibold tracking-[0.2em] text-destructive">
+                        <FieldError className="font-mono text-xs font-semibold tracking-spaced text-destructive">
                             {error}
                         </FieldError>
                     )}

@@ -1,6 +1,6 @@
 'use client';
 
-import InputField from '@/components/shared/InputField';
+import InputField from '@/components/shared/forms/InputField';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Email, Loading02Icon, User03Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@hugeicons/react';

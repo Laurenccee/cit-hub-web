@@ -55,10 +55,57 @@ export async function GetEventCategories(): Promise<QueryResult<EventCategory[]>
     return { success: true, data: (data ?? []) as EventCategory[] };
 }
 
-export async function GetEvents(): Promise<QueryResult<EventItem[]>> {
+async function GetEvents(): Promise<QueryResult<EventItem[]>> {
     const supabase = await createClient();
 
     return fetchPublishedEvents(supabase);
+}
+
+/** The next published events that have not started yet, soonest first. */
+export async function GetUpcomingEvents(limit: number): Promise<QueryResult<EventItem[]>> {
+    const supabase = await createClient();
+
+    const { data, error } = await publishedEventsQuery(supabase)
+        .gte('start_date', new Date().toISOString())
+        .order('start_date', { ascending: true })
+        .limit(limit);
+
+    if (error) {
+        console.error('Error fetching upcoming events:', error.message);
+        return { success: false, data: [] };
+    }
+
+    return { success: true, data: (data ?? []) as EventItem[] };
+}
+
+const RELATED_EVENT_LIMIT = 3;
+
+/**
+ * Up to three other published events in the same category, upcoming first
+ * (soonest first) then past (most recent first) — fetched with small limited
+ * queries instead of loading the whole catalogue.
+ */
+export async function GetRelatedEvents(event: Pick<EventItem, 'id' | 'category_id'>): Promise<QueryResult<EventItem[]>> {
+    const supabase = await createClient();
+    const now = new Date().toISOString();
+
+    const related = () => {
+        const query = publishedEventsQuery(supabase).neq('id', event.id).limit(RELATED_EVENT_LIMIT);
+        return event.category_id == null ? query.is('category_id', null) : query.eq('category_id', event.category_id);
+    };
+
+    const [upcomingRes, pastRes] = await Promise.all([
+        related().gte('start_date', now).order('start_date', { ascending: true }),
+        related().lt('start_date', now).order('start_date', { ascending: false }),
+    ]);
+
+    if (upcomingRes.error || pastRes.error) {
+        console.error('Error fetching related events:', (upcomingRes.error ?? pastRes.error)?.message);
+    }
+
+    const events = [...(upcomingRes.data ?? []), ...(pastRes.data ?? [])] as EventItem[];
+
+    return { success: !upcomingRes.error || !pastRes.error, data: events.slice(0, RELATED_EVENT_LIMIT) };
 }
 
 /**

@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import InputField from '@/components/shared/InputField';
+import InputField from '@/components/shared/forms/InputField';
 import { Label } from '@/components/ui/label';
 import { Controller, useFieldArray, type Control, type FieldValues } from 'react-hook-form';
 import { HugeiconsIcon } from '@hugeicons/react';

@@ -26,7 +26,7 @@ export default function UpcomingEventsCard({ events = [] }: { events: EventItemP
                         {events.slice(0, 5).map((event) => (
                             <div key={event.id} className="grid grid-cols-6 items-center gap-2.5 group">
                                 <div className="col-span-1 flex flex-col bg-accent justify-center items-center aspect-square rounded-md border transition-colors group-hover:bg-primary/10">
-                                    <span className="text-[10px] leading-none uppercase text-primary font-semibold">
+                                    <span className="text-2xs leading-none uppercase text-primary font-semibold">
                                         {formatDayDate(event.date, 'MMM')}
                                     </span>
                                     <p className="font-bold text-lg">{formatDayDate(event.date, 'dd')}</p>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import type {
   DeskCheckin,
   DeskCheckinRecord,
@@ -25,7 +24,9 @@ import {
   removePendingTap,
   replaceRoster,
   toCachedStudent,
+  type PendingTap,
 } from "../lib/offline-db";
+import { buildTapOutcome, classifyReplay, isAppliedForEvent, isAppliedTap } from "../lib/scan-tap-outcome";
 
 interface UseScanTerminalOptions {
   eventId: string;
@@ -35,6 +36,18 @@ interface UseScanTerminalOptions {
 }
 
 const LIST_LIMIT = 50;
+
+/** Replay one queued tap; null means the server could not be reached. */
+async function sendQueuedTap(tap: PendingTap) {
+  try {
+    return await logDeskCheckinAction(tap.eventId, tap.cardUid, tap.direction, {
+      clientId: tap.id,
+      clientTimestamp: tap.clientTimestamp,
+    });
+  } catch {
+    return null;
+  }
+}
 
 /** Merge polled rows into the visible list: fresh rows win, newest first. */
 function mergeCheckins(previous: DeskCheckin[], fresh: DeskCheckin[]) {
@@ -130,36 +143,13 @@ export function useScanTerminal({
           clientId,
           clientTimestamp,
         });
-        if (result.success && result.record && result.student) {
+        if (isAppliedTap(result)) {
           // Instant local update — no page refetch.
           applyTapResult(result.record, result.student, direction);
-          setScan({ kind: "success", message: result.message, direction });
-          setLastResult({
-            student: result.student,
-            identifier,
-            message: result.message,
-            tone: "success",
-            at: (direction === "in" ? result.record.check_in : result.record.check_out) ?? result.record.created_at,
-          });
-        } else if (result.alreadyInside || result.noActiveVisit) {
-          setScan({ kind: "warning", message: result.message });
-          setLastResult({
-            student: result.student ?? null,
-            identifier,
-            message: result.message,
-            tone: "warning",
-            at: new Date().toISOString(),
-          });
-        } else {
-          setScan({ kind: "error", message: result.message });
-          setLastResult({
-            student: result.student ?? null,
-            identifier,
-            message: result.message,
-            tone: "error",
-            at: new Date().toISOString(),
-          });
         }
+        const outcome = buildTapOutcome(result, identifier, direction);
+        setScan(outcome.scan);
+        setLastResult(outcome.lastResult);
       } catch {
         await queueOfflineTap(identifier, clientId, clientTimestamp);
       }
@@ -233,27 +223,16 @@ export function useScanTerminal({
     try {
       const taps = await listPendingTaps();
       for (const tap of taps) {
-        let result;
-        try {
-          result = await logDeskCheckinAction(tap.eventId, tap.cardUid, tap.direction, {
-            clientId: tap.id,
-            clientTimestamp: tap.clientTimestamp,
-          });
-        } catch {
-          // Still unreachable — leave the rest queued for the next attempt.
-          break;
-        }
+        const result = await sendQueuedTap(tap);
+        // Still unreachable — leave the rest queued for the next attempt.
+        if (!result) break;
 
-        if (result.success) {
-          await removePendingTap(tap.id);
-          if (result.record && result.student && result.record.event_id === eventId) {
-            applyTapResult(result.record, result.student, tap.direction);
-          }
-        } else if (result.alreadyInside || result.noActiveVisit) {
-          // Permanently rejected by the server; retrying will never help.
-          await removePendingTap(tap.id);
-        } else {
-          break;
+        const verdict = classifyReplay(result);
+        // Anything but a clean sync or a permanent rejection stays queued.
+        if (verdict === "retry") break;
+        await removePendingTap(tap.id);
+        if (verdict === "synced" && isAppliedForEvent(result, eventId)) {
+          applyTapResult(result.record, result.student, tap.direction);
         }
       }
     } finally {
@@ -368,20 +347,28 @@ export function useScanTerminal({
     };
 
     const debouncedSync = createDebouncer();
-    const supabase = createClient();
-    const channel = supabase
-      .channel(`attendance:${eventId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "event_attendance",
-          filter: `event_id=eq.${eventId}`,
-        },
-        () => debouncedSync.schedule(() => void sync()),
-      )
-      .subscribe();
+    let unsubscribe: (() => void) | undefined;
+
+    // Realtime is an enhancement over the poll below, so the Supabase client
+    // is loaded on demand instead of blocking the terminal's first load.
+    void import("@/lib/supabase/client").then(({ createClient }) => {
+      if (cancelled) return;
+      const supabase = createClient();
+      const channel = supabase
+        .channel(`attendance:${eventId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "event_attendance",
+            filter: `event_id=eq.${eventId}`,
+          },
+          () => debouncedSync.schedule(() => void sync()),
+        )
+        .subscribe();
+      unsubscribe = () => void supabase.removeChannel(channel);
+    });
 
     // Fallback for when realtime is unavailable, and to self-heal after the
     // socket reconnects.
@@ -391,7 +378,7 @@ export function useScanTerminal({
       cancelled = true;
       window.clearInterval(timer);
       debouncedSync.cancel();
-      void supabase.removeChannel(channel);
+      unsubscribe?.();
     };
   }, [eventId]);
 

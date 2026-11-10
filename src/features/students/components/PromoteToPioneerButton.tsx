@@ -21,6 +21,67 @@ import { ROLES } from "@/utils/constants/roles";
 import { promoteToPioneerAction, revokePioneerAction } from "../action";
 import { Student } from "../types";
 
+interface PioneerActionResult {
+  success: boolean;
+  message?: string;
+}
+
+interface PioneerActionConfig {
+  run: () => Promise<PioneerActionResult>;
+  failureMessage: string;
+  successMessage: string;
+}
+
+async function runPioneerAction({
+  run,
+  failureMessage,
+  successMessage,
+}: PioneerActionConfig): Promise<boolean> {
+  try {
+    const result = await run();
+    if (!result.success) throw new Error(result.message || failureMessage);
+    toast.success(result.message ?? successMessage);
+    return true;
+  } catch (error) {
+    toast.error(
+      error instanceof Error ? error.message : "An unexpected error occurred.",
+    );
+    return false;
+  }
+}
+
+function pioneerTrigger(isPioneer: boolean) {
+  if (isPioneer) {
+    return (
+      <Badge variant="default" size="lg" className="cursor-pointer gap-1">
+        <HugeiconsIcon icon={Award01Icon} className="size-3.5" />
+        Pioneer
+      </Badge>
+    );
+  }
+  return (
+    <Button
+      size="icon-lg"
+      variant="ghost"
+      className="cursor-pointer text-muted-foreground hover:text-foreground"
+      aria-label="Register as Pioneer"
+    >
+      <HugeiconsIcon icon={Award01Icon} />
+    </Button>
+  );
+}
+
+function PioneerSubmitLabel({
+  isPending,
+  isPioneer,
+}: {
+  isPending: boolean;
+  isPioneer: boolean;
+}) {
+  if (isPending) return <Loader2 size={16} className="animate-spin" />;
+  return <>{isPioneer ? "Revoke Pioneer" : "Register as Pioneer"}</>;
+}
+
 export default function PromoteToPioneerButton({
   student,
 }: {
@@ -34,65 +95,32 @@ export default function PromoteToPioneerButton({
 
   if (!isAdmin) return null;
 
-  const handlePromote = async () => {
+  const execute = async (config: PioneerActionConfig) => {
     setIsPending(true);
     try {
-      const result = await promoteToPioneerAction({ id: student.id });
-      if (!result.success) {
-        throw new Error(result.message || "Failed to register as Pioneer.");
-      }
-      toast.success(result.message ?? "Student registered as Pioneer.");
-      setOpen(false);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "An unexpected error occurred.",
-      );
+      if (await runPioneerAction(config)) setOpen(false);
     } finally {
       setIsPending(false);
     }
   };
 
-  const handleRevoke = async () => {
-    setIsPending(true);
-    try {
-      const result = await revokePioneerAction(student.id);
-      if (!result.success) {
-        throw new Error(result.message || "Failed to revoke Pioneer status.");
-      }
-      toast.success(result.message ?? "Pioneer status revoked.");
-      setOpen(false);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "An unexpected error occurred.",
-      );
-    } finally {
-      setIsPending(false);
-    }
-  };
+  const handlePromote = () =>
+    execute({
+      run: () => promoteToPioneerAction({ id: student.id }),
+      failureMessage: "Failed to register as Pioneer.",
+      successMessage: "Student registered as Pioneer.",
+    });
+
+  const handleRevoke = () =>
+    execute({
+      run: () => revokePioneerAction(student.id),
+      failureMessage: "Failed to revoke Pioneer status.",
+      successMessage: "Pioneer status revoked.",
+    });
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {isPioneer ? (
-          <Badge variant="default" size="lg" className="cursor-pointer gap-1">
-            <HugeiconsIcon icon={Award01Icon} className="size-3.5" />
-            Pioneer
-          </Badge>
-        ) : (
-          <Button
-            size="icon-lg"
-            variant="ghost"
-            className="cursor-pointer text-muted-foreground hover:text-foreground"
-            aria-label="Register as Pioneer"
-          >
-            <HugeiconsIcon icon={Award01Icon} />
-          </Button>
-        )}
-      </DialogTrigger>
+      <DialogTrigger asChild>{pioneerTrigger(isPioneer)}</DialogTrigger>
       <DialogContent className="sm:max-w-md flex flex-col">
         <DialogHeader>
           <DialogTitle>
@@ -112,13 +140,7 @@ export default function PromoteToPioneerButton({
             disabled={isPending}
             onClick={isPioneer ? handleRevoke : handlePromote}
           >
-            {isPending ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : isPioneer ? (
-              "Revoke Pioneer"
-            ) : (
-              "Register as Pioneer"
-            )}
+            <PioneerSubmitLabel isPending={isPending} isPioneer={isPioneer} />
           </Button>
         </DialogFooter>
       </DialogContent>

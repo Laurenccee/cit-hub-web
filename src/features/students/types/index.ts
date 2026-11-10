@@ -125,14 +125,3 @@ export interface DirectoryPaginationProps {
   onPageChange: (page: number) => void;
 }
 
-export interface EditStudentDialogProps {
-  student: Student;
-  courses: Course[];
-  majors: Major[];
-}
-
-export interface RfidLinkButtonProps {
-  studentId: string;
-  studentName: string;
-}
-

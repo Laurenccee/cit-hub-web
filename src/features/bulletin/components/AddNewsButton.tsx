@@ -4,7 +4,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -15,28 +14,17 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
-import { ContentType } from "../types";
-import NewsForm from "./NewsForm";
-import { NewsFormData } from "../schema/news";
-import { addNewsAction } from "../action";
-import { useNewsForm } from "../hooks/useNewsForm";
+import dynamic from "next/dynamic";
+import type { ContentType } from "../types";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Loading02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
+import { PlusSignIcon } from "@hugeicons/core-free-icons";
 
-const FORM_ID = "add-news-form";
-
-const INITIAL_VALUES: NewsFormData = {
-  title: "",
-  description: "",
-  content: "",
-  slug: "",
-  imageUrl: undefined,
-  imageAlt: "",
-  typesId: undefined,
-  isPublished: false,
-  isFeatured: false,
-};
+const AddNewsDialogBody = dynamic(() => import("./AddNewsDialogBody"), {
+  ssr: false,
+  loading: () => <Skeleton className="mx-6 my-4 h-64" />,
+});
 
 export default function AddNewsButton({
   contentTypes,
@@ -46,76 +34,38 @@ export default function AddNewsButton({
   const { isAdmin, isFaculty } = useAuth();
   const [open, setOpen] = useState(false);
 
-  const {
-    control,
-    isPending,
-    pendingBlobRef,
-    handleTitleChange,
-    handleTypeChange,
-    onSubmit,
-  } = useNewsForm({
-    mode: "create",
-    initialValues: INITIAL_VALUES,
-    contentTypes,
-    submitAction: addNewsAction,
-    onSuccess: () => setOpen(false),
-  });
-
   if (!isAdmin && !isFaculty) return null;
 
   return (
-    (isAdmin || isFaculty) && (
-      <Dialog open={open} onOpenChange={setOpen}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DialogTrigger asChild>
-              <Button size="icon-lg" className="w-full aspect-square sm:w-auto">
-                <HugeiconsIcon icon={PlusSignIcon} />
-              </Button>
-            </DialogTrigger>
-          </TooltipTrigger>
-          <TooltipContent>Add News & Announcement</TooltipContent>
-        </Tooltip>
-        <DialogContent className="sm:max-w-2xl flex p-0 flex-row max-h-[80vh]">
-          <div className="flex flex-col flex-1 min-w-0 max-h-[80vh]">
-            <DialogHeader className="px-6 pt-6 pb-2">
-              <DialogTitle>Add News & Announcement</DialogTitle>
-              <DialogDescription>
-                Fill in the details below to publish a new article or
-                announcement.
-              </DialogDescription>
-            </DialogHeader>
-            <NewsForm
-              id={FORM_ID}
+    <Dialog open={open} onOpenChange={setOpen}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button size="icon-lg" className="w-full aspect-square sm:w-auto">
+              <HugeiconsIcon icon={PlusSignIcon} />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>Add News & Announcement</TooltipContent>
+      </Tooltip>
+      <DialogContent className="sm:max-w-2xl         flex p-0 flex-row max-h-dialog">
+        <div className="flex flex-col flex-1 min-w-0 max-h-dialog">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle>Add News & Announcement</DialogTitle>
+            <DialogDescription>
+              Fill in the details below to publish a new article or
+              announcement.
+            </DialogDescription>
+          </DialogHeader>
+          {open && (
+            <AddNewsDialogBody
               contentTypes={contentTypes}
-              control={control}
-              isPending={isPending}
-              pendingBlobRef={pendingBlobRef}
-              handleTitleChange={handleTitleChange}
-              handleTypeChange={handleTypeChange}
-              onSubmit={onSubmit}
+              onSuccess={() => setOpen(false)}
             />
-            <DialogFooter className="px-6 py-4 border-t shrink-0">
-              <Button
-                type="submit"
-                form={FORM_ID}
-                size="lg"
-                disabled={isPending}
-              >
-                {isPending ? "Publishing..." : "Publish"}
-                {isPending ? (
-                  <HugeiconsIcon
-                    icon={Loading02Icon}
-                    className="animate-spin"
-                  />
-                ) : (
-                  <HugeiconsIcon icon={PlusSignIcon} />
-                )}
-              </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
-    )
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
+

@@ -1,6 +1,6 @@
 "use client";
 
-import InputField from "@/components/shared/InputField";
+import InputField from "@/components/shared/forms/InputField";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { IdIcon, UserIcon } from "@hugeicons/core-free-icons";
 import type { Control, FieldValues } from "react-hook-form";

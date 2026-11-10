@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type UseFormSetError } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { EventSchema, type EventFormData } from "../schema/event";
@@ -16,6 +16,56 @@ function slugify(text: string): string {
     .replace(/[^\w\s-]/g, "")
     .replace(/[\s_-]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+type CoverUpload =
+  | { success: true; url: string | undefined }
+  | { success: false; message: string };
+
+/** Uploads the cover (when one was picked) through the same FormData flow as the other forms. */
+async function uploadCoverImage(blob: Blob | null): Promise<CoverUpload> {
+  if (!blob) return { success: true, url: undefined };
+  const fd = new FormData();
+  fd.append("file", blob, "event.jpg");
+
+  const uploadResult = await uploadEventImageAction(fd);
+  if (!uploadResult.success) {
+    return { success: false, message: uploadResult.message ?? "Failed to upload image." };
+  }
+  return { success: true, url: uploadResult.url };
+}
+
+/** Map server-side field errors back to RHF so they render inline. */
+function applyFieldErrors(
+  fieldErrors: Record<string, string[]>,
+  setError: UseFormSetError<EventFormData>,
+) {
+  Object.entries(fieldErrors).forEach(([field, messages]) => {
+    if (!Array.isArray(messages)) return;
+    messages.forEach((message) => {
+      setError(field as keyof EventFormData, { type: "server", message: String(message) });
+    });
+  });
+}
+
+async function reportCreateFailure(
+  result: { message?: string; fieldErrors?: Record<string, string[]> },
+  imageUrl: string | undefined,
+  setError: UseFormSetError<EventFormData>,
+) {
+  // Roll back the uploaded cover image so a failed insert does not
+  // leave an orphaned file in storage.
+  if (imageUrl) {
+    await deleteStorageFileAction(imageUrl, "event-images");
+  }
+  if (result.fieldErrors) {
+    applyFieldErrors(result.fieldErrors, setError);
+  }
+  toast.error(result.message ?? "Failed to create event");
+}
+
+function errorMessage(err: unknown) {
+  return err instanceof Error ? err.message : "Something went wrong";
 }
 
 /**
@@ -58,43 +108,17 @@ export function useEventForm({ onSuccess, onClose }: UseEventFormProps) {
     handleSubmit((data: EventFormData) => {
       startTransition(async () => {
         try {
-          let imageUrl: string | undefined;
-
-          const blob = imageBlobRef.current;
-          if (blob) {
-            const fd = new FormData();
-            fd.append("file", blob, "event.jpg");
-
-            const uploadResult = await uploadEventImageAction(fd);
-            if (!uploadResult.success) {
-              toast.error(uploadResult.message ?? "Failed to upload image.");
-              return;
-            }
-            imageUrl = uploadResult.url;
+          const upload = await uploadCoverImage(imageBlobRef.current);
+          if (!upload.success) {
+            toast.error(upload.message);
+            return;
           }
+          const imageUrl = upload.url;
 
           const result = await createEventAction(data, imageUrl);
 
           if (!result.success) {
-            // Roll back the uploaded cover image so a failed insert does not
-            // leave an orphaned file in storage.
-            if (imageUrl) {
-              await deleteStorageFileAction(imageUrl, "event-images");
-            }
-            // Map server-side field errors back to RHF so they render inline.
-            if (result.fieldErrors) {
-              Object.entries(result.fieldErrors).forEach(([field, messages]) => {
-                if (Array.isArray(messages)) {
-                  messages.forEach((message) => {
-                    form.setError(field as keyof EventFormData, {
-                      type: "server",
-                      message: String(message),
-                    });
-                  });
-                }
-              });
-            }
-            toast.error(result.message ?? "Failed to create event");
+            await reportCreateFailure(result, imageUrl, form.setError);
             return;
           }
 
@@ -103,8 +127,7 @@ export function useEventForm({ onSuccess, onClose }: UseEventFormProps) {
           onSuccess?.();
           onClose?.();
         } catch (err) {
-          const message = err instanceof Error ? err.message : "Something went wrong";
-          toast.error(message);
+          toast.error(errorMessage(err));
         }
       });
     });

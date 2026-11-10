@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import type { DeskCheckin, EventAttendanceRecord } from "../types";
 import { getRecentCheckinsAction } from "../action/desk-checkin";
 import { createDebouncer } from "../utils";
@@ -80,19 +79,28 @@ export default function LiveActivityFeed({
     };
 
     const debouncedFetch = createDebouncer();
-    const channel = createClient()
-      .channel(`attendance-feed:${eventId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'event_attendance',
-          filter: `event_id=eq.${eventId}`,
-        },
-        () => debouncedFetch.schedule(() => void fetchRecent()),
-      )
-      .subscribe();
+    let unsubscribe: (() => void) | undefined;
+
+    // Load the Supabase client on demand so it stays out of the route's
+    // first-load JS; the poll below covers the gap until it is ready.
+    void import("@/lib/supabase/client").then(({ createClient }) => {
+      if (cancelled) return;
+      const supabase = createClient();
+      const channel = supabase
+        .channel(`attendance-feed:${eventId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'event_attendance',
+            filter: `event_id=eq.${eventId}`,
+          },
+          () => debouncedFetch.schedule(() => void fetchRecent()),
+        )
+        .subscribe();
+      unsubscribe = () => void supabase.removeChannel(channel);
+    });
 
     const timer = window.setInterval(fetchRecent, 45000);
     fetchRecent();
@@ -100,14 +108,14 @@ export default function LiveActivityFeed({
       cancelled = true;
       window.clearInterval(timer);
       debouncedFetch.cancel();
-      void createClient().removeChannel(channel);
+      unsubscribe?.();
     };
   }, [eventId]);
 
   return (
     <div>
       <div className="flex items-center justify-between">
-        <p className="text-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="text-micro font-bold uppercase tracking-label-wider text-muted-foreground">
           Recent live activity
         </p>
         <p className="flex items-center gap-1.5 text-micro text-muted-foreground">

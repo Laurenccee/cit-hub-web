@@ -6,8 +6,7 @@ import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { DirectoryFiltersProps, MajorFilter } from "../types";
 
-export type { MajorFilter };
-export const majorFilters: { label: string; value: MajorFilter }[] = [
+const majorFilters: { label: string; value: MajorFilter }[] = [
   { label: "All Students", value: "ALL" },
   { label: "Automotive Technology", value: "AT" },
   { label: "Mechanical Technology", value: "MT" },

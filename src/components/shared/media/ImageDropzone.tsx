@@ -1,21 +1,15 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import NextImage from 'next/image';
-import Cropper from 'react-easy-crop';
 import type { Area, Point } from 'react-easy-crop';
 import { ImagePlus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+
+// The cropper (react-easy-crop) is only needed once a file is picked.
+const ImageCropDialog = dynamic(() => import('./ImageCropDialog'), { ssr: false });
 
 export interface ImageDropzoneProps {
     variant?: 'avatar' | 'news' | 'onboarding';
@@ -103,13 +97,12 @@ const VARIANT_CONFIG = {
     },
 } satisfies Record<string, object>;
 
-export default function ImageDropzone({ variant = 'avatar', onFile, initialUrl, inputId }: ImageDropzoneProps) {
-    const config = VARIANT_CONFIG[variant];
+type Variant = NonNullable<ImageDropzoneProps['variant']>;
 
-    const inputRef = useRef<HTMLInputElement>(null);
-    const [preview, setPreview] = useState<string | null>(initialUrl ?? null);
-    const [isDragging, setIsDragging] = useState(false);
-
+function useCropper(
+    variant: Variant,
+    onCropped: (blob: Blob) => void,
+) {
     const [cropSrc, setCropSrc] = useState<string | null>(null);
     const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
@@ -126,18 +119,91 @@ export default function ImageDropzone({ variant = 'avatar', onFile, initialUrl, 
         setZoom(1);
     };
 
-    const handleConfirmCrop = async () => {
+    const closeCropper = () => setCropSrc(null);
+
+    const confirmCrop = async () => {
         if (!cropSrc || !croppedAreaPixels) return;
         const src = cropSrc;
         setCropSrc(null);
         try {
-            const blob = await getCroppedBlob(src, croppedAreaPixels, variant);
-            setPreview(URL.createObjectURL(blob));
-            onFile?.(blob);
+            onCropped(await getCroppedBlob(src, croppedAreaPixels, variant));
         } catch {
             toast.error('Failed to process image.');
         }
     };
+
+    return { cropSrc, crop, zoom, setCrop, setZoom, onCropComplete, openCropper, closeCropper, confirmCrop };
+}
+
+function DropzonePlaceholder({ variant, isDragging }: { variant: Variant; isDragging: boolean }) {
+    if (variant === 'onboarding') {
+        return (
+            <>
+                <span className="flex size-16 items-center justify-center rounded-full bg-card shadow-sm">
+                    <ImagePlus size={28} className="text-primary" />
+                </span>
+                <span className="flex flex-col gap-1 px-6 text-center">
+                    <span className="text-base font-semibold text-foreground">
+                        {isDragging ? 'Drop photo here' : 'Click or drag photo here'}
+                    </span>
+                    <span className="text-xs text-muted-foreground">High-res portrait preferred</span>
+                </span>
+            </>
+        );
+    }
+    return (
+        <>
+            <ImagePlus size={24} className="text-muted-foreground/50" />
+            <p
+                className={cn(
+                    'text-muted-foreground text-center px-2',
+                    variant === 'avatar' ? 'text-micro' : 'text-xs',
+                )}
+            >
+                {isDragging ? 'Drop to upload' : 'Click or drag to upload'}
+            </p>
+        </>
+    );
+}
+
+function DropzonePreview({
+    preview,
+    showClear,
+    onClear,
+}: {
+    preview: string;
+    showClear: boolean;
+    onClear: (e: React.MouseEvent) => void;
+}) {
+    return (
+        <>
+            <NextImage src={preview} alt="Preview" fill unoptimized className="object-cover" />
+            {showClear && (
+                <button
+                    type="button"
+                    onClick={onClear}
+                    className="absolute top-2 right-2 z-10 rounded-full bg-black/60 p-1 text-primary-foreground hover:bg-black/80 transition-colors"
+                    aria-label="Remove image"
+                >
+                    <X size={14} />
+                </button>
+            )}
+        </>
+    );
+}
+
+export default function ImageDropzone({ variant = 'avatar', onFile, initialUrl, inputId }: ImageDropzoneProps) {
+    const config = VARIANT_CONFIG[variant];
+
+    const inputRef = useRef<HTMLInputElement>(null);
+    const [preview, setPreview] = useState<string | null>(initialUrl ?? null);
+    const [isDragging, setIsDragging] = useState(false);
+
+    const cropper = useCropper(variant, (blob) => {
+        setPreview(URL.createObjectURL(blob));
+        onFile?.(blob);
+    });
+    const { openCropper } = cropper;
 
     const handleClear = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -166,51 +232,10 @@ export default function ImageDropzone({ variant = 'avatar', onFile, initialUrl, 
                     if (file) openCropper(file);
                 }}
             >
-                {preview && (
-                    <>
-                        <NextImage src={preview} alt="Preview" fill unoptimized className="object-cover" />
-                        {config.showClear && (
-                            <button
-                                type="button"
-                                onClick={handleClear}
-                                className="absolute top-2 right-2 z-10 rounded-full bg-black/60 p-1 text-primary-foreground hover:bg-black/80 transition-colors"
-                                aria-label="Remove image"
-                            >
-                                <X size={14} />
-                            </button>
-                        )}
-                    </>
-                )}
-                {!preview && (
-                    <>
-                        {variant === 'onboarding' ? (
-                            <>
-                                <span className="flex size-16 items-center justify-center rounded-full bg-card shadow-sm">
-                                    <ImagePlus size={28} className="text-primary" />
-                                </span>
-                                <span className="flex flex-col gap-1 px-6 text-center">
-                                    <span className="text-base font-semibold text-foreground">
-                                        {isDragging ? 'Drop photo here' : 'Click or drag photo here'}
-                                    </span>
-                                    <span className="text-xs text-muted-foreground">
-                                        High-res portrait preferred
-                                    </span>
-                                </span>
-                            </>
-                        ) : (
-                            <>
-                                <ImagePlus size={24} className="text-muted-foreground/50" />
-                                <p
-                                    className={cn(
-                                        'text-muted-foreground text-center px-2',
-                                        variant === 'avatar' ? 'text-micro' : 'text-xs',
-                                    )}
-                                >
-                                    {isDragging ? 'Drop to upload' : 'Click or drag to upload'}
-                                </p>
-                            </>
-                        )}
-                    </>
+                {preview ? (
+                    <DropzonePreview preview={preview} showClear={config.showClear} onClear={handleClear} />
+                ) : (
+                    <DropzonePlaceholder variant={variant} isDragging={isDragging} />
                 )}
                 <input
                     ref={inputRef}
@@ -226,49 +251,7 @@ export default function ImageDropzone({ variant = 'avatar', onFile, initialUrl, 
                 />
             </div>
 
-            <Dialog open={!!cropSrc} onOpenChange={(open) => !open && setCropSrc(null)}>
-                <DialogContent className={config.dialogMaxW} showCloseButton={false}>
-                    <DialogHeader>
-                        <DialogTitle>Crop {variant === 'avatar' ? 'Photo' : 'Image'}</DialogTitle>
-                        {config.showDescription && (
-                            <DialogDescription>Adjust the crop area and zoom, then apply.</DialogDescription>
-                        )}
-                    </DialogHeader>
-                    <div className={cn(config.cropPreviewClass)}>
-                        {cropSrc && (
-                            <Cropper
-                                image={cropSrc}
-                                crop={crop}
-                                zoom={zoom}
-                                aspect={config.cropperAspect}
-                                onCropChange={setCrop}
-                                onZoomChange={setZoom}
-                                onCropComplete={onCropComplete}
-                            />
-                        )}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <span className="text-xs text-muted-foreground">Zoom</span>
-                        <input
-                            type="range"
-                            min={1}
-                            max={3}
-                            step={0.01}
-                            value={zoom}
-                            onChange={(e) => setZoom(Number(e.target.value))}
-                            className="w-full accent-primary"
-                        />
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" size="sm" onClick={() => setCropSrc(null)}>
-                            Cancel
-                        </Button>
-                        <Button size="sm" onClick={handleConfirmCrop}>
-                            Apply
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            {cropper.cropSrc && <ImageCropDialog variant={variant} config={config} cropper={cropper} />}
         </>
     );
 }

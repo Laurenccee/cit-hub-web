@@ -29,30 +29,56 @@ export async function getStudentDirectory(): Promise<QueryResult<DirectoryStuden
     return { success: false, data: [] };
   }
 
-  const directory: DirectoryStudent[] = result.data.map((student) => {
-    const courseName = student.courses?.name ?? student.courses?.code ?? null;
-    const linked = Boolean(student.rfid_uid);
-    return {
-      id: student.id,
-      firstName: student.first_name,
-      lastName: student.last_name,
-      photoUrl: student.profile_picture_url,
-      yearLevel: formatYearLevel(student.year_level),
-      studentId: student.student_id ?? "—",
-      course: courseName ?? "—",
-      courseCode: student.courses?.code ?? null,
-      major: student.majors?.name ?? null,
-      majorId: student.major_id ?? student.majors?.id ?? null,
-      majorCode: student.majors?.code ?? null,
-      rfidStatus: linked ? "linked" : "unlinked",
-      nfcTag: linked ? `NFC-${student.rfid_uid!.slice(-6).toUpperCase()}` : null,
-      rfidUid: student.rfid_uid,
-      rfidNote: linked ? null : "No credential assigned",
-      source: student,
-    };
-  });
+  return { success: true, data: result.data.map(toDirectoryStudent) };
+}
 
-  return { success: true, data: directory };
+function toCourseFields(student: Student) {
+  return {
+    course: student.courses?.name ?? student.courses?.code ?? "—",
+    courseCode: student.courses?.code ?? null,
+  };
+}
+
+function toMajorFields(student: Student) {
+  return {
+    major: student.majors?.name ?? null,
+    majorId: student.major_id ?? student.majors?.id ?? null,
+    majorCode: student.majors?.code ?? null,
+  };
+}
+
+function toRfidFields(
+  rfidUid: string | null | undefined,
+): Pick<DirectoryStudent, "rfidStatus" | "nfcTag" | "rfidUid" | "rfidNote"> {
+  if (!rfidUid) {
+    return {
+      rfidStatus: "unlinked",
+      nfcTag: null,
+      rfidUid,
+      rfidNote: "No credential assigned",
+    };
+  }
+  return {
+    rfidStatus: "linked",
+    nfcTag: `NFC-${rfidUid.slice(-6).toUpperCase()}`,
+    rfidUid,
+    rfidNote: null,
+  };
+}
+
+function toDirectoryStudent(student: Student): DirectoryStudent {
+  return {
+    id: student.id,
+    firstName: student.first_name,
+    lastName: student.last_name,
+    photoUrl: student.profile_picture_url,
+    yearLevel: formatYearLevel(student.year_level),
+    studentId: student.student_id ?? "—",
+    ...toCourseFields(student),
+    ...toMajorFields(student),
+    ...toRfidFields(student.rfid_uid),
+    source: student,
+  };
 }
 
 function formatYearLevel(yearLevel?: string | null) {
@@ -60,10 +86,6 @@ function formatYearLevel(yearLevel?: string | null) {
   if (!raw) return "—";
   if (/year/i.test(raw)) return raw;
   return `${raw} Year`;
-}
-
-export async function getStudents(): Promise<QueryResult<Student[]>> {
-  return fetchStudents();
 }
 
 async function getCourses(): Promise<QueryResult<Course[]>> {

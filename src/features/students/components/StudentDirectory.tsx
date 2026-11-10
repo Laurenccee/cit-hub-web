@@ -53,7 +53,7 @@ export default function StudentDirectory({
         <div className="overflow-x-auto border-b border-border">
           <table className="w-full min-w-[880px] text-sm">
             <thead>
-              <tr className="border-b border-border bg-muted/30 text-left text-micro font-bold uppercase tracking-[0.08em] text-muted-foreground">
+              <tr className="border-b border-border bg-muted/30 text-left text-micro font-bold uppercase tracking-label-tight text-muted-foreground">
                 <th className="px-4 py-3 sm:px-5">Student Name</th>
                 <th className="px-4 py-3">Student ID</th>
                 <th className="px-4 py-3">Degree &amp; Major</th>

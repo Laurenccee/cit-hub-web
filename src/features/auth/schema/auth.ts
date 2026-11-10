@@ -1,20 +1,24 @@
-import { z } from 'zod';
+import * as z from 'zod/mini';
 
 export const SignInSchema = z.object({
-    email: z.string().email('Please enter a valid email'),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
+    email: z.email('Please enter a valid email'),
+    password: z.string().check(z.minLength(6, 'Password must be at least 6 characters')),
 });
 
 export const ForgetPasswordSchema = z.object({
-    email: z.string().min(1, 'Email is required').email('Invalid email address'),
+    email: z
+        .string()
+        .check(z.minLength(1, 'Email is required'), z.regex(z.regexes.email, 'Invalid email address')),
 });
 
 const passwordRule = z
     .string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Must include an uppercase letter')
-    .regex(/[a-z]/, 'Must include a lowercase letter')
-    .regex(/[0-9]/, 'Must include a number');
+    .check(
+        z.minLength(8, 'Password must be at least 8 characters'),
+        z.regex(/[A-Z]/, 'Must include an uppercase letter'),
+        z.regex(/[a-z]/, 'Must include a lowercase letter'),
+        z.regex(/[0-9]/, 'Must include a number'),
+    );
 
 export const ResetPasswordSchema = z.object({
     password: passwordRule,

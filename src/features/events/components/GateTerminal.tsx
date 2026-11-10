@@ -142,7 +142,7 @@ export default function GateTerminal({
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success" />
           </span>
           <span>
-            <span className="block text-micro font-bold uppercase tracking-[0.14em] text-muted-foreground">
+            <span className="block text-micro font-bold uppercase tracking-label-wider text-muted-foreground">
               Total Checked In
             </span>
             <span className="block text-3xl font-bold leading-none text-foreground">

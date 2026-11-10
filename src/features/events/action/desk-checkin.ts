@@ -117,92 +117,126 @@ async function commitDeskVisit(
   clientTimestamp: string | null,
 ): Promise<DeskCheckinResult> {
   const now = new Date().toISOString();
+  const tap: DeskTap = {
+    supabase,
+    eventId,
+    student,
+    clientId,
+    timestamp: clientTimestamp ?? now,
+    now,
+  };
 
   // A replayed tap may already be committed — the original attempt could have
   // written the row and then lost its response. Resolve that before the
   // open-visit pre-check so a retry reports success, not "already checked in".
   const applied = await findAppliedTap(supabase, clientId, direction);
-  if (applied) {
-    return { success: true, message: 'Tap already recorded.', student, record: applied };
+  if (applied) return tapRecordedResult(student, applied);
+
+  return direction === 'in' ? commitCheckIn(tap) : commitCheckOut(tap);
+}
+
+interface DeskTap {
+  supabase: SupabaseClient;
+  eventId: string;
+  student: DeskStudent;
+  clientId: string | null;
+  /** Device time when the tap was captured, else the server's `now`. */
+  timestamp: string;
+  now: string;
+}
+
+type AttendanceRow = Omit<DeskCheckinRecord, 'created_at'>;
+
+const ATTENDANCE_COLUMNS = 'id, event_id, check_in, check_out, student_id';
+
+function tapRecordedResult(student: DeskStudent, record: DeskCheckinRecord): DeskCheckinResult {
+  return { success: true, message: 'Tap already recorded.', student, record };
+}
+
+function dbFailureResult(
+  action: 'check-in' | 'check-out',
+  error: { code?: string; message: string },
+): DeskCheckinResult {
+  return {
+    success: false,
+    message: `Could not record ${action} (${error.code ?? 'db-error'}: ${error.message}).`,
+  };
+}
+
+async function commitCheckIn(tap: DeskTap): Promise<DeskCheckinResult> {
+  const { supabase, eventId, student, clientId, timestamp, now } = tap;
+
+  // Read the student's open visit alongside the event and card lookup so
+  // duplicates are caught before the insert without adding a round trip.
+  const openVisit = await findOpenVisit(supabase, student.id);
+  if (openVisit) return alreadyCheckedInResult(supabase, student, eventId);
+
+  const { data: created, error: insertError } = await supabase
+    .from('event_attendance')
+    .insert({
+      event_id: eventId,
+      student_id: student.id,
+      check_in: timestamp,
+      check_in_client_id: clientId,
+    })
+    .select(ATTENDANCE_COLUMNS)
+    .single();
+
+  if (insertError) return resolveCheckInInsertError(tap, insertError);
+
+  return {
+    success: true,
+    message: `Welcome, ${student.first_name} ${student.last_name}. Checked in.`,
+    student,
+    record: { ...(created as AttendanceRow), created_at: now },
+  };
+}
+
+async function resolveCheckInInsertError(
+  tap: DeskTap,
+  insertError: { code?: string; message: string },
+): Promise<DeskCheckinResult> {
+  const { supabase, eventId, student, clientId } = tap;
+
+  if (insertError.code !== '23505') {
+    console.error('Check-in insert error:', insertError.message);
+    return dbFailureResult('check-in', insertError);
   }
 
-  if (direction === 'in') {
-    // Read the student's open visit alongside the event and card lookup so
-    // duplicates are caught before the insert without adding a round trip.
-    const openVisit = await findOpenVisit(supabase, student.id);
+  // Two unique indexes can raise this: the check_in_client_id key (this
+  // exact tap already landed) and the one-open-visit key (they are
+  // already inside).
+  const replayed = await findAppliedTap(supabase, clientId, 'in');
+  if (replayed) return tapRecordedResult(student, replayed);
+  return alreadyCheckedInResult(supabase, student, eventId);
+}
 
-    if (openVisit) {
-      return alreadyCheckedInResult(supabase, student, eventId);
-    }
+/**
+ * Close the student's open visit for this event, or failing that any of
+ * their open visits — a card scanned in at one desk still has to be able to
+ * leave at whichever kiosk is in front of them.
+ *
+ * Only `check_out_client_id` is written: `check_in_client_id` belongs to the
+ * IN tap that opened the visit, and overwriting it would let a replayed IN
+ * slip past the idempotency check and open a second visit.
+ */
+function closeOpenVisit(tap: DeskTap, scopedToEvent: boolean) {
+  const query = tap.supabase
+    .from('event_attendance')
+    .update({ check_out: tap.timestamp, check_out_client_id: tap.clientId });
 
-    const { data: created, error: insertError } = await supabase
-      .from('event_attendance')
-      .insert({
-        event_id: eventId,
-        student_id: student.id,
-        check_in: clientTimestamp ?? now,
-        check_in_client_id: clientId,
-      })
-      .select('id, event_id, check_in, check_out, student_id')
-      .single();
+  return (scopedToEvent ? query.eq('event_id', tap.eventId) : query)
+    .eq('student_id', tap.student.id)
+    .not('check_in', 'is', null)
+    .is('check_out', null)
+    .select(ATTENDANCE_COLUMNS);
+}
 
-    if (insertError) {
-      if (insertError.code === '23505') {
-        // Two unique indexes can raise this: the check_in_client_id key (this
-        // exact tap already landed) and the one-open-visit key (they are
-        // already inside).
-        const replayed = await findAppliedTap(supabase, clientId, direction);
-        if (replayed) {
-          return { success: true, message: 'Tap already recorded.', student, record: replayed };
-        }
-        return alreadyCheckedInResult(supabase, student, eventId);
-      }
-      console.error('Check-in insert error:', insertError.message);
-      return { success: false, message: `Could not record check-in (${insertError.code ?? 'db-error'}: ${insertError.message}).` };
-    }
+type CloseAttempt = Awaited<ReturnType<typeof closeOpenVisit>>;
 
-    return {
-      success: true,
-      message: `Welcome, ${student.first_name} ${student.last_name}. Checked in.`,
-      student,
-      record: { ...(created as Omit<DeskCheckinRecord, 'created_at'>), created_at: now },
-    };
-  }
-
-  // direction === 'out': close the student's open visit.
-  // A conditional update returns the closed row, so no follow-up read is
-  // needed. No returned row means there was no open visit to close.
+function findClosedVisit(attempts: CloseAttempt[], now: string) {
   let closedVisit: DeskCheckinRecord | null = null;
-  let updateError: { code?: string; message: string; details?: string | null } | null = null;
-
-  // Close the student's open visit for this event, or failing that any of
-  // their open visits — a card scanned in at one desk still has to be able to
-  // leave at whichever kiosk is in front of them.
-  //
-  // Only `check_out_client_id` is written: `check_in_client_id` belongs to the
-  // IN tap that opened the visit, and overwriting it would let a replayed IN
-  // slip past the idempotency check and open a second visit.
-  const closeVisitForEvent = () =>
-    supabase
-      .from('event_attendance')
-      .update({ check_out: clientTimestamp ?? now, check_out_client_id: clientId })
-      .eq('event_id', eventId)
-      .eq('student_id', student.id)
-      .not('check_in', 'is', null)
-      .is('check_out', null)
-      .select('id, event_id, check_in, check_out, student_id');
-
-  const closeAnyOpenVisit = () =>
-    supabase
-      .from('event_attendance')
-      .update({ check_out: clientTimestamp ?? now, check_out_client_id: clientId })
-      .eq('student_id', student.id)
-      .not('check_in', 'is', null)
-      .is('check_out', null)
-      .select('id, event_id, check_in, check_out, student_id');
-
-  const scoped = await closeVisitForEvent();
-  const attempts = scoped.data?.length ? [scoped] : [scoped, await closeAnyOpenVisit()];
+  let updateError: CloseAttempt['error'] = null;
 
   for (const attempt of attempts) {
     if (attempt.error) {
@@ -215,32 +249,44 @@ async function commitDeskVisit(
       updateError = attempt.error;
       continue;
     }
-    if (attempt.data && attempt.data.length > 0) {
-      closedVisit = {
-        ...(attempt.data[0] as Omit<DeskCheckinRecord, 'created_at'>),
-        created_at: now,
-      };
+    if (attempt.data?.length) {
+      closedVisit = { ...(attempt.data[0] as AttendanceRow), created_at: now };
       break;
     }
   }
 
-  if (!closedVisit) {
-    if (updateError) {
-      return { success: false, message: `Could not record check-out (${updateError.code ?? 'db-error'}: ${updateError.message}).` };
-    }
+  return { closedVisit, updateError };
+}
 
-    // No open row for this event. If they are checked in somewhere else, say
-    // where instead of the bare "no active check-in".
-    return {
-      success: false,
-      message: await describeOpenVisit(supabase, student, eventId, {
-        sameEvent: `${student.first_name} ${student.last_name} has no active check-in.`,
-        otherEvent: (title) => `${student.first_name} ${student.last_name} is checked in at "${title}". Log them out there first.`,
-        none: `${student.first_name} ${student.last_name} has no active check-in.`,
-      }),
-      student,
-      noActiveVisit: true,
-    };
+async function noActiveVisitResult(tap: DeskTap): Promise<DeskCheckinResult> {
+  const { supabase, eventId, student } = tap;
+  const name = `${student.first_name} ${student.last_name}`;
+
+  // No open row for this event. If they are checked in somewhere else, say
+  // where instead of the bare "no active check-in".
+  return {
+    success: false,
+    message: await describeOpenVisit(supabase, student, eventId, {
+      sameEvent: `${name} has no active check-in.`,
+      otherEvent: (title) => `${name} is checked in at "${title}". Log them out there first.`,
+      none: `${name} has no active check-in.`,
+    }),
+    student,
+    noActiveVisit: true,
+  };
+}
+
+// A conditional update returns the closed row, so no follow-up read is
+// needed. No returned row means there was no open visit to close.
+async function commitCheckOut(tap: DeskTap): Promise<DeskCheckinResult> {
+  const { eventId, student, now } = tap;
+
+  const scoped = await closeOpenVisit(tap, true);
+  const attempts = scoped.data?.length ? [scoped] : [scoped, await closeOpenVisit(tap, false)];
+  const { closedVisit, updateError } = findClosedVisit(attempts, now);
+
+  if (!closedVisit) {
+    return updateError ? dbFailureResult('check-out', updateError) : noActiveVisitResult(tap);
   }
 
   if (closedVisit.event_id !== eventId) {
@@ -253,6 +299,39 @@ async function commitDeskVisit(
     student,
     record: closedVisit,
   };
+}
+
+type LookupSettled =
+  | { status: 'ok'; result: Awaited<ReturnType<typeof resolveAttendeeAction>> }
+  | { status: 'failed'; error: unknown };
+
+type LookupOutcome = { student: DeskStudent } | { failure: DeskCheckinResult };
+
+function isEventAcceptingCheckins(
+  eventRes: { error: unknown; data: { is_published: boolean; is_archived: boolean } | null },
+): boolean {
+  return !eventRes.error && !!eventRes.data && eventRes.data.is_published && !eventRes.data.is_archived;
+}
+
+function interpretLookup(settled: LookupSettled, identifier: string): LookupOutcome {
+  if (settled.status === 'failed') {
+    const { error } = settled;
+    console.error('Attendee lookup threw:', error instanceof Error ? error.message : error);
+    return { failure: { success: false, message: 'Card lookup is unavailable. Check the server configuration.' } };
+  }
+  if (!settled.result.success) {
+    return { failure: { success: false, message: 'Lookup failed. Try again.' } };
+  }
+  // Unknown cards and IDs are rejected at the gate, never recorded.
+  if (!settled.result.student) {
+    return {
+      failure: {
+        success: false,
+        message: `No student found for "${identifier}". Register the card in the student directory, or check the ID and try again.`,
+      },
+    };
+  }
+  return { student: settled.result.student };
 }
 
 /**
@@ -291,34 +370,19 @@ export async function logDeskCheckinAction(
       .eq('id', eventId)
       .maybeSingle(),
     resolveAttendeeAction(trimmed).then(
-      (result) => ({ status: 'ok' as const, result }),
-      (error: unknown) => ({ status: 'failed' as const, error }),
+      (result): LookupSettled => ({ status: 'ok', result }),
+      (error: unknown): LookupSettled => ({ status: 'failed', error }),
     ),
   ]);
 
-  if (eventRes.error || !eventRes.data || !eventRes.data.is_published || eventRes.data.is_archived) {
+  if (!isEventAcceptingCheckins(eventRes)) {
     return { success: false, message: 'This event is not accepting check-ins.' };
   }
 
-  if (lookupSettled.status === 'failed') {
-    console.error('Attendee lookup threw:', lookupSettled.error instanceof Error ? lookupSettled.error.message : lookupSettled.error);
-    return { success: false, message: 'Card lookup is unavailable. Check the server configuration.' };
-  }
-  const lookup = lookupSettled.result;
-  if (!lookup.success) {
-    return { success: false, message: 'Lookup failed. Try again.' };
-  }
-  const student = lookup.student;
+  const outcome = interpretLookup(lookupSettled, trimmed);
+  if ('failure' in outcome) return outcome.failure;
 
-  // Unknown cards and IDs are rejected at the gate, never recorded.
-  if (!student) {
-    return {
-      success: false,
-      message: `No student found for "${trimmed}". Register the card in the student directory, or check the ID and try again.`,
-    };
-  }
-
-  return commitDeskVisit(supabase, eventId, student, direction, clientId, clientTimestamp);
+  return commitDeskVisit(supabase, eventId, outcome.student, direction, clientId, clientTimestamp);
 }
 
 /**

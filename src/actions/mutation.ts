@@ -1,6 +1,6 @@
 import { revalidatePath } from 'next/cache';
 import type { PostgrestError } from '@supabase/supabase-js';
-import type { z } from 'zod';
+import type * as z from 'zod/mini';
 import { createClient } from '@/lib/supabase/server';
 import type { ActionResult } from '@/types/action';
 
@@ -13,7 +13,7 @@ export interface MutationContext {
 /** A path to revalidate after a write, optionally scoped to a page or layout. */
 export type RevalidateTarget = string | { path: string; type?: 'page' | 'layout' };
 
-export interface RunMutationOptions<TSchema extends z.ZodTypeAny, TExtra extends object = Record<never, never>> {
+export interface RunMutationOptions<TSchema extends z.ZodMiniType, TExtra extends object = Record<never, never>> {
     /** Raw, untrusted values from the client. */
     values: unknown;
     /** Schema used to re-validate them on the server. */
@@ -38,6 +38,41 @@ export interface RunMutationOptions<TSchema extends z.ZodTypeAny, TExtra extends
     conflictMessage?: string;
 }
 
+const UNIQUE_VIOLATION_CODE = '23505';
+
+function collectFieldErrors(issues: ReadonlyArray<{ path: PropertyKey[]; message: string }>) {
+    const fieldErrors: Record<string, string[]> = {};
+    for (const issue of issues) {
+        const path = issue.path.join('.');
+        (fieldErrors[path] ??= []).push(issue.message);
+    }
+    return fieldErrors;
+}
+
+function revalidateTargets(targets: RevalidateTarget[]) {
+    for (const target of targets) {
+        if (typeof target === 'string') revalidatePath(target);
+        else revalidatePath(target.path, target.type);
+    }
+}
+
+function mapMutationError(error: unknown, failureMessage: string, conflictMessage?: string) {
+    if (conflictMessage && (error as { code?: string } | null)?.code === UNIQUE_VIOLATION_CODE) {
+        return conflictMessage;
+    }
+    const message = (error as { message?: unknown } | null)?.message;
+    return typeof message === 'string' && message ? message : failureMessage;
+}
+
+function resolveMessages(options: Pick<RunMutationOptions<z.ZodMiniType>, 'unauthorizedMessage' | 'invalidMessage' | 'failureMessage'>) {
+    const {
+        unauthorizedMessage = 'Unauthorized.',
+        invalidMessage = 'Invalid form data.',
+        failureMessage = 'An unexpected database error occurred.',
+    } = options;
+    return { unauthorizedMessage, invalidMessage, failureMessage };
+}
+
 /**
  * The shared pipeline every mutating server action runs through:
  * authorize → re-validate on the server → write → revalidate → map errors.
@@ -45,32 +80,18 @@ export interface RunMutationOptions<TSchema extends z.ZodTypeAny, TExtra extends
  * Server actions must never trust client data, so `schema` is parsed again here
  * even though the form already validated with `zodResolver`.
  */
-export async function runMutation<TSchema extends z.ZodTypeAny, TExtra extends object = Record<never, never>>(
+export async function runMutation<TSchema extends z.ZodMiniType, TExtra extends object = Record<never, never>>(
     options: RunMutationOptions<TSchema, TExtra>,
 ): Promise<ActionResult<TExtra>> {
-    const {
-        values,
-        schema,
-        authorize,
-        execute,
-        revalidate = [],
-        successMessage,
-        unauthorizedMessage = 'Unauthorized.',
-        invalidMessage = 'Invalid form data.',
-        failureMessage = 'An unexpected database error occurred.',
-        conflictMessage,
-    } = options;
+    const { values, schema, authorize, execute, revalidate = [], successMessage, conflictMessage } = options;
+    const { unauthorizedMessage, invalidMessage, failureMessage } = resolveMessages(options);
 
     const authorized = await authorize();
     if (!authorized) return { success: false, message: unauthorizedMessage };
 
     const validation = schema.safeParse(values);
     if (!validation.success) {
-        const fieldErrors: Record<string, string[]> = {};
-        for (const issue of validation.error.issues) {
-            const path = issue.path.join('.');
-            (fieldErrors[path] ??= []).push(issue.message);
-        }
+        const fieldErrors = collectFieldErrors(validation.error.issues);
         return { success: false, message: invalidMessage, fieldErrors };
     }
 
@@ -83,10 +104,7 @@ export async function runMutation<TSchema extends z.ZodTypeAny, TExtra extends o
         });
         if (error) throw error;
 
-        for (const target of revalidate) {
-            if (typeof target === 'string') revalidatePath(target);
-            else revalidatePath(target.path, target.type);
-        }
+        revalidateTargets(revalidate);
 
         if (extra !== undefined) {
             return { success: true, message: successMessage, ...extra };
@@ -94,10 +112,6 @@ export async function runMutation<TSchema extends z.ZodTypeAny, TExtra extends o
         return { success: true, message: successMessage };
     } catch (error) {
         console.error('Mutation error:', error);
-        if (conflictMessage && (error as { code?: string } | null)?.code === '23505') {
-            return { success: false, message: conflictMessage };
-        }
-        const message = (error as { message?: unknown } | null)?.message;
-        return { success: false, message: typeof message === 'string' && message ? message : failureMessage };
+        return { success: false, message: mapMutationError(error, failureMessage, conflictMessage) };
     }
 }

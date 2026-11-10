@@ -5,21 +5,18 @@ import { CalendarX2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CardEmptyState } from "@/components/shared/CardEmptyState";
-import ListingFilterPills from "@/components/shared/ListingFilterPills";
-import ListingPagination from "@/components/shared/ListingPagination";
-import ListingSearchInput from "@/components/shared/ListingSearchInput";
-import ListingSortSelect from "@/components/shared/ListingSortSelect";
-import {
-  LISTING_PAGE_SIZE,
-  buildSearchText,
-  compareListItems,
-  paginate,
-} from "@/components/shared/listing-utils";
+import ListingFilterPills from "@/components/shared/listing/ListingFilterPills";
+import ListingPagination from "@/components/shared/listing/ListingPagination";
+import ListingSearchInput from "@/components/shared/listing/ListingSearchInput";
+import ListingSortSelect from "@/components/shared/listing/ListingSortSelect";
+import { LISTING_PAGE_SIZE, paginate } from "@/utils/listing";
 import type { EventItem } from "../types";
-import EventCard, { isAcademicEvent } from "./EventCard";
-
-type Tab = "all" | "upcoming" | "week" | "month" | "academic" | "student-life";
-type SortOrder = "soonest" | "latest" | "alphabetical";
+import EventCard from "./EventCard";
+import {
+  filterAndSortEvents,
+  type EventsSortOrder as SortOrder,
+  type EventsTab as Tab,
+} from "../lib/listing";
 
 interface EventsListingProps {
   events: EventItem[];
@@ -56,58 +53,13 @@ export default function EventsListing({ events }: EventsListingProps) {
     setCurrentPage(1);
   };
 
-  const now = new Date();
-
-  // Week interval (Monday to Sunday)
-  const currentDay = now.getDay();
-  const diffToMonday = (currentDay + 6) % 7;
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - diffToMonday);
-  startOfWeek.setHours(0, 0, 0, 0);
-
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
-  endOfWeek.setHours(23, 59, 59, 999);
-
-  // Month interval
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-
-  const isWithinInterval = (date: Date, start: Date, end: Date) => {
-    return date >= start && date <= end;
-  };
-
-  const normalizedSearch = searchTerm.trim().toLocaleLowerCase();
-
-  const filteredEvents = events
-    .filter((event) => {
-      const eventDate = new Date(event.start_date);
-      if (activeTab === "upcoming" && !(eventDate >= now)) return false;
-      if (activeTab === "week" && !isWithinInterval(eventDate, startOfWeek, endOfWeek))
-        return false;
-      if (activeTab === "month" && !isWithinInterval(eventDate, startOfMonth, endOfMonth))
-        return false;
-      if (activeTab === "academic" && !isAcademicEvent(event)) return false;
-      if (activeTab === "student-life" && isAcademicEvent(event)) return false;
-
-      if (!normalizedSearch) return true;
-      return buildSearchText([
-        event.title,
-        event.description,
-        event.content,
-        event.location,
-        event.category?.label,
-      ]).includes(normalizedSearch);
-    })
-    .sort((first, second) =>
-      compareListItems(
-        first,
-        second,
-        (item) => item.start_date,
-        sortOrder === "alphabetical",
-        sortOrder === "soonest",
-      ),
-    );
+  const filteredEvents = filterAndSortEvents(
+    events,
+    activeTab,
+    searchTerm,
+    sortOrder,
+    new Date(),
+  );
 
   const { pageItems, pageCount } = paginate(
     filteredEvents,

@@ -6,7 +6,7 @@ import {
   Link,
   type LucideIcon,
 } from "lucide-react";
-import type { WizardStep } from "@/components/shared/SetupWizard";
+import type { WizardStep } from "@/components/shared/wizard/SetupWizard";
 
 export interface PersonnelStepMeta {
   id: string;

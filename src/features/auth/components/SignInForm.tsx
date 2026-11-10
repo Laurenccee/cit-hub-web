@@ -9,7 +9,7 @@ import { signInAction } from '../action';
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 import FormActions from './FormActions';
-import InputField from '@/components/shared/InputField';
+import InputField from '@/components/shared/forms/InputField';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { User03Icon, LockPasswordIcon, Loading02Icon, ArrowRight } from '@hugeicons/core-free-icons';
 

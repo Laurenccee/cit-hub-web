@@ -1,6 +1,6 @@
 "use client";
 
-import ComboboxField from "@/components/shared/ComboboxField";
+import ComboboxField from "@/components/shared/forms/ComboboxField";
 import type { Control, FieldValues } from "react-hook-form";
 import { SECTIONS, YEAR_LEVELS } from "../../schema/student";
 

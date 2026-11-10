@@ -41,7 +41,7 @@ export default function EventHero({ event, attendance }: EventHeroProps) {
           </div>
         </div>
 
-        <p className="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-micro font-bold uppercase tracking-[0.1em]">
+        <p className="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-micro font-bold         uppercase tracking-label">
           <span className="rounded bg-primary/10 px-1.5 py-0.5 text-primary">
             {event.organizer ?? "CIT Hub"}
           </span>
@@ -54,15 +54,13 @@ export default function EventHero({ event, attendance }: EventHeroProps) {
           {event.title}
         </h2>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          {event.description ??
-            event.content ??
-            "Join us for a day of talks, demos, and hands-on sessions across the CIT community."}
+          {heroDescription(event)}
         </p>
 
         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 text-muted-foreground/70" />
-            {event.location ?? "CIT Campus"}
+            {locationLabel(event)}
           </span>
           <span className="inline-flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
@@ -99,11 +97,11 @@ export default function EventHero({ event, attendance }: EventHeroProps) {
             <Users className="h-5 w-5 text-primary" />
           </span>
           <span className="min-w-0">
-            <span className="block text-micro font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            <span className="block text-micro font-bold uppercase tracking-label-wide text-muted-foreground">
               Current live presence
             </span>
             <span className="block truncate text-xs font-semibold text-foreground">
-              {event.location ?? "CIT Campus"}
+              {locationLabel(event)}
             </span>
           </span>
           <span className="ml-auto shrink-0 text-right">
@@ -135,19 +133,41 @@ export default function EventHero({ event, attendance }: EventHeroProps) {
   );
 }
 
+function locationLabel(event: EventItem) {
+  return event.location ?? "CIT Campus";
+}
+
+function heroDescription(event: EventItem) {
+  return (
+    event.description ??
+    event.content ??
+    "Join us for a day of talks, demos, and hands-on sessions across the CIT community."
+  );
+}
+
+function plural(count: number, unit: string) {
+  return `${count} ${unit}${count === 1 ? "" : "s"}`;
+}
+
+function endsInLabel(mins: number) {
+  if (mins < 60) return `Ends in ${plural(mins, "min")}`;
+  const hours = Math.floor(mins / 60);
+  const rest = mins % 60;
+  return rest === 0 ? `Ends in ${plural(hours, "hr")}` : `Ends in ${hours}h ${rest}m`;
+}
+
+function runningLabel(now: number, startAt: number, endAt: number) {
+  if (now > endAt) return "Session ended";
+  if (!(now >= startAt)) return null;
+  return endsInLabel(Math.max(1, Math.round((endAt - now) / 60000)));
+}
+
 function sessionLabel(start: string, end?: string | null) {
   const now = Date.now();
   const startAt = new Date(start).getTime();
   if (end) {
-    const endAt = new Date(end).getTime();
-    if (now > endAt) return "Session ended";
-    if (now >= startAt) {
-      const mins = Math.max(1, Math.round((endAt - now) / 60000));
-      if (mins < 60) return `Ends in ${mins} min${mins === 1 ? "" : "s"}`;
-      const hours = Math.floor(mins / 60);
-      const rest = mins % 60;
-      return rest === 0 ? `Ends in ${hours} hr${hours === 1 ? "" : "s"}` : `Ends in ${hours}h ${rest}m`;
-    }
+    const label = runningLabel(now, startAt, new Date(end).getTime());
+    if (label) return label;
   }
   if (now < startAt) {
     return `Starts ${new Date(start).toLocaleDateString("en-US", {

@@ -9,8 +9,8 @@ import { ArrowRight, Loader2, RectangleEllipsis } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { ResetPasswordData, ResetPasswordSchema } from '../schema/auth';
-import InputField from '@/components/shared/InputField';
-import PasswordRulesCard from '@/components/shared/PasswordRuleCard';
+import InputField from '@/components/shared/forms/InputField';
+import PasswordRulesCard from '@/components/shared/forms/PasswordRuleCard';
 import { resetPasswordAction } from '../action';
 
 export default function ResetPasswordForm() {

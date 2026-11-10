@@ -1,32 +1,12 @@
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUserProfile } from '@/lib/supabase/current-user';
 import { AuthProvider } from './auth-provider';
 
 export async function AuthWrapper({ children }: { children: React.ReactNode }) {
-    const supabase = await createClient();
-    const {
-        data: { user },
-        error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError) {
-        return (
-            <AuthProvider initialUser={null} initialRole={null}>
-                {children}
-            </AuthProvider>
-        );
-    }
-
-    let role = null;
-    if (user) {
-        const { data: profile } = await supabase.from('profiles').select('role_id').eq('id', user.id).single();
-        role = profile?.role_id ?? null;
-    }
+    const current = await getCurrentUserProfile();
 
     return (
-        <AuthProvider initialUser={user} initialRole={role}>
+        <AuthProvider initialUser={current?.user ?? null} initialRole={current?.profile?.role_id ?? null}>
             {children}
         </AuthProvider>
     );
 }
-
-export default AuthWrapper;

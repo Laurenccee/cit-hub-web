@@ -172,7 +172,7 @@ function CoverScene({ cover }: { cover?: string }) {
             <span className="rounded-lg border border-green-400/50 bg-green-400/10 px-3 py-1 text-sm font-bold tracking-widest text-green-300">
               CTF
             </span>
-            <span className="text-[10px] font-semibold tracking-[0.28em] text-green-400/80">
+            <span className="text-2xs font-semibold tracking-[0.28em] text-green-400/80">
               CYBER DEFENSE LAB
             </span>
           </div>
@@ -226,7 +226,7 @@ function BrandedScene({
         <span className="rounded-xl border border-white/30 bg-white/10 px-3.5 py-1.5 text-sm font-bold tracking-wider text-white backdrop-blur-[1px]">
           {mark}
         </span>
-        <span className="px-4 text-center text-[10px] font-bold tracking-[0.22em] text-white/85">
+        <span className="px-4 text-center text-2xs font-bold tracking-[0.22em] text-white/85">
           {label}
         </span>
       </div>
